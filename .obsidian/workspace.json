@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "准备阶段规划/归档文本/AI注意事项.md",
+                "file": "待完成功能清单.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "AI注意事项"
+              "title": "待完成功能清单"
             }
           }
         ]
@@ -183,11 +183,11 @@
       "bases:新建数据库": false
     }
   },
-  "active": "5e45995777ba2284",
+  "active": "61aa88093136fa5d",
   "lastOpenFiles": [
+    "准备阶段规划/归档文本/AI注意事项.md",
     "准备阶段规划/归档文本",
     "待完成功能清单.md",
-    "准备阶段规划/归档文本/AI注意事项.md",
     "准备阶段规划/AI规划核心要点.md",
     "准备阶段规划/AI给出的规划_续.md"
   ]
