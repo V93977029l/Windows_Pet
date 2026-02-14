@@ -13,6 +13,7 @@ config_version=5
 config/name="TransparentPet"
 run/main_scene="uid://c2pktm0gbvst4"
 config/features=PackedStringArray("4.6", "Forward Plus")
+boot_splash/bg_color=Color(0, 0, 0, 0)
 config/icon="res://icon.svg"
 
 [display]

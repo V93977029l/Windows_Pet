@@ -6,28 +6,33 @@ var is_dragging: bool = false
 # 初始化（接收主节点）
 func init(node: Node2D):
 	parent_node = node
-	print("✅ 拖动逻辑初始化完成")
+	print("✅ [拖动] 拖动逻辑初始化完成")
 
 # 处理Area2D的点击事件（触发拖动）
 func handle_area_input_event(event: InputEvent):
-	if not parent_node: return
-	
+	if not parent_node:
+		print("❌ [拖动] 父节点为空")
+		return
+
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
 		if event.pressed:
-			var mouse_global: Vector2i = DisplayServer.mouse_get_position()
-			click_offset = mouse_global - parent_node.get_window().position
+			# 左键按下 - 开始拖动
+			var mouse_global: Vector2 = parent_node.get_global_mouse_position()
+			var sprite_global: Vector2 = parent_node.get_node("Sprite2D").global_position
+			click_offset = Vector2i(int(round(mouse_global.x - sprite_global.x)), int(round(mouse_global.y - sprite_global.y)))
 			is_dragging = true
+			print("👆 [拖动] 左键按下，开始拖动，偏移：", click_offset)
 		else:
+			# 左键松开 - 停止拖动
 			is_dragging = false
+			print("✅ [拖动] 左键松开，停止拖动")
 
-# 处理Input事件（执行拖动）
-func handle_drag_input(event: InputEvent):
-	if not parent_node: return
-	
-	# 左键松开停止拖动
-	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and not event.pressed:
-		is_dragging = false
-	# 执行拖动
-	if is_dragging and event is InputEventMouseMotion:
-		var mouse_global: Vector2i = DisplayServer.mouse_get_position()
-		parent_node.get_window().position = mouse_global - click_offset
+# 处理拖动更新（从主脚本调用）
+func update_drag():
+	if not parent_node or not is_dragging:
+		return
+
+	# 获取当前鼠标位置并更新精灵位置
+	var mouse_global: Vector2 = parent_node.get_global_mouse_position()
+	var new_pos: Vector2 = Vector2(mouse_global.x - click_offset.x, mouse_global.y - click_offset.y)
+	parent_node.get_node("Sprite2D").global_position = new_pos

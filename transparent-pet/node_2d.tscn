@@ -6,7 +6,7 @@
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_0e48y"]
 size = Vector2(128, 128)
 
-[node name="Character" type="Node2D" unique_id=1083952124]
+[node name="TransparentWindow" type="Node2D" unique_id=1083952124]
 script = ExtResource("1_0e48y")
 
 [node name="Sprite2D" type="Sprite2D" parent="." unique_id=460647025]
