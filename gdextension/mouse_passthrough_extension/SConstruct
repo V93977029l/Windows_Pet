@@ -1,0 +1,20 @@
+#!/usr/bin/env python
+
+import os
+
+# 导入godot-cpp的构建配置
+env = SConscript("../godot-cpp/SConstruct")
+
+# 添加源代码目录和godot-cpp包含目录
+env.Append(CPPPATH=["src/", "../godot-cpp/include/"])
+sources = Glob("src/*.cpp")
+
+# 构建共享库
+library = env.SharedLibrary(
+    "bin/libmouse_passthrough{}{}".format(env["suffix"], env["SHLIBSUFFIX"]),
+    source=sources,
+)
+
+# 设置构建目标
+env.NoCache(library)
+Default(library)

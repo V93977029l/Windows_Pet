@@ -21,11 +21,11 @@ func handle_area_input_event(event: InputEvent):
 			var sprite_global: Vector2 = parent_node.get_node("Sprite2D").global_position
 			click_offset = Vector2i(int(round(mouse_global.x - sprite_global.x)), int(round(mouse_global.y - sprite_global.y)))
 			is_dragging = true
-			print("👆 [拖动] 左键按下，开始拖动，偏移：", click_offset)
+			print("[拖动] 左键按下，开始拖动，偏移：", click_offset)
 		else:
 			# 左键松开 - 停止拖动
 			is_dragging = false
-			print("✅ [拖动] 左键松开，停止拖动")
+			print("[拖动] 左键松开，停止拖动")
 
 # 处理拖动更新（从主脚本调用）
 func update_drag():
