@@ -23,8 +23,7 @@ namespace godot {
  */
 MousePassthrough::MousePassthrough() {
     godot::print_line(godot::String::utf8("[插件:鼠标穿透] 初始化插件"));
-    // 初始化时默认设置为可穿透状态
-    update_mouse_passthrough(false);
+    // 暂时不在构造函数中设置穿透状态，等待窗口完全创建后再设置
 }
 
 /**
@@ -81,7 +80,7 @@ bool MousePassthrough::get_mouse_passthrough() const {
 /**
  * @brief 更新鼠标穿透状态
  * 
- * @param has_opaque_pixel 是否有不透明像素（鼠标是否在精灵上）
+ * @param has_opaque_pixel 是否有不透明像素
  * 
  * 当has_opaque_pixel为true时，禁用鼠标穿透（窗口不可穿透）
  * 当has_opaque_pixel为false时，启用鼠标穿透（窗口可以穿透）
@@ -115,18 +114,15 @@ void MousePassthrough::update_mouse_passthrough(bool has_opaque_pixel) {
         return;
     }
     
-    godot::print_line(godot::String::utf8("[插件:鼠标穿透] 找到窗口句柄: ") + godot::String::num_uint64((uint64_t)hwnd));
-    godot::print_line(godot::String::utf8("[插件:鼠标穿透] 鼠标在精灵上: ") + godot::String::num(has_opaque_pixel));
-    
     // 获取当前窗口样式
     LONG ex_style = GetWindowLong(hwnd, GWL_EXSTYLE);
 
     if (has_opaque_pixel) {
-        // 有不透明像素（鼠标在精灵上），禁用鼠标穿透
+        // 禁用鼠标穿透
         godot::print_line(godot::String::utf8("[插件:鼠标穿透] 禁用鼠标穿透"));
         ex_style &= ~WS_EX_TRANSPARENT;
     } else {
-        // 没有不透明像素（鼠标不在精灵上），启用鼠标穿透
+        // 启用鼠标穿透
         godot::print_line(godot::String::utf8("[插件:鼠标穿透] 启用鼠标穿透"));
         ex_style |= WS_EX_TRANSPARENT;
         ex_style |= WS_EX_LAYERED;
@@ -138,9 +134,9 @@ void MousePassthrough::update_mouse_passthrough(bool has_opaque_pixel) {
     if (result != 0) {
         // 更新窗口以应用更改
         SetWindowPos(hwnd, nullptr, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
-        godot::print_line(godot::String::utf8("[插件:鼠标穿透] 窗口样式更新成功"));
+        godot::print_line(godot::String::utf8("✅更新成功"));
     } else {
-        godot::print_line(godot::String::utf8("[插件:鼠标穿透] 窗口样式更新失败"));
+        godot::print_line(godot::String::utf8("❌更新失败"));
     }
 #endif
 }
