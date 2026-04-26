@@ -1,24 +1,27 @@
 {
     "configurations": [
         {
-            "name": "Win32",
+            "name": "Godot GDExtension",
             "includePath": [
                 "${workspaceFolder}/**",
-                "f:\\VSCode\\game\\gdextension\\godot-cpp\\include",
-                "f:\\VSCode\\game\\gdextension\\godot-cpp\\include\\godot_cpp",
-                "f:\\VSCode\\game\\gdextension\\godot-cpp\\include\\godot_cpp\\core",
-                "f:\\VSCode\\game\\gdextension\\godot-cpp\\include\\godot_cpp\\variant"
+                "${workspaceFolder}/gdextension/godot-cpp/include",
+                "${workspaceFolder}/gdextension/godot-cpp/gen/include"
             ],
             "defines": [
                 "_DEBUG",
                 "UNICODE",
-                "_UNICODE",
-                "_WIN32"
+                "_WIN32",
+                "GDEXTENSION"
             ],
-            "compilerPath": "cl.exe",
+            "compilerPath": "g++.exe",
             "cStandard": "c17",
             "cppStandard": "c++17",
-            "intelliSenseMode": "windows-msvc-x64"
+            "browse": {
+                "path": [
+                    "${workspaceFolder}/**"
+                ],
+                "limitSymbolsToIncludedHeaders": false
+            }
         }
     ],
     "version": 4
