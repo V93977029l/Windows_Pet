@@ -1,0 +1,14 @@
+# Build files
+.sconsign.dblite
+*.o
+*.dll
+*.so
+*.a
+*.lib
+*.obj
+*.bc
+
+# Misc
+*.log
+logs/
+cache/
