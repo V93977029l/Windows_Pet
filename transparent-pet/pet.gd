@@ -43,6 +43,17 @@ func center_sprite():
 		# 直接设置精灵的全局位置为屏幕中心
 		pet_sprite.global_position = screen_size / 2
 		print("[精灵] 精灵全局位置：", pet_sprite.global_position)
+		# 初始化精灵透明度
+		set_sprite_transparency(0.5)
+
+# 设置精灵透明度
+func set_sprite_transparency(alpha: float):
+	if pet_sprite:
+		# 确保alpha值在有效范围内
+		var clamped_alpha = max(0.0, min(1.0, alpha))
+		# 设置精灵透明度
+		pet_sprite.modulate = Color(1, 1, 1, clamped_alpha)
+		print("[精灵] 精灵透明度设置为：", clamped_alpha)
 
 # 每帧更新
 func _process(_delta):
