@@ -4,7 +4,10 @@
             "name": "Win32",
             "includePath": [
                 "${workspaceFolder}/**",
-                "${workspaceFolder}/gdextension/godot-cpp/include/"
+                "f:\\VSCode\\game\\gdextension\\godot-cpp\\include",
+                "f:\\VSCode\\game\\gdextension\\godot-cpp\\include\\godot_cpp",
+                "f:\\VSCode\\game\\gdextension\\godot-cpp\\include\\godot_cpp\\core",
+                "f:\\VSCode\\game\\gdextension\\godot-cpp\\include\\godot_cpp\\variant"
             ],
             "defines": [
                 "_DEBUG",
