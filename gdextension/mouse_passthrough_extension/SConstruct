@@ -13,7 +13,11 @@ sources = Glob("src/*.cpp")
 library = env.SharedLibrary(
     "bin/libmouse_passthrough{}{}".format(env["suffix"], env["SHLIBSUFFIX"]),
     source=sources,
+    LIBS=["user32", "libgodot-cpp.windows.template_debug.x86_64"]
 )
+
+# 确保链接到godot-cpp库
+env.Append(LIBPATH=["../godot-cpp/bin"])
 
 # 设置构建目标
 env.NoCache(library)

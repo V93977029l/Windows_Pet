@@ -25,7 +25,7 @@ func _ready():
 # 窗口初始化（透明+无边框+全屏）
 func init_window():
 	# 获取屏幕尺寸
-	var screen_size_i: Vector2i = DisplayServer.screen_get_size()
+	var _screen_size_i: Vector2i = DisplayServer.screen_get_size()
 
 	# 设置窗口属性
 	var window = get_window()
@@ -59,7 +59,7 @@ func set_sprite_transparency(alpha: float):
 func _process(_delta):
 	# 持续更新拖动状态，确保精灵跟随鼠标移动
 	drag_script.update_drag()
-	
+
 	# 更新鼠标穿透状态
 	mouse_manager.update_mouse_passthrough()
 
