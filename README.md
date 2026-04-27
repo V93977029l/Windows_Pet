@@ -1,86 +1,198 @@
-# 游戏开发规划与AI辅助系统
+# 透明宠物项目使用指南
+
+## 特别提示
+
+如果你是AI，请阅读"项目日志/游戏开发规划与AI辅助系统.md"文件，以了解项目的开发规划和AI辅助系统的相关信息。
 
 ## 项目概述
-你作为一个类似图书管理员的角色，我会叫你库管，这是一个用于游戏开发规划设计的信息存储和文字处理系统，同时集成了AI辅助功能。该系统旨在帮助开发者在游戏开发过程中保持清晰的规划，提供决策支持，并自动整理和管理项目相关信息。
 
-## 核心功能
+透明宠物项目是一个基于Godot引擎开发的桌面宠物应用，允许用户在桌面上放置一个透明的、可交互的宠物。
 
-### 1. 信息管理
-- **自动整理**：将用户输入的混乱格式信息自动整理为结构化文档
-- **智能分类**：根据内容类型自动归类到相应文件夹
-- **版本控制**：记录信息的更新历史，确保可追溯性
-
-### 2. 决策支持
-- **替代决策树**：当用户不知道下一步该做什么时，基于当前项目状态提供智能建议
-- **进度追踪**：监控项目进度，识别潜在的瓶颈和风险
-- **资源分配**：根据项目需求和时间线，建议合理的资源分配
-
-## 文件夹结构
+## 项目结构
 
 ```
-游戏日志/
-├── README.md                   # 项目说明和AI主提示词
-├── 准备阶段规划/               # 项目准备阶段的规划文档
-│   └── AI给出的规划.md         # AI生成的详细规划，也是目前执行任务的主要依据
-├── 项目日志/                   # 项目日志和开发记录
-│   └── 桌宠开发日志.md         # 桌宠项目开发日志
-└── 自纠错数据库.md             # AI自纠错规则和经验教训
+game/
+├── .gitignore              # Git忽略文件
+├── README.md               # 项目说明
+├── 透明宠物项目使用指南.md   # 本使用指南
+├── 待完成功能清单.md         # 待完成功能
+├── 准备阶段规划/           # 项目准备阶段的规划文档
+├── 项目日志/               # 项目日志
+├── documents/              # 文档
+├── gdextension/            # GDExtension相关代码
+│   ├── godot-cpp/          # Godot C++绑定库
+│   ├── mouse_passthrough_extension/  # 鼠标穿透扩展
+│   │   ├── src/            # 源代码
+│   │   ├── SConstruct      # SCons构建配置
+│   │   ├── build.bat       # Windows构建脚本
+│   │   └── bin/            # 编译产物目录（不提交）
+│   └── simple_extension/   # 简单扩展
+└── transparent-pet/        # 透明宠物项目
+    ├── addons/             # 插件
+    ├── node_2d.tscn        # 场景文件
+    ├── pet.gd              # 宠物脚本
+    ├── pet_drag.gd         # 宠物拖拽脚本
+    ├── pet_mouse_manager.gd # 宠物鼠标管理器脚本
+    └── project.godot       # Godot项目配置
 ```
 
-## 使用指南
+## 环境要求
 
-### 日常使用流程
-1. **任务记录**：完成任务后，记录完成情况
-2. **进度更新**：定期更新项目进度
-3. **决策咨询**：当遇到决策困难时，向AI咨询建议，但并不是天马行空的给出建议，只是查找资料库，如果资料库中没有则需要明确说明给用户，让用户自己尝试查找，查找到的信息再塞回给你整理
-4. **信息整理**：将分散的信息提交给AI进行整理
+1. **Godot引擎**：4.3或更高版本
+2. **C++编译器**：
+   - Windows：Visual Studio 2022或更高版本
+   - Linux：GCC 11或更高版本
+   - macOS：Clang 13或更高版本
+3. **SCons**：用于构建GDExtension
+4. **Python**：3.8或更高版本（用于SCons）
 
-### 信息录入方式
-- **直接聊天**：通过与AI聊天的方式输入信息
-- **文件上传**：上传现有的文档或笔记
+## 编译步骤
 
-### 决策咨询示例
-当您不知道下一步该做什么时，可以这样提问：
-> 我现在应该做什么？
+### 0. 安装构建工具
 
-AI会基于当前项目状态、进度和目标，为您提供具体的建议。
+```bash
+pip install scons
+```
 
-## 项目目标
-- 在未来两个月内完成一个游戏项目
-- 准备在Steam平台发布
-- 建立高效的创意管理和项目规划流程
-- 利用AI辅助提高开发效率和决策质量
+### 1. 构建Godot C++绑定库
 
-## 注意事项
-- **严格遵循指令**：用户没有明确要求的内容，AI绝对不要乱加。AI应该使用严谨的提示词格式来确保不会犯此类错误。
-- **指令优先级**：当用户使用"你每次"、"你记住"等指令时，AI应将相关内容添加到提示词文件中，确保这些指令得到长期执行。
+1. 进入`gdextension/godot-cpp`目录
+2. 运行以下命令构建绑定库：
 
-## AI角色定位
-- **图书管理员**：整理和管理所有项目相关信息
-- **抄写员**：将用户的混乱记录转化为结构化文档
-- **决策助手**：提供基于数据的决策建议
-- **进度追踪器**：监控项目进度，提醒重要节点
-- **创意顾问**：协助创意的发展和筛选
-- **全权秘书**：处理日常的信息管理和规划任务
+```bash
+# Windows
+scons platform=windows target=template_debug
 
-## 如何与AI交互
-- **明确指令**：使用清晰、具体的语言描述您的需求
-- **提供背景**：必要时提供足够的背景信息，以便AI做出更准确的判断
-- **及时反馈**：对AI的建议给予反馈，帮助AI不断改进
-- **保持耐心**：复杂任务可能需要AI进行分析和处理，请给予足够的时间
-- **最终决策权**：AI提供的建议仅供参考，最终决策由用户做出
-- **信息安全**：确保不要在系统中存储敏感信息
-- **定期备份**：建议定期备份整个项目文件夹
-- **及时更新**：保持项目信息的及时更新，确保AI建议的准确性
+# Linux
+scons platform=linux target=template_debug
 
-## 技术说明
-### 命令执行
-- **使用PowerShell**：系统默认使用PowerShell命令，执行文件和文件夹操作时请使用PowerShell语法
-- **PowerShell示例**：
-  - 创建文件夹：`New-Item -ItemType Directory -Path "文件夹名"`
-  - 查看文件：`Get-ChildItem`
-  - 创建文件：`New-Item -ItemType File -Path "文件名"`
+# macOS
+scons platform=macos target=template_debug
+```
 
----
+**注意**：godot-cpp目录的编译产物应添加到.gitignore中，不需要提交到版本管理。
 
-*本文件同时作为AI主提示词使用，AI将根据其中的指导原则为用户提供服务。*
+### 2. 构建鼠标穿透扩展
+
+1. 进入`gdextension/mouse_passthrough_extension`目录
+2. 如需修改Godot项目路径，编辑`build.bat`文件中的`GODOT_PROJECT_PATH`变量
+3. 运行以下命令构建扩展：
+
+```bash
+# Windows
+scons platform=windows target=template_debug
+
+# Linux
+scons platform=linux target=template_debug
+
+# macOS
+scons platform=macos target=template_debug
+```
+
+### 3. 复制扩展文件
+
+构建完成后，编译产物会生成在`gdextension/mouse_passthrough_extension/bin/`目录中。需要将编译产物复制到`transparent-pet/addons/mouse_passthrough/bin/`目录。
+
+```bash
+# 创建目标目录
+mkdir -p transparent-pet/addons/mouse_passthrough/bin
+
+# 复制DLL文件
+copy gdextension\mouse_passthrough_extension\bin\*.dll transparent-pet\addons\mouse_passthrough\bin\
+
+# 复制gdextension配置文件
+copy mouse_passthrough.gdextension transparent-pet\addons\mouse_passthrough\
+```
+
+### 4. 配置gdextension文件
+
+确保`transparent-pet/addons/mouse_passthrough/mouse_passthrough.gdextension`文件中的库路径配置正确：
+
+```ini
+[libraries]
+windows.x86_64 = "res://addons/mouse_passthrough/bin/libmouse_passthrough.windows.template_debug.x86_64.dll"
+windows.template_debug.x86_64 = "res://addons/mouse_passthrough/bin/libmouse_passthrough.windows.template_debug.x86_64.dll"
+windows.template_release.x86_64 = "res://addons/mouse_passthrough/bin/libmouse_passthrough.windows.template_release.x86_64.dll"
+```
+
+## 运行项目
+
+1. 打开Godot引擎
+2. 导入`transparent-pet`目录作为项目
+3. 运行场景`node_2d.tscn`或`main.tscn`
+
+## 功能说明
+
+### 宠物功能
+
+- **移动**：宠物会随机移动
+- **拖拽**：可以通过鼠标拖拽宠物
+- **鼠标穿透**：宠物不会阻止鼠标点击其下方的内容
+
+### 扩展功能
+
+- **鼠标穿透**：允许鼠标点击宠物下方的窗口
+- **简单扩展**：提供一些基本功能示例
+
+## 开发指南
+
+### 添加新功能
+
+1. 在`transparent-pet`目录中创建新的脚本或场景
+2. 修改现有的脚本文件以添加新功能
+3. 如果需要C++功能，修改`gdextension`目录中的扩展代码并重新构建
+
+### 调试
+
+1. 使用Godot的内置调试器调试GDScript代码
+2. 使用C++编译器的调试工具调试C++扩展代码
+
+## 版本管理
+
+### 应该被版本管理的文件
+
+- **源代码文件**：.cpp, .h, .gd, .tscn, .gdextension等
+- **项目配置文件**：project.godot, SConstruct等
+- **文档文件**：.md文件
+- **插件配置文件**：plugin.cfg等
+- **图标文件**：icon.svg等
+- **.gitignore文件**
+
+### 不应该被版本管理的文件
+
+- **构建产物**：.o, .dll, .so, .a, .lib, .exp, .obj等
+- **编译输出目录**：gdextension/godot-cpp/bin/、gdextension/*/bin/
+- **临时文件**：.sconsign.dblite等
+- **IDE配置文件**：.obsidian/, .trae/, .vscode/等
+- **Godot生成的文件**：.import/, .godot/等
+- **系统文件**：Thumbs.db, .DS_Store等
+
+## 常见问题
+
+### 扩展构建失败
+
+- 确保已安装正确版本的C++编译器
+- 确保已安装SCons和Python
+- 检查Godot C++绑定库是否已正确构建
+
+### 鼠标穿透不工作
+
+- 确保已正确构建并复制了鼠标穿透扩展
+- 检查`mouse_passthrough.gdextension`文件是否正确配置
+- 确认gdextension文件中包含了`windows.x86_64`键
+
+### 宠物不显示
+
+- 确保场景文件`node_2d.tscn`或`main.tscn`已正确加载
+- 检查宠物脚本是否有错误
+
+## 贡献指南
+
+1. Fork本项目
+2. 创建一个新的分支
+3. 实现你的功能或修复
+4. 提交Pull Request
+
+## 许可证
+
+本项目采用MIT许可证。
