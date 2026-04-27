@@ -50,27 +50,6 @@ def main():
     current_dir = os.path.dirname(os.path.abspath(__file__))
     godot_project_path = os.path.join(current_dir, "..", "transparent-pet")
 
-    # 检查并克隆 godot-cpp
-    godot_cpp_dir = os.path.join(current_dir, "godot-cpp")
-    if not os.path.exists(godot_cpp_dir):
-        print("正在克隆 godot-cpp 仓库...")
-        # 尝试使用 SSH 方式
-        if not run_command(
-            ["git", "clone", "git@github.com:godotengine/godot-cpp.git"],
-            cwd=current_dir,
-        ):
-            print("克隆失败，尝试使用 HTTPS 方式...")
-            if not run_command(
-                ["git", "clone", "https://github.com/godotengine/godot-cpp.git"],
-                cwd=current_dir,
-            ):
-                print("克隆失败，请手动下载并解压到 godot-cpp 目录")
-                return 1
-
-        print("正在切换到 godot-cpp 最新发行版...")
-        if not run_command(["git", "checkout", "10.0.0-rc1"], cwd=godot_cpp_dir):
-            return 1
-
     # 构建 godot-cpp
     print("正在构建 godot-cpp...")
     if not run_command(

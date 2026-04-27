@@ -201,3 +201,9 @@ cmake-build*/
 
 # CMake related
 CMakeUserPresets.json
+
+# Allow specific binary file for GDExtension
+!bin/libgodot-cpp.windows.template_debug.x86_64.a
+!gdextension/mouse_passthrough_extension/src/**
+!gdextension/mouse_passthrough_extension/*.gdextension
+!gdextension/mouse_passthrough_extension/SConstruct
