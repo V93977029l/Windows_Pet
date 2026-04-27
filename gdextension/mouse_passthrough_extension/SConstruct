@@ -13,7 +13,7 @@ sources = Glob("src/*.cpp")
 library = env.SharedLibrary(
     "bin/libmouse_passthrough{}{}".format(env["suffix"], env["SHLIBSUFFIX"]),
     source=sources,
-    LIBS=["user32", "libgodot-cpp.windows.template_debug.x86_64"]
+    LIBS=["user32", "libgodot-cpp" + env["suffix"] + env["LIBSUFFIX"]]
 )
 
 # 确保链接到godot-cpp库
