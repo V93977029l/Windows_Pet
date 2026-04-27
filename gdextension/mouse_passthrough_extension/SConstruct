@@ -5,9 +5,19 @@ import os
 # 导入godot-cpp的构建配置
 env = SConscript("../godot-cpp/SConstruct")
 
+# 开启缓存功能
+scons_cache_path = os.environ.get("SCONS_CACHE", os.path.join(os.path.expanduser("~"), ".scons_cache"))
+if not os.path.exists(scons_cache_path):
+    os.makedirs(scons_cache_path)
+CacheDir(scons_cache_path)
+Decider("MD5")
+
 # 添加源代码目录和godot-cpp包含目录
 env.Append(CPPPATH=["src/", "../godot-cpp/include/"])
 sources = Glob("src/*.cpp")
+
+# 确保链接到godot-cpp库
+env.Append(LIBPATH=["../godot-cpp/bin"])
 
 # 构建共享库
 library = env.SharedLibrary(
@@ -16,9 +26,5 @@ library = env.SharedLibrary(
     LIBS=["user32", "libgodot-cpp" + env["suffix"] + env["LIBSUFFIX"]]
 )
 
-# 确保链接到godot-cpp库
-env.Append(LIBPATH=["../godot-cpp/bin"])
-
 # 设置构建目标
-env.NoCache(library)
 Default(library)

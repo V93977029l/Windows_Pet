@@ -54,6 +54,65 @@ game/
 pip install scons
 ```
 
+### 0.1 获取Godot C++绑定库
+
+#### 方法一：直接克隆到项目中（推荐）
+
+将`https://github.com/godotengine/godot-cpp/`的最新发行版库文件直接克隆到项目的`gdextension`目录中：
+
+```bash
+# 进入项目根目录
+cd d:\Github\Pet\Windows_Pet
+
+# 进入gdextension目录
+cd gdextension
+
+# 克隆godot-cpp仓库到当前目录
+git clone https://github.com/godotengine/godot-cpp.git
+
+# 进入godot-cpp目录
+cd godot-cpp
+
+# 切换到最新的发行版（10.0.0-rc1）
+git checkout 10.0.0-rc1
+
+# 或者使用master分支（最新开发版本）
+# git checkout master
+```
+
+
+
+#### 方法二：直接下载发行版
+
+如果网络连接有问题，可以直接从GitHub下载godot-cpp的发行版：
+
+1. 访问 https://github.com/godotengine/godot-cpp/releases
+2. 下载最新的发行版（10.0.0-rc1）
+3. 将下载的文件解压到`gdextension/godot-cpp`目录
+
+#### 将godot-cpp添加到版本控制
+
+本项目已修改`.gitignore`文件，允许将godot-cpp目录提交到版本控制中。这样做的好处是：
+- 项目结构更完整，克隆后即可构建
+- 避免了依赖版本不一致的问题
+- 减少了外部依赖的复杂性
+
+如果选择将godot-cpp提交到版本控制，执行以下命令：
+
+```bash
+# 进入项目根目录
+cd d:\Github\Pet\Windows_Pet
+
+# 添加godot-cpp目录到版本控制
+git add gdextension/godot-cpp/
+
+# 提交更改
+git commit -m "Add godot-cpp as a subdirectory"
+
+# 推送更改
+git push
+```
+
 ### 1. 构建Godot C++绑定库
 
 1. 进入`gdextension/godot-cpp`目录
@@ -114,6 +173,17 @@ windows.x86_64 = "res://addons/mouse_passthrough/bin/libmouse_passthrough.window
 windows.template_debug.x86_64 = "res://addons/mouse_passthrough/bin/libmouse_passthrough.windows.template_debug.x86_64.dll"
 windows.template_release.x86_64 = "res://addons/mouse_passthrough/bin/libmouse_passthrough.windows.template_release.x86_64.dll"
 ```
+
+## 详细构建流程
+
+如果需要更详细的GDExtension构建流程，请参考[GDExtension构建全流程.md](documents/GDExtension构建全流程.md)文件，该文件包含了：
+- 详细的目录结构说明
+- 构建环境的准备步骤
+- 完整的构建命令
+- 常见问题及解决方案
+- 开发流程建议
+- 构建命令速查表
+- 版本控制建议
 
 ## 运行项目
 
