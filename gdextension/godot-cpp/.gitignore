@@ -2,7 +2,6 @@
 *.gen.*
 .import/
 .godot/
-/gen/
 
 # Godot 3.x ignores
 include/gen
@@ -28,7 +27,7 @@ cache/
 *.dblite
 *.pdb
 *.lib
-bin
+# bin
 *.config
 *.creator
 *.creator.user

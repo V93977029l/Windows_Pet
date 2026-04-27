@@ -8,10 +8,6 @@
 *.obj
 *.bc
 
-# GDExtension build outputs
-# gdextension/godot-cpp/
-gdextension/*/bin/
-
 # Misc
 *.log
 logs/
