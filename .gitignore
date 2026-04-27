@@ -9,7 +9,7 @@
 *.bc
 
 # GDExtension build outputs
-gdextension/godot-cpp/
+# gdextension/godot-cpp/
 gdextension/*/bin/
 
 # Misc
