@@ -1,0 +1,1 @@
+gdextension/godot-cpp/bin/*.lib filter=lfs diff=lfs merge=lfs -text

@@ -6,23 +6,23 @@
 
 ### 1. 核心目录
 
-| 目录路径 | 说明 | 重要性 |
-|---------|------|--------|
-| `gdextension/` | GDExtension 相关代码的根目录 | 核心 |
-| `gdextension/godot-cpp/` | Godot C++ 绑定库 | 核心 |
-| `gdextension/mouse_passthrough_extension/` | 鼠标穿透插件的实现 | 核心 |
-| `transparent-pet/addons/mouse_passthrough/` | Godot 项目中的插件目录 | 核心 |
+| 目录路径                                        | 说明                   | 重要性 |
+| ------------------------------------------- | -------------------- | --- |
+| `gdextension/`                              | GDExtension 相关代码的根目录 | 核心  |
+| `gdextension/godot-cpp/`                    | Godot C++ 绑定库        | 核心  |
+| `gdextension/mouse_passthrough_extension/`  | 鼠标穿透插件的实现            | 核心  |
+| `transparent-pet/addons/mouse_passthrough/` | Godot 项目中的插件目录       | 核心  |
 
 ### 2. 重要文件
 
-| 文件路径 | 说明 | 重要性 |
-|---------|------|--------|
-| `gdextension/mouse_passthrough_extension/SConstruct` | 插件的构建配置文件 | 核心 |
-| `gdextension/mouse_passthrough_extension/src/mouse_passthrough.cpp` | 鼠标穿透功能的实现 | 核心 |
-| `gdextension/mouse_passthrough_extension/src/mouse_passthrough.h` | 鼠标穿透类的头文件 | 核心 |
-| `gdextension/mouse_passthrough_extension/src/register_types.cpp` | 插件的注册文件 | 核心 |
-| `gdextension/mouse_passthrough_extension/mouse_passthrough.gdextension` | GDExtension 配置文件 | 核心 |
-| `transparent-pet/addons/mouse_passthrough/mouse_passthrough.gd` | 插件的 GDScript 包装 | 核心 |
+| 文件路径                                                                    | 说明               | 重要性 |
+| ----------------------------------------------------------------------- | ---------------- | --- |
+| `gdextension/mouse_passthrough_extension/SConstruct`                    | 插件的构建配置文件        | 核心  |
+| `gdextension/mouse_passthrough_extension/src/mouse_passthrough.cpp`     | 鼠标穿透功能的实现        | 核心  |
+| `gdextension/mouse_passthrough_extension/src/mouse_passthrough.h`       | 鼠标穿透类的头文件        | 核心  |
+| `gdextension/mouse_passthrough_extension/src/register_types.cpp`        | 插件的注册文件          | 核心  |
+| `gdextension/mouse_passthrough_extension/mouse_passthrough.gdextension` | GDExtension 配置文件 | 核心  |
+| `transparent-pet/addons/mouse_passthrough/mouse_passthrough.gd`         | 插件的 GDScript 包装  | 核心  |
 
 ## 二、构建环境准备
 
@@ -131,6 +131,7 @@ windows.release.x86_64 = "res://addons/mouse_passthrough/bin/libmouse_passthroug
 **原因**：MinGW-w64 未正确安装或未添加到环境变量
 
 **解决方案**：
+
 - 重新安装 MinGW-w64
 - 确保 `mingw64/bin` 目录已添加到系统环境变量
 - 重启终端或电脑使环境变量生效
@@ -140,6 +141,7 @@ windows.release.x86_64 = "res://addons/mouse_passthrough/bin/libmouse_passthroug
 **原因**：godot-cpp 未正确构建或路径配置错误
 
 **解决方案**：
+
 - 先构建 godot-cpp
 - 检查 SConstruct 文件中的包含路径是否正确
 
@@ -148,6 +150,7 @@ windows.release.x86_64 = "res://addons/mouse_passthrough/bin/libmouse_passthroug
 **原因**：DLL 文件未正确复制到 Godot 项目目录
 
 **解决方案**：
+
 - 确认 DLL 文件已复制到 `transparent-pet/addons/mouse_passthrough/bin/` 目录
 - 检查 GDExtension 配置文件中的路径是否正确
 
@@ -156,6 +159,7 @@ windows.release.x86_64 = "res://addons/mouse_passthrough/bin/libmouse_passthroug
 **原因**：插件初始化时窗口尚未完全创建
 
 **解决方案**：
+
 - 插件初始化时不要立即尝试获取窗口句柄
 - 等待窗口完全创建后再设置鼠标穿透状态
 
@@ -169,12 +173,12 @@ windows.release.x86_64 = "res://addons/mouse_passthrough/bin/libmouse_passthroug
 
 ## 七、构建命令速查表
 
-| 命令 | 说明 | 适用场景 |
-|------|------|----------|
-| `scons` | 构建鼠标穿透插件 | 日常开发 |
-| `scons -c` | 清理构建产物 | 重新构建时 |
-| `scons platform=windows target=template_debug bits=64` | 构建指定平台和目标的版本 | 跨平台开发 |
-| `copy bin\libmouse_passthrough.windows.template_debug.x86_64.dll "..\..\transparent-pet\addons\mouse_passthrough\bin\"` | 复制 DLL 文件到 Godot 项目 | 部署插件 |
+| 命令                                                                                                                      | 说明                  | 适用场景  |
+| ----------------------------------------------------------------------------------------------------------------------- | ------------------- | ----- |
+| `scons`                                                                                                                 | 构建鼠标穿透插件            | 日常开发  |
+| `scons -c`                                                                                                              | 清理构建产物              | 重新构建时 |
+| `scons platform=windows target=template_debug bits=64`                                                                  | 构建指定平台和目标的版本        | 跨平台开发 |
+| `copy bin\libmouse_passthrough.windows.template_debug.x86_64.dll "..\..\transparent-pet\addons\mouse_passthrough\bin\"` | 复制 DLL 文件到 Godot 项目 | 部署插件  |
 
 ## 八、版本控制建议
 
@@ -186,7 +190,6 @@ windows.release.x86_64 = "res://addons/mouse_passthrough/bin/libmouse_passthroug
    gdextension/mouse_passthrough_extension/.sconsign.dblite
    transparent-pet/addons/mouse_passthrough/bin/
    ```
-
 2. **使用子模块管理 godot-cpp**：
    ```bash
    git submodule add https://github.com/godotengine/godot-cpp.git gdextension/godot-cpp
@@ -199,6 +202,6 @@ GDExtension 是 Godot 4 引入的一种扩展机制，允许使用 C++ 编写高
 
 构建流程虽然步骤较多，但只要按照本文档的说明一步步操作，就能成功构建和部署插件。如果遇到问题，请参考本文档的「常见问题及解决方案」部分，或查阅 Godot 官方文档。
 
----
+***
 
 **注意**：本文档适用于本项目的特定结构，其他项目可能需要根据实际情况进行调整。
