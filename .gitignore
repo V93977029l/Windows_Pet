@@ -1,12 +1,28 @@
-# Build files
+# Build intermediate files (excluding useful binaries)
 .sconsign.dblite
 *.o
-*.dll
-*.so
-*.a
-*.lib
 *.obj
 *.bc
+*.exp
+*.lib
+*.pdb
+
+# Build cache
+.sconf_temp
+.scons_node_count
+.cache/
+scons_cache/
+
+# IDE
+.vscode/
+.idea/
+*.code-workspace
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
 
 # Misc
 *.log
