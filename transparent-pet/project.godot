@@ -15,7 +15,7 @@ run/main_scene="uid://c2pktm0gbvst4"
 config/features=PackedStringArray("4.6", "Forward Plus")
 boot_splash/bg_color=Color(0, 0, 0, 0)
 boot_splash/stretch_mode=4
-config/icon="res://icon.svg"
+config/icon="res://assets/icons/app_icon.svg"
 
 [display]
 
