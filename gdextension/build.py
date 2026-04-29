@@ -98,11 +98,16 @@ def verify_paths(godot_project_path, plugin_name):
         with open(gdextension_file, 'r') as f:
             content = f.read()
         
-        if 'windows.template_debug.x86_64' in content or 'windows.template_release.x86_64' in content:
-            print("\n警告: .gdextension 文件中使用了错误的库键名！")
-            print("  错误格式: windows.template_debug.x86_64")
-            print("  正确格式: windows.debug.x86_64")
-            all_ok = False
+        import re
+        for line in content.split('\n'):
+            match = re.match(r'^\s*(windows\.[a-z_]+\.x86_64)\s*=', line)
+            if match:
+                key = match.group(1)
+                if 'template_debug' in key or 'template_release' in key:
+                    print(f"\n警告: .gdextension 文件中使用了错误的库键名 '{key}'！")
+                    print("  错误格式: windows.template_debug.x86_64")
+                    print("  正确格式: windows.debug.x86_64")
+                    all_ok = False
 
     if all_ok:
         print("\n所有路径验证通过！")
@@ -182,24 +187,12 @@ def main():
         return 1
 
     godot_cpp_lib = os.path.join(godot_cpp_dir, "bin", "libgodot-cpp.windows.template_debug.x86_64.lib")
+    
+    if not os.path.exists(godot_cpp_lib):
+        print(f"错误: godot-cpp 库文件不存在 - {godot_cpp_lib}")
+        print("请先编译 godot-cpp 或确保库文件已正确放置")
+        return 1
 
-    if args.clean:
-        print("清理 godot-cpp 构建缓存...")
-        if not run_command(["scons", "-c"], cwd=godot_cpp_dir):
-            print("警告: 清理 godot-cpp 缓存失败")
-
-    if args.force or need_rebuild([os.path.join(godot_cpp_dir, "include"), os.path.join(godot_cpp_dir, "src")], godot_cpp_lib):
-        print("正在构建 godot-cpp...")
-        if not run_command(
-            ["scons", "platform=windows", "target=template_debug", f"-j{os.cpu_count()}"],
-            cwd=godot_cpp_dir,
-        ):
-            print("godot-cpp 构建失败")
-            return 1
-    else:
-        print("跳过 godot-cpp 编译（缓存有效）")
-
-    print()
     print("正在构建所有扩展...")
 
     mouse_passthrough_dir = os.path.join(current_dir, "mouse_passthrough_extension")

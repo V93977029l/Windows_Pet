@@ -1,11 +1,21 @@
+# godot-cpp - ignore source but keep compiled libs
+gdextension/godot-cpp/*
+!gdextension/godot-cpp/bin
+gdextension/godot-cpp/bin/*
+!gdextension/godot-cpp/bin/*.lib
+!gdextension/godot-cpp/bin/*.a
+
 # Build intermediate files (excluding useful binaries)
 .sconsign.dblite
 *.o
 *.obj
 *.bc
 *.exp
-*.lib
 *.pdb
+
+# Exclude lib files except in godot-cpp/bin
+*/*.lib
+!gdextension/godot-cpp/bin/*.lib
 
 # Build cache
 .sconf_temp
@@ -28,3 +38,5 @@ venv/
 *.log
 logs/
 cache/
+
+.godot/
