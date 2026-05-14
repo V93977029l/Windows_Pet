@@ -119,11 +119,9 @@ void MousePassthrough::update_mouse_passthrough(bool has_opaque_pixel) {
 
     if (has_opaque_pixel) {
         // 禁用鼠标穿透
-        godot::print_line(godot::String::utf8("[插件:鼠标穿透] 禁用鼠标穿透"));
         ex_style &= ~WS_EX_TRANSPARENT;
     } else {
         // 启用鼠标穿透
-        godot::print_line(godot::String::utf8("[插件:鼠标穿透] 启用鼠标穿透"));
         ex_style |= WS_EX_TRANSPARENT;
         ex_style |= WS_EX_LAYERED;
     }
@@ -134,9 +132,9 @@ void MousePassthrough::update_mouse_passthrough(bool has_opaque_pixel) {
     if (result != 0) {
         // 更新窗口以应用更改
         SetWindowPos(hwnd, nullptr, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
-        godot::print_line(godot::String::utf8("✅更新成功"));
+        godot::print_line(godot::String::utf8("[插件:鼠标穿透] ") + (has_opaque_pixel ? godot::String::utf8("禁用穿透") : godot::String::utf8("启用穿透")) + godot::String::utf8(" ✅"));
     } else {
-        godot::print_line(godot::String::utf8("❌更新失败"));
+        godot::print_line(godot::String::utf8("[插件:鼠标穿透] ") + (has_opaque_pixel ? godot::String::utf8("禁用穿透") : godot::String::utf8("启用穿透")) + godot::String::utf8(" ❌"));
     }
 #endif
 }
