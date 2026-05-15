@@ -1,2 +1,7 @@
 res://pet.gd
 res://settings_window.gd
+res://config/pet_config.cfg
+res://settings_window.tscn
+res://resources/presets/aurora_glass.tres
+res://resources/presets/crystal_glass.tres
+res://resources/presets/liquid_glass.tres

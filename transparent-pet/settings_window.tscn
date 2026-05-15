@@ -1,106 +1,159 @@
-[gd_scene load_steps=2 format=3 uid="uid://b2a9f5x6c7d8e9f0a1b2"]
+[gd_scene format=3 uid="uid://bwi1nr6sut85a"]
 
-[ext_resource type="Script" path="res://settings_window.gd" id="1"]
+[ext_resource type="Script" uid="uid://bvxc5ncb6q5so" path="res://settings_window.gd" id="1"]
 
-[node name="SettingsWindow" type="Window"]
-size = Vector2(300, 260)
-title = "Pet Settings Config"
-resizable = false
-transparent = false
-borderless = false
-always_on_top = false
-modal = false
-popup_exclusive = false
-transient = false
-dialog = false
-unfocusable = false
-per_pixel_transparency_allowed = false
-clear_color = Color(1, 1, 1, 1)
-script = ExtResource(1)
+[sub_resource type="StyleBoxFlat" id="1"]
+bg_color = Color(0, 0, 0, 1)
 
-[node name="VBox" type="VBoxContainer" parent="."]
+[node name="SettingsWindow" type="Window" unique_id=2010493237]
+oversampling_override = 1.0
+title = "桌宠设置"
+position = Vector2i(0, 36)
+size = Vector2i(420, 487)
+always_on_top = true
+min_size = Vector2i(380, 400)
+script = ExtResource("1")
+
+[node name="Background" type="Panel" parent="." unique_id=1]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-margin_left = 10.0
-margin_top = 10.0
-margin_right = -10.0
-margin_bottom = -10.0
-spacing = 8
+custom_minimum_size = Vector2(420, 487)
+layout_mode = 2
+add_child_above = false
+style = SubResource("1")
 
-[node name="Transparency" type="HBoxContainer" parent="VBox"]
-
-[node name="Label" type="Label" parent="VBox/Transparency"]
-text = "Transparency:"
-custom_minimum_size = Vector2(80, 0)
-
-[node name="Slider" type="HSlider" parent="VBox/Transparency"]
+[node name="MainHBox" type="HBoxContainer" parent="Background" unique_id=1828007998]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-margin_right = -60.0
-min_value = 0.0
+
+[node name="LeftSpacer" type="Control" parent="Background/MainHBox" unique_id=2100041260]
+custom_minimum_size = Vector2(35, 0)
+layout_mode = 2
+
+[node name="CenterVBox" type="VBoxContainer" parent="Background/MainHBox" unique_id=1588283147]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="TopSpacer" type="Control" parent="Background/MainHBox/CenterVBox" unique_id=284700400]
+custom_minimum_size = Vector2(0, 30)
+layout_mode = 2
+
+[node name="TitleLabel" type="Label" parent="Background/MainHBox/CenterVBox" unique_id=1332808414]
+custom_minimum_size = Vector2(0, 45)
+layout_mode = 2
+text = "桌宠配置"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="HSeparator1" type="HSeparator" parent="Background/MainHBox/CenterVBox" unique_id=423269891]
+custom_minimum_size = Vector2(0, 10)
+layout_mode = 2
+
+[node name="Transparency" type="VBoxContainer" parent="Background/MainHBox/CenterVBox" unique_id=971040311]
+custom_minimum_size = Vector2(0, 80)
+layout_mode = 2
+
+[node name="Label" type="Label" parent="Background/MainHBox/CenterVBox/Transparency" unique_id=1167324189]
+custom_minimum_size = Vector2(0, 24)
+layout_mode = 2
+text = "透明度 (0.0-1.0)"
+
+[node name="HBox" type="HBoxContainer" parent="Background/MainHBox/CenterVBox/Transparency" unique_id=1386603441]
+layout_mode = 2
+
+[node name="Slider" type="HSlider" parent="Background/MainHBox/CenterVBox/Transparency/HBox" unique_id=650264344]
+layout_mode = 2
+size_flags_horizontal = 3
 max_value = 1.0
 step = 0.01
 value = 0.5
 
-[node name="Value" type="Label" parent="VBox/Transparency"]
-anchors_preset = 12
-anchor_left = 1.0
-margin_left = -50.0
-custom_minimum_size = Vector2(50, 0)
-text = "0.5"
-horizontal_alignment = 2
-
-[node name="Scale" type="HBoxContainer" parent="VBox"]
-
-[node name="Label" type="Label" parent="VBox/Scale"]
-text = "Scale:"
+[node name="Input" type="LineEdit" parent="Background/MainHBox/CenterVBox/Transparency/HBox" unique_id=1225816882]
 custom_minimum_size = Vector2(80, 0)
+layout_mode = 2
+text = "0.5"
 
-[node name="Slider" type="HSlider" parent="VBox/Scale"]
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-margin_right = -60.0
+[node name="Scale" type="VBoxContainer" parent="Background/MainHBox/CenterVBox" unique_id=1752053830]
+custom_minimum_size = Vector2(0, 80)
+layout_mode = 2
+
+[node name="Label2" type="Label" parent="Background/MainHBox/CenterVBox/Scale" unique_id=1376120610]
+custom_minimum_size = Vector2(0, 24)
+layout_mode = 2
+text = "缩放 (0.1-3.0)"
+
+[node name="HBox2" type="HBoxContainer" parent="Background/MainHBox/CenterVBox/Scale" unique_id=1289215907]
+layout_mode = 2
+
+[node name="Slider2" type="HSlider" parent="Background/MainHBox/CenterVBox/Scale/HBox2" unique_id=1133620019]
+layout_mode = 2
+size_flags_horizontal = 3
 min_value = 0.1
 max_value = 3.0
-step = 0.1
+step = 0.05
 value = 1.0
 
-[node name="Value" type="Label" parent="VBox/Scale"]
-anchors_preset = 12
-anchor_left = 1.0
-margin_left = -50.0
-custom_minimum_size = Vector2(50, 0)
+[node name="Input2" type="LineEdit" parent="Background/MainHBox/CenterVBox/Scale/HBox2" unique_id=927856732]
+custom_minimum_size = Vector2(80, 0)
+layout_mode = 2
 text = "1.0"
-horizontal_alignment = 2
 
-[node name="Material" type="HBoxContainer" parent="VBox"]
+[node name="Material" type="VBoxContainer" parent="Background/MainHBox/CenterVBox" unique_id=724799659]
+custom_minimum_size = Vector2(0, 60)
+layout_mode = 2
 
-[node name="Label" type="Label" parent="VBox/Material"]
-text = "Material:"
-custom_minimum_size = Vector2(80, 0)
+[node name="Label3" type="Label" parent="Background/MainHBox/CenterVBox/Material" unique_id=932284246]
+custom_minimum_size = Vector2(0, 24)
+layout_mode = 2
+text = "材质类型"
 
-[node name="Combo" type="OptionButton" parent="VBox/Material"]
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
+[node name="Combo" type="OptionButton" parent="Background/MainHBox/CenterVBox/Material" unique_id=1739299741]
+layout_mode = 2
+size_flags_horizontal = 3
 
-[node name="AlwaysOnTop" type="HBoxContainer" parent="VBox"]
+[node name="AlwaysOnTop" type="VBoxContainer" parent="Background/MainHBox/CenterVBox" unique_id=1965370006]
+custom_minimum_size = Vector2(0, 50)
+layout_mode = 2
 
-[node name="Label" type="Label" parent="VBox/AlwaysOnTop"]
-text = "Always On Top:"
-custom_minimum_size = Vector2(80, 0)
+[node name="Label4" type="Label" parent="Background/MainHBox/CenterVBox/AlwaysOnTop" unique_id=467141521]
+custom_minimum_size = Vector2(0, 24)
+layout_mode = 2
+text = "窗口置顶"
 
-[node name="Check" type="CheckButton" parent="VBox/AlwaysOnTop"]
+[node name="Check" type="CheckButton" parent="Background/MainHBox/CenterVBox/AlwaysOnTop" unique_id=1965478924]
+layout_mode = 2
+text = "启用窗口置顶"
 
-[node name="Buttons" type="HBoxContainer" parent="VBox"]
+[node name="HSeparator2" type="HSeparator" parent="Background/MainHBox/CenterVBox" unique_id=697041114]
+custom_minimum_size = Vector2(0, 10)
+layout_mode = 2
+
+[node name="Buttons" type="HBoxContainer" parent="Background/MainHBox/CenterVBox" unique_id=328862503]
+custom_minimum_size = Vector2(0, 50)
+layout_mode = 2
 alignment = 1
-spacing = 10
 
-[node name="Save" type="Button" parent="VBox/Buttons"]
-text = "Save"
+[node name="Save" type="Button" parent="Background/MainHBox/CenterVBox/Buttons" unique_id=373125733]
+custom_minimum_size = Vector2(110, 35)
+layout_mode = 2
+text = "保存配置"
 
-[node name="Close" type="Button" parent="VBox/Buttons"]
-text = "Close"
+[node name="Reset" type="Button" parent="Background/MainHBox/CenterVBox/Buttons" unique_id=1147168346]
+custom_minimum_size = Vector2(110, 35)
+layout_mode = 2
+text = "恢复默认"
+
+[node name="Close" type="Button" parent="Background/MainHBox/CenterVBox/Buttons" unique_id=595203895]
+custom_minimum_size = Vector2(110, 35)
+layout_mode = 2
+text = "关闭"
+
+[node name="BottomSpacer" type="Control" parent="Background/MainHBox/CenterVBox" unique_id=105344302]
+custom_minimum_size = Vector2(0, 30)
+layout_mode = 2
+
+[node name="RightSpacer" type="Control" parent="Background/MainHBox" unique_id=906449765]
+custom_minimum_size = Vector2(50, 0)
+layout_mode = 2

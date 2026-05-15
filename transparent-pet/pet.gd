@@ -127,7 +127,13 @@ func open_settings_window():
 	if settings_scene:
 		var settings_window = settings_scene.instantiate()
 		get_tree().root.add_child(settings_window)
+		settings_window.set_pet_node(self)
 		
 		var pet_pos = pet_sprite.global_position
 		var settings_pos = Vector2(pet_pos.x + 50, pet_pos.y - 130)
 		settings_window.position = settings_pos
+		
+		# 确保设置窗口与桌宠窗口完全独立
+		settings_window.transient = false
+		settings_window.unfocusable = false
+		settings_window.exclusive = false
