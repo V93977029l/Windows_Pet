@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://c2pktm0gbvst4"]
 
-[ext_resource type="Script" uid="uid://2y73ty0gduqr" path="res://pet.gd" id="1"]
+[ext_resource type="Script" uid="uid://cvbqwmt5wnah8" path="res://pet.gd" id="1"]
 [ext_resource type="Shader" uid="uid://dkxk6cpak2v7q" path="res://assets/shaders/liquid_glass.gdshader" id="2"]
 [ext_resource type="Texture2D" uid="uid://ba8cy67rmbwk3" path="res://assets/icons/pet_sprite.svg" id="3"]
 

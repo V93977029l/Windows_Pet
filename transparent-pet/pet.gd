@@ -156,3 +156,6 @@ func open_settings_window():
 ##
 func update_pet_scale(new_scale: float):
 	vector_renderer.update_scale(new_scale)
+
+func apply_high_res_scale(new_scale: float):
+	vector_renderer.apply_high_res_scale(new_scale)

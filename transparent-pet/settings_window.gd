@@ -7,6 +7,7 @@ var config = null
 @onready var transparency_input: LineEdit = $Background/MainHBox/CenterVBox/Transparency/HBox/Input
 @onready var scale_slider: HSlider = $Background/MainHBox/CenterVBox/Scale/HBox2/Slider2
 @onready var scale_input: LineEdit = $Background/MainHBox/CenterVBox/Scale/HBox2/Input2
+@onready var apply_scale_btn: Button = $Background/MainHBox/CenterVBox/Scale/ApplyScaleBtn
 @onready var material_combo: OptionButton = $Background/MainHBox/CenterVBox/Material/Combo
 @onready var always_on_top_check: CheckButton = $Background/MainHBox/CenterVBox/AlwaysOnTop/Check
 @onready var save_button: Button = $Background/MainHBox/CenterVBox/Buttons/Save
@@ -35,6 +36,7 @@ func _ready():
 	transparency_input.text_changed.connect(_on_transparency_input_changed)
 	scale_slider.value_changed.connect(_on_scale_slider_changed)
 	scale_input.text_changed.connect(_on_scale_input_changed)
+	apply_scale_btn.pressed.connect(_on_apply_scale)
 	material_combo.item_selected.connect(_on_material_changed)
 	always_on_top_check.toggled.connect(_on_always_on_top_changed)
 	save_button.pressed.connect(_on_save)
@@ -43,7 +45,6 @@ func _ready():
 	
 	visible = true
 	
-	# 延迟一帧确保完全初始化
 	await get_tree().process_frame
 	grab_focus()
 
@@ -99,7 +100,6 @@ func _on_scale_slider_changed(value: float):
 	is_updating_ui = false
 	
 	config.pet_scale = rounded
-	apply_scale(rounded)
 
 func _on_scale_input_changed(text: String):
 	if is_updating_ui:
@@ -112,7 +112,11 @@ func _on_scale_input_changed(text: String):
 		is_updating_ui = false
 		
 		config.pet_scale = value
-		apply_scale(value)
+
+func _on_apply_scale():
+	var value = config.pet_scale
+	apply_high_res_scale(value)
+	print("✅ [设置] 缩放已应用: ", value)
 
 func _on_material_changed(index: int):
 	if is_updating_ui:
@@ -142,6 +146,10 @@ func apply_scale(value: float):
 	if pet_node:
 		pet_node.update_pet_scale(value)
 
+func apply_high_res_scale(value: float):
+	if pet_node:
+		pet_node.apply_high_res_scale(value)
+
 func apply_material(material_id: int):
 	if pet_node and pet_node.pet_sprite:
 		var current_scale = pet_node.pet_sprite.scale.x
@@ -156,8 +164,9 @@ func apply_always_on_top(enabled: bool):
 		var window = pet_node.get_window()
 		window.always_on_top = enabled
 		
-		# 修复Bug：置顶状态变化后确保设置窗口保持可交互
-		self.always_on_top = enabled
+		self.always_on_top = true
+		self.transient = true
+		self.exclusive = true
 		self.grab_focus()
 
 func _on_save():
