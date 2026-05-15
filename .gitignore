@@ -39,7 +39,9 @@ venv/
 logs/
 cache/
 
-.godot/
+.godot/shader_cache/
+.godot/imported/
+*.d3d12.cache
 
 # Godot UID files
 *.uid
