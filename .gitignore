@@ -40,3 +40,6 @@ logs/
 cache/
 
 .godot/
+
+# Godot UID files
+*.uid
