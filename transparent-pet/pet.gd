@@ -14,11 +14,15 @@ extends Node2D
 @onready var mouse_manager = preload("res://pet_mouse_manager.gd").new()
 # 材质管理器，负责材质加载和应用
 @onready var material_manager = preload("res://pet_material_manager.gd").new()
+# 矢量渲染器，支持实时SVG渲染
+@onready var vector_renderer = preload("res://pet_vector_renderer.gd").new()
 # 桌宠精灵节点引用，用于渲染桌宠图像
 @onready var pet_sprite: Sprite2D = $Sprite2D
 
 # 当前使用的材质ID (1-4对应四种预设材质)
 var current_material_id: int = 1
+# SVG文件路径
+const SVG_PATH: String = "res://assets/icons/pet_sprite.svg"
 
 ##
 # 节点初始化完成回调函数
@@ -28,6 +32,7 @@ func _ready():
 	print("✅ [桌宠] ====== 桌宠主程序初始化完成 ========")
 	config.print_config()
 	
+	init_vector_renderer()
 	init_materials()
 	init_window()
 	center_sprite()
@@ -35,6 +40,13 @@ func _ready():
 	drag_script.init(self)
 	passthrough_manager.init(self)
 	mouse_manager.init(self, pet_sprite, passthrough_manager)
+
+##
+# 初始化矢量渲染器
+# 使用SVG文件实时渲染精灵
+##
+func init_vector_renderer():
+	vector_renderer.init(pet_sprite, SVG_PATH)
 
 ##
 # 初始化材质系统
@@ -76,7 +88,7 @@ func center_sprite():
 			target_y = config.window_initial_y
 		
 		pet_sprite.global_position = Vector2(target_x, target_y)
-		pet_sprite.scale = Vector2(config.pet_scale, config.pet_scale)
+		update_pet_scale(config.pet_scale)
 		
 		print("[精灵] 精灵全局位置：", pet_sprite.global_position)
 		print("[精灵] 精灵缩放大小：", config.pet_scale)
@@ -137,3 +149,10 @@ func open_settings_window():
 		settings_window.transient = false
 		settings_window.unfocusable = false
 		settings_window.exclusive = false
+
+##
+# 更新精灵缩放并重新渲染SVG
+# @param new_scale: float - 新的缩放比例
+##
+func update_pet_scale(new_scale: float):
+	vector_renderer.update_scale(new_scale)

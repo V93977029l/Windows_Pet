@@ -5,3 +5,5 @@ res://settings_window.tscn
 res://resources/presets/aurora_glass.tres
 res://resources/presets/crystal_glass.tres
 res://resources/presets/liquid_glass.tres
+res://assets/shaders/frosted_glass.gdshader
+res://pet_vector_renderer.gd

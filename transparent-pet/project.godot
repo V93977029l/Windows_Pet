@@ -56,3 +56,9 @@ OpenSettings={
 
 rendering_device/driver.windows="d3d12"
 environment/defaults/default_clear_color=Color(0.3019608, 0.3019608, 0.3019608, 0)
+quality/textures/default_texture_filter=3
+quality/textures/anisotropic_filtering_level=4
+quality/anti_aliasing/quality=1
+quality/anti_aliasing/fxaa/quality=2
+quality/anti_aliasing/fxaa/edge_threshold_min=0.05
+quality/anti_aliasing/fxaa/edge_threshold_max=0.5

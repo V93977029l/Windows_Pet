@@ -139,14 +139,16 @@ func apply_transparency(value: float):
 				material.set_shader_parameter("glass_color", Vector4(current_color.x, current_color.y, current_color.z, value))
 
 func apply_scale(value: float):
-	if pet_node and pet_node.pet_sprite:
-		pet_node.pet_sprite.scale = Vector2(value, value)
+	if pet_node:
+		pet_node.update_pet_scale(value)
 
 func apply_material(material_id: int):
-	if pet_node:
+	if pet_node and pet_node.pet_sprite:
+		var current_scale = pet_node.pet_sprite.scale.x
 		var preset = config.load_preset(material_id)
 		pet_node.material_manager.apply_preset(preset, material_id)
 		pet_node.current_material_id = material_id
+		pet_node.pet_sprite.scale = Vector2(current_scale, current_scale)
 		apply_transparency(config.pet_initial_transparency)
 
 func apply_always_on_top(enabled: bool):
