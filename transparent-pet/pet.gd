@@ -117,3 +117,17 @@ func _process(_delta):
 ##
 func _on_area_2d_input_event(_viewport: Node, event: InputEvent, _shape_idx: int):
 	drag_script.handle_area_input_event(event)
+
+func _input(event: InputEvent):
+	if event.is_action_pressed("OpenSettings"):
+		open_settings_window()
+
+func open_settings_window():
+	var settings_scene = load("res://settings_window.tscn")
+	if settings_scene:
+		var settings_window = settings_scene.instantiate()
+		get_tree().root.add_child(settings_window)
+		
+		var pet_pos = pet_sprite.global_position
+		var settings_pos = Vector2(pet_pos.x + 50, pet_pos.y - 130)
+		settings_window.position = settings_pos

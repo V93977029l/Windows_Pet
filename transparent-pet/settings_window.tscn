@@ -1,0 +1,106 @@
+[gd_scene load_steps=2 format=3 uid="uid://b2a9f5x6c7d8e9f0a1b2"]
+
+[ext_resource type="Script" path="res://settings_window.gd" id="1"]
+
+[node name="SettingsWindow" type="Window"]
+size = Vector2(300, 260)
+title = "Pet Settings Config"
+resizable = false
+transparent = false
+borderless = false
+always_on_top = false
+modal = false
+popup_exclusive = false
+transient = false
+dialog = false
+unfocusable = false
+per_pixel_transparency_allowed = false
+clear_color = Color(1, 1, 1, 1)
+script = ExtResource(1)
+
+[node name="VBox" type="VBoxContainer" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+margin_left = 10.0
+margin_top = 10.0
+margin_right = -10.0
+margin_bottom = -10.0
+spacing = 8
+
+[node name="Transparency" type="HBoxContainer" parent="VBox"]
+
+[node name="Label" type="Label" parent="VBox/Transparency"]
+text = "Transparency:"
+custom_minimum_size = Vector2(80, 0)
+
+[node name="Slider" type="HSlider" parent="VBox/Transparency"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+margin_right = -60.0
+min_value = 0.0
+max_value = 1.0
+step = 0.01
+value = 0.5
+
+[node name="Value" type="Label" parent="VBox/Transparency"]
+anchors_preset = 12
+anchor_left = 1.0
+margin_left = -50.0
+custom_minimum_size = Vector2(50, 0)
+text = "0.5"
+horizontal_alignment = 2
+
+[node name="Scale" type="HBoxContainer" parent="VBox"]
+
+[node name="Label" type="Label" parent="VBox/Scale"]
+text = "Scale:"
+custom_minimum_size = Vector2(80, 0)
+
+[node name="Slider" type="HSlider" parent="VBox/Scale"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+margin_right = -60.0
+min_value = 0.1
+max_value = 3.0
+step = 0.1
+value = 1.0
+
+[node name="Value" type="Label" parent="VBox/Scale"]
+anchors_preset = 12
+anchor_left = 1.0
+margin_left = -50.0
+custom_minimum_size = Vector2(50, 0)
+text = "1.0"
+horizontal_alignment = 2
+
+[node name="Material" type="HBoxContainer" parent="VBox"]
+
+[node name="Label" type="Label" parent="VBox/Material"]
+text = "Material:"
+custom_minimum_size = Vector2(80, 0)
+
+[node name="Combo" type="OptionButton" parent="VBox/Material"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="AlwaysOnTop" type="HBoxContainer" parent="VBox"]
+
+[node name="Label" type="Label" parent="VBox/AlwaysOnTop"]
+text = "Always On Top:"
+custom_minimum_size = Vector2(80, 0)
+
+[node name="Check" type="CheckButton" parent="VBox/AlwaysOnTop"]
+
+[node name="Buttons" type="HBoxContainer" parent="VBox"]
+alignment = 1
+spacing = 10
+
+[node name="Save" type="Button" parent="VBox/Buttons"]
+text = "Save"
+
+[node name="Close" type="Button" parent="VBox/Buttons"]
+text = "Close"
