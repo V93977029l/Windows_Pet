@@ -1,6 +1,6 @@
-[gd_scene format=3 uid="uid://bwi1nr6sut85a"]
+[gd_scene format=3 uid="uid://d3hb67io4rhhx"]
 
-[ext_resource type="Script" uid="uid://bvxc5ncb6q5so" path="res://settings_window.gd" id="1"]
+[ext_resource type="Script" uid="uid://bvxc5ncb6q5so" path="res://src/controllers/settings_window.gd" id="1"]
 
 [node name="SettingsWindow" type="Window" unique_id=2010493237]
 oversampling_override = 1.0

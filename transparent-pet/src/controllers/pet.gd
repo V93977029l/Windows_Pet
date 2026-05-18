@@ -1,11 +1,11 @@
 extends Node2D
 
-@onready var config = preload("res://config/PetConfig.gd").new()
-@onready var drag_script = preload("res://pet_drag.gd").new()
+@onready var config = preload("res://src/config/pet_config.gd").new()
+@onready var drag_script = preload("res://src/controllers/pet_drag.gd").new()
 @onready var passthrough_manager = preload("res://addons/mouse_passthrough/mouse_passthrough.gd").new()
-@onready var mouse_manager = preload("res://pet_mouse_manager.gd").new()
-@onready var material_manager = preload("res://pet_material_manager.gd").new()
-@onready var vector_renderer = preload("res://pet_vector_renderer.gd").new()
+@onready var mouse_manager = preload("res://src/controllers/pet_mouse_manager.gd").new()
+@onready var material_manager = preload("res://src/managers/material_manager.gd").new()
+@onready var vector_renderer = preload("res://src/controllers/pet_vector_renderer.gd").new()
 @onready var pet_sprite: Sprite2D = $Sprite2D
 
 const SVG_PATH: String = "res://assets/icons/pet_sprite.svg"
@@ -73,7 +73,7 @@ func _input(event: InputEvent):
 		open_settings_window()
 
 func open_settings_window():
-	var settings_scene = load("res://settings_window.tscn")
+	var settings_scene = load("res://src/controllers/settings_window.tscn")
 	if settings_scene:
 		var settings_window = settings_scene.instantiate()
 		get_tree().root.add_child(settings_window)

@@ -30,7 +30,6 @@ func update_scale(new_scale: float):
 		sprite.scale = Vector2(new_scale, new_scale)
 
 func apply_high_res_scale(new_scale: float):
-	# 防止缩放为 0，避免崩溃
 	if new_scale < 0.1:
 		new_scale = 0.1
 
@@ -38,14 +37,13 @@ func apply_high_res_scale(new_scale: float):
 		print("❌ [矢量渲染] 无法渲染：精灵或SVG内容为空")
 		return
 	
-	# 关键：Godot 4 正确 SVG 渲染方式（只传缩放值，不传尺寸）
 	var image = Image.new()
 	var result = image.load_svg_from_string(svg_content, new_scale * 2)
 	
 	if result == OK:
 		var new_texture = ImageTexture.create_from_image(image)
 		sprite.texture = new_texture
-		sprite.scale = Vector2(1.0, 1.0) # 高清纹理不需要再缩放
+		sprite.scale = Vector2(1.0, 1.0)
 		print("✅ [矢量渲染] SVG高清渲染完成")
 	else:
 		print("❌ [矢量渲染] SVG渲染失败，错误码: ", result)

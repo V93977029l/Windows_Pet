@@ -1,7 +1,7 @@
 extends RefCounted
 
 var config: ConfigFile = ConfigFile.new()
-var config_path: String = "res://config/pet_config.cfg"
+var config_path: String = "res://data/pet_config.cfg"
 
 var pet_scale: float = 1.0
 
@@ -69,7 +69,7 @@ func _save_config():
 	config.set_value("window", "initial_y", window_initial_y)
 	config.set_value("window", "always_on_top", window_always_on_top)
 	
-	DirAccess.make_dir_recursive_absolute("res://config")
+	DirAccess.make_dir_recursive_absolute("res://data")
 	
 	var err = config.save(config_path)
 	if err == OK:
