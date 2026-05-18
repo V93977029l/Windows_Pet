@@ -1,8 +1,0 @@
-[gd_resource type="GlassMaterialPreset" load_steps=1 format=3]
-
-[resource]
-glass_color = Color(0.8, 0.9, 1.0, 0.3)
-edge_glow = 0.5
-highlight_intensity = 0.6
-liquid_wobble = 0.1
-wobble_speed = 1.0
