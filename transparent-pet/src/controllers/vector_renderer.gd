@@ -1,4 +1,4 @@
-class_name PetVectorRenderer
+class_name TP_VectorRenderer
 const BASE_SIZE: Vector2 = Vector2(200, 132)
 
 var sprite: Sprite2D = null

@@ -1,4 +1,4 @@
-class_name PetMouseManager
+class_name TP_MouseManager
 
 var passthrough_manager = null
 var pet_node: Node2D = null

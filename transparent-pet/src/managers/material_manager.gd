@@ -1,4 +1,4 @@
-class_name MaterialManager
+class_name TP_MaterialManager
 
 var liquid_shader: Shader = preload("res://assets/shaders/liquid_glass.gdshader")
 

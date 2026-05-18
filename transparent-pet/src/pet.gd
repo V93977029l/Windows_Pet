@@ -1,11 +1,12 @@
 extends Node2D
 
 @onready var config = preload("res://src/config/pet_config.gd").new()
-@onready var drag_script = preload("res://src/controllers/pet_drag.gd").new()
+@onready var drag_controller = preload("res://src/controllers/drag_controller.gd").new()
 @onready var passthrough_manager = preload("res://addons/mouse_passthrough/mouse_passthrough.gd").new()
-@onready var mouse_manager = preload("res://src/controllers/pet_mouse_manager.gd").new()
+@onready var mouse_manager = preload("res://src/controllers/mouse_manager.gd").new()
 @onready var material_manager = preload("res://src/managers/material_manager.gd").new()
-@onready var vector_renderer = preload("res://src/controllers/pet_vector_renderer.gd").new()
+@onready var vector_renderer = preload("res://src/controllers/vector_renderer.gd").new()
+@onready var window_manager = preload("res://src/managers/window_manager.gd").new()
 @onready var pet_sprite: Sprite2D = $Sprite2D
 
 const SVG_PATH: String = "res://assets/icons/pet_sprite.svg"
@@ -14,30 +15,19 @@ func _ready():
 	print("✅ [桌宠] ====== 桌宠主程序初始化完成 ========")
 	config.print_config()
 	
-	init_vector_renderer()
+	window_manager.init(self)
+	vector_renderer.init(pet_sprite, SVG_PATH)
+	material_manager.init(pet_sprite)
 	init_materials()
-	init_window()
 	center_sprite()
 	
-	drag_script.init(self)
+	drag_controller.init(self)
 	passthrough_manager.init(self)
 	mouse_manager.init(self, pet_sprite, passthrough_manager)
 
-func init_vector_renderer():
-	vector_renderer.init(pet_sprite, SVG_PATH)
-
 func init_materials():
-	material_manager.init(pet_sprite)
 	var preset = config.load_preset()
 	material_manager.apply_preset(preset)
-
-func init_window():
-	var window = get_window()
-	window.always_on_top = config.window_always_on_top
-	
-	print("📌 [窗口] 窗口尺寸：", window.size, "，位置：", window.position)
-	print("📌 [窗口] 窗口属性 - 透明：", window.transparent)
-	print("📌 [窗口] 窗口属性 - 置顶：", window.always_on_top)
 
 func center_sprite():
 	if pet_sprite:
@@ -62,11 +52,11 @@ func get_current_material_name() -> String:
 	return material_manager.get_current_material_name()
 
 func _process(_delta):
-	drag_script.update_drag()
+	drag_controller.update_drag()
 	mouse_manager.update_mouse_passthrough()
 
 func _on_area_2d_input_event(_viewport: Node, event: InputEvent, _shape_idx: int):
-	drag_script.handle_area_input_event(event)
+	drag_controller.handle_area_input_event(event)
 
 func _input(event: InputEvent):
 	if event.is_action_pressed("OpenSettings"):

@@ -1,7 +1,7 @@
 # 鼠标穿透插件
 # 功能：提供鼠标穿透功能的核心逻辑
 
-class_name MousePassthroughManager
+class_name TP_MousePassthroughManager
 
 var mouse_passthrough = null
 var parent_node: Node2D = null
