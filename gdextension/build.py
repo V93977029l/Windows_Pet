@@ -167,12 +167,13 @@ def build_godot_cpp(godot_cpp_dir, platform, target, clean=False, force=False, j
     ]
     
     print(f"编译命令: {' '.join(cmd)}")
+    print("编译中... (这可能需要几分钟，请耐心等待)")
     if not run_command(cmd, cwd=godot_cpp_dir, verbose=False):
         print("godot-cpp 编译失败")
         return False
     
     if os.path.exists(target_lib):
-        print(f"✓ godot-cpp 编译成功: {target_lib}")
+        print(f"✓ godot-cpp 编译成功")
         return True
     else:
         print(f"错误: 编译产物不存在 - {target_lib}")
@@ -207,12 +208,13 @@ def build_extension(ext_dir, platform, target, godot_cpp_dir, clean=False, force
     ]
     
     print(f"编译命令: {' '.join(cmd)}")
+    print("编译中...")
     if not run_command(cmd, cwd=ext_dir, verbose=False):
         print(f"扩展编译失败")
         return False
     
     if os.path.exists(target_dll):
-        print(f"✓ 扩展编译成功: {target_dll}")
+        print(f"✓ 扩展编译成功")
         return True
     else:
         print(f"错误: 编译产物不存在 - {target_dll}")
