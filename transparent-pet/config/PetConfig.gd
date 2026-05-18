@@ -3,16 +3,15 @@ extends RefCounted
 var config: ConfigFile = ConfigFile.new()
 var config_path: String = "res://config/pet_config.cfg"
 
-var pet_initial_transparency: float = 0.5
 var pet_scale: float = 1.0
 
-var glass_color: Color = Color(0.1, 0.3, 0.6, 0.4)
+var glass_color: Color = Color(0.1, 0.3, 0.6, 1.0)
 var edge_glow: float = 0.8
 var highlight_intensity: float = 1.0
 var liquid_wobble: float = 0.3
 var wobble_speed: float = 2.0
-var refraction_strength: float = 0.02
 var fresnel_power: float = 3.0
+var enable_dynamic: bool = true
 
 var window_initial_x: int = -1
 var window_initial_y: int = -1
@@ -32,11 +31,8 @@ func load_config():
 		_save_config()
 
 func _read_pet_section():
-	pet_initial_transparency = config.get_value("pet", "initial_transparency", 0.5)
 	pet_scale = config.get_value("pet", "scale", 1.0)
-	
-	pet_initial_transparency = max(0.0, min(1.0, pet_initial_transparency))
-	pet_scale = max(0.1, min(5.0, pet_scale))
+	pet_scale = clamp(pet_scale, 0.2, 4.0)
 
 func _read_window_section():
 	window_initial_x = config.get_value("window", "initial_x", -1)
@@ -51,26 +47,24 @@ func load_preset(_material_id: int = 1) -> Dictionary:
 		"highlight_intensity": highlight_intensity,
 		"liquid_wobble": liquid_wobble,
 		"wobble_speed": wobble_speed,
-		"refraction_strength": refraction_strength,
-		"fresnel_power": fresnel_power
+		"fresnel_power": fresnel_power,
+		"enable_dynamic": enable_dynamic
 	}
 
 func get_default_preset() -> Dictionary:
 	return {
 		"name": "液态玻璃",
-		"glass_color": Color(0.1, 0.3, 0.6, 0.4),
+		"glass_color": Color(0.1, 0.3, 0.6, 1.0),
 		"edge_glow": 0.8,
 		"highlight_intensity": 1.0,
 		"liquid_wobble": 0.3,
 		"wobble_speed": 2.0,
-		"refraction_strength": 0.02,
-		"fresnel_power": 3.0
+		"fresnel_power": 3.0,
+		"enable_dynamic": true
 	}
 
 func _save_config():
-	config.set_value("pet", "initial_transparency", pet_initial_transparency)
 	config.set_value("pet", "scale", pet_scale)
-	
 	config.set_value("window", "initial_x", window_initial_x)
 	config.set_value("window", "initial_y", window_initial_y)
 	config.set_value("window", "always_on_top", window_always_on_top)
@@ -89,14 +83,12 @@ func save_config():
 func print_config():
 	print("\n📋 [配置] 当前配置参数:")
 	print("├── [pet]")
-	print("│   ├── initial_transparency: ", pet_initial_transparency)
 	print("│   ├── scale: ", pet_scale)
 	print("│   ├── glass_color: ", glass_color)
 	print("│   ├── edge_glow: ", edge_glow)
 	print("│   ├── highlight_intensity: ", highlight_intensity)
 	print("│   ├── liquid_wobble: ", liquid_wobble)
 	print("│   ├── wobble_speed: ", wobble_speed)
-	print("│   ├── refraction_strength: ", refraction_strength)
 	print("│   └── fresnel_power: ", fresnel_power)
 	print("└── [window]")
 	print("    ├── initial_x: ", window_initial_x)

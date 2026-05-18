@@ -6,13 +6,13 @@
 oversampling_override = 1.0
 title = "桌宠设置"
 position = Vector2i(0, 36)
-size = Vector2i(420, 487)
+size = Vector2i(420, 470)
 always_on_top = true
 min_size = Vector2i(380, 400)
 script = ExtResource("1")
 
 [node name="Background" type="Panel" parent="." unique_id=1]
-custom_minimum_size = Vector2(420, 487)
+custom_minimum_size = Vector2(420, 470)
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -40,30 +40,6 @@ vertical_alignment = 1
 [node name="HSeparator1" type="HSeparator" parent="Background/MainHBox/CenterVBox" unique_id=423269891]
 custom_minimum_size = Vector2(0, 10)
 layout_mode = 2
-
-[node name="Transparency" type="VBoxContainer" parent="Background/MainHBox/CenterVBox" unique_id=971040311]
-custom_minimum_size = Vector2(0, 80)
-layout_mode = 2
-
-[node name="Label" type="Label" parent="Background/MainHBox/CenterVBox/Transparency" unique_id=1167324189]
-custom_minimum_size = Vector2(0, 24)
-layout_mode = 2
-text = "透明度 (0.0-1.0)"
-
-[node name="HBox" type="HBoxContainer" parent="Background/MainHBox/CenterVBox/Transparency" unique_id=1386603441]
-layout_mode = 2
-
-[node name="Slider" type="HSlider" parent="Background/MainHBox/CenterVBox/Transparency/HBox" unique_id=650264344]
-layout_mode = 2
-size_flags_horizontal = 3
-max_value = 1.0
-step = 0.01
-value = 0.5
-
-[node name="Input" type="LineEdit" parent="Background/MainHBox/CenterVBox/Transparency/HBox" unique_id=1225816882]
-custom_minimum_size = Vector2(80, 0)
-layout_mode = 2
-text = "0.5"
 
 [node name="Scale" type="VBoxContainer" parent="Background/MainHBox/CenterVBox" unique_id=1752053830]
 custom_minimum_size = Vector2(0, 120)
@@ -108,6 +84,19 @@ text = "材质类型"
 layout_mode = 2
 size_flags_horizontal = 3
 
+[node name="DynamicEffect" type="VBoxContainer" parent="Background/MainHBox/CenterVBox" unique_id=1153088862]
+custom_minimum_size = Vector2(0, 50)
+layout_mode = 2
+
+[node name="Label5" type="Label" parent="Background/MainHBox/CenterVBox/DynamicEffect" unique_id=1630467367]
+custom_minimum_size = Vector2(0, 24)
+layout_mode = 2
+text = "动态效果"
+
+[node name="Check" type="CheckButton" parent="Background/MainHBox/CenterVBox/DynamicEffect" unique_id=2016287119]
+layout_mode = 2
+text = "启用液态流动效果"
+
 [node name="AlwaysOnTop" type="VBoxContainer" parent="Background/MainHBox/CenterVBox" unique_id=1965370006]
 custom_minimum_size = Vector2(0, 50)
 layout_mode = 2
@@ -125,7 +114,7 @@ text = "启用窗口置顶"
 custom_minimum_size = Vector2(0, 10)
 layout_mode = 2
 
-[node name="Buttons" type="HBoxContainer" parent="Background/MainHBox/CenterVBox" unique_id=328862503]
+[node name="Buttons" type="HBoxContainer" parent="Background/MainHBox/CenterVBox" unique_id=2801723290]
 custom_minimum_size = Vector2(0, 50)
 layout_mode = 2
 alignment = 1

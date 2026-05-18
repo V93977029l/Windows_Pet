@@ -1,12 +1,12 @@
 shader_type canvas_item;
 
-uniform vec4 glass_color = vec4(0.1, 0.3, 0.6, 0.4);
+uniform vec4 glass_color = vec4(0.1, 0.3, 0.6, 1.0);
 uniform float edge_glow = 0.8;
 uniform float highlight_intensity = 1.0;
 uniform float liquid_wobble = 0.3;
 uniform float wobble_speed = 2.0;
-uniform float refraction_strength = 0.02;
 uniform float fresnel_power = 3.0;
+uniform bool enable_dynamic = true;
 
 float random(vec2 st) {
     return fract(sin(dot(st, vec2(12.9898, 78.233))) * 43758.5453);
@@ -40,15 +40,20 @@ float fbm(vec2 st) {
 }
 
 void vertex() {
-    float wobble = sin(TIME * wobble_speed) * liquid_wobble * 2.0;
-    VERTEX.y += wobble * abs(UV.x - 0.5);
-    VERTEX.x += cos(TIME * wobble_speed * 0.7) * liquid_wobble * 1.5;
+    if (enable_dynamic) {
+        float wobble = sin(TIME * wobble_speed) * liquid_wobble * 2.0;
+        VERTEX.y += wobble * abs(UV.x - 0.5);
+        VERTEX.x += cos(TIME * wobble_speed * 0.7) * liquid_wobble * 1.5;
+    }
 }
 
 void fragment() {
     vec2 uv = UV;
     
-    float distortion = fbm(uv * 3.0) * liquid_wobble;
+    float distortion = 0.0;
+    if (enable_dynamic) {
+        distortion = fbm(uv * 3.0) * liquid_wobble;
+    }
     vec2 distorted_uv = uv + vec2(distortion * 0.1, distortion * 0.1);
     
     vec4 tex_color = texture(TEXTURE, distorted_uv);
@@ -64,10 +69,9 @@ void fragment() {
     
     float rim_light = pow(dist_to_edge, fresnel_power) * edge_glow;
     
-    vec2 highlight_dir = normalize(vec2(0.3, -0.3));
-    vec2 normal = normalize(uv - center);
-    float dot_prod = dot(normal, highlight_dir);
-    float specular = pow(max(0.0, -dot_prod), 12.0) * highlight_intensity;
+    vec2 highlight_pos = center + vec2(0.15, -0.15);
+    float highlight_dist = length(uv - highlight_pos);
+    float specular = pow(1.0 - smoothstep(0.0, 0.35, highlight_dist), 4.0) * highlight_intensity;
     
     vec4 final_color = glass_color;
     
@@ -78,7 +82,9 @@ void fragment() {
     final_color.g = mix(final_color.g, 0.95, dist_to_edge * 0.4);
     final_color.b = mix(final_color.b, 1.0, dist_to_edge * 0.6);
     
-    final_color.rgb += fbm(uv * 10.0 + TIME * 2.0) * 0.05;
+    if (enable_dynamic) {
+        final_color.rgb += fbm(uv * 10.0 + TIME * 2.0) * 0.05;
+    }
     
     final_color.a *= shape_mask;
     final_color.a *= (1.0 - dist_to_center * 0.6);

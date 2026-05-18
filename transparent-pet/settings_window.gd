@@ -3,12 +3,11 @@ extends Window
 var pet_node: Node2D = null
 var config = null
 
-@onready var transparency_slider: HSlider = $Background/MainHBox/CenterVBox/Transparency/HBox/Slider
-@onready var transparency_input: LineEdit = $Background/MainHBox/CenterVBox/Transparency/HBox/Input
 @onready var scale_slider: HSlider = $Background/MainHBox/CenterVBox/Scale/HBox2/Slider2
 @onready var scale_input: LineEdit = $Background/MainHBox/CenterVBox/Scale/HBox2/Input2
 @onready var apply_scale_btn: Button = $Background/MainHBox/CenterVBox/Scale/ApplyScaleBtn
 @onready var material_combo: OptionButton = $Background/MainHBox/CenterVBox/Material/Combo
+@onready var dynamic_check: CheckButton = $Background/MainHBox/CenterVBox/DynamicEffect/Check
 @onready var always_on_top_check: CheckButton = $Background/MainHBox/CenterVBox/AlwaysOnTop/Check
 @onready var save_button: Button = $Background/MainHBox/CenterVBox/Buttons/Save
 @onready var reset_button: Button = $Background/MainHBox/CenterVBox/Buttons/Reset
@@ -34,12 +33,11 @@ func _ready():
 	grab_focus()
 
 func setup_connections():
-	transparency_slider.value_changed.connect(_on_transparency_slider_changed)
-	transparency_input.text_changed.connect(_on_transparency_input_changed)
 	scale_slider.value_changed.connect(_on_scale_slider_changed)
 	scale_input.text_changed.connect(_on_scale_input_changed)
 	apply_scale_btn.pressed.connect(_on_apply_scale)
 	material_combo.item_selected.connect(_on_material_changed)
+	dynamic_check.toggled.connect(_on_dynamic_changed)
 	always_on_top_check.toggled.connect(_on_always_on_top_changed)
 	save_button.pressed.connect(_on_save)
 	reset_button.pressed.connect(_on_reset)
@@ -58,51 +56,17 @@ func load_config():
 	
 	_is_updating_ui = true
 	
-	transparency_slider.value = clamp(config.pet_initial_transparency, 0.0, 1.0)
-	transparency_input.text = format_float(config.pet_initial_transparency)
-	
 	scale_slider.value = clamp(config.pet_scale, 0.2, 4.0)
 	scale_input.text = format_float(config.pet_scale)
 	
 	material_combo.select(0)
+	dynamic_check.button_pressed = config.enable_dynamic
 	always_on_top_check.button_pressed = config.window_always_on_top
 	
 	_is_updating_ui = false
 
 func format_float(value: float) -> String:
 	return str(round(value * 100) / 100)
-
-func _on_transparency_slider_changed(value: float):
-	if _is_updating_ui:
-		return
-	
-	var rounded = clamp(value, 0.0, 1.0)
-	_is_updating_ui = true
-	transparency_input.text = format_float(rounded)
-	_is_updating_ui = false
-	
-	config.pet_initial_transparency = rounded
-	apply_transparency(rounded)
-
-func _on_transparency_input_changed(text: String):
-	if _is_updating_ui:
-		return
-	
-	if not text.is_valid_float():
-		transparency_input.text = format_float(config.pet_initial_transparency)
-		return
-	
-	var value = text.to_float()
-	if value < 0.0 or value > 1.0:
-		transparency_input.text = format_float(config.pet_initial_transparency)
-		return
-	
-	_is_updating_ui = true
-	transparency_slider.value = value
-	_is_updating_ui = false
-	
-	config.pet_initial_transparency = value
-	apply_transparency(value)
 
 func _on_scale_slider_changed(value: float):
 	if _is_updating_ui:
@@ -144,19 +108,19 @@ func _on_material_changed(index: int):
 		return
 	print("[设置] 材质选择: ", material_combo.get_item_text(index))
 
+func _on_dynamic_changed(enabled: bool):
+	if _is_updating_ui:
+		return
+	
+	config.enable_dynamic = enabled
+	apply_dynamic_effect(enabled)
+
 func _on_always_on_top_changed(enabled: bool):
 	if _is_updating_ui:
 		return
 	
 	config.window_always_on_top = enabled
 	apply_always_on_top(enabled)
-
-func apply_transparency(value: float):
-	if not pet_node or not pet_node.pet_sprite:
-		print("⚠️ [设置] 无法应用透明度：pet_node 或 pet_sprite 为空")
-		return
-	
-	pet_node.material_manager.update_transparency(value)
 
 func apply_scale(value: float):
 	if not pet_node:
@@ -171,6 +135,13 @@ func apply_high_res_scale(value: float):
 		return
 	
 	pet_node.apply_high_res_scale(value)
+
+func apply_dynamic_effect(enabled: bool):
+	if not pet_node:
+		print("⚠️ [设置] 无法设置动态效果：pet_node 为空")
+		return
+	
+	pet_node.material_manager.set_dynamic_enabled(enabled)
 
 func apply_always_on_top(enabled: bool):
 	if not pet_node:
@@ -189,14 +160,14 @@ func _on_save():
 	print("✅ [设置] 配置已保存")
 
 func _on_reset():
-	config.pet_initial_transparency = 0.5
 	config.pet_scale = 1.0
+	config.enable_dynamic = true
 	config.window_always_on_top = true
 	
 	load_config()
 	
-	apply_transparency(config.pet_initial_transparency)
 	apply_scale(config.pet_scale)
+	apply_dynamic_effect(config.enable_dynamic)
 	apply_always_on_top(config.window_always_on_top)
 	
 	print("✅ [设置] 已恢复默认配置")
