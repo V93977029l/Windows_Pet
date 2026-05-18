@@ -1,2 +1,3 @@
-res://pet_vector_renderer.gd
-res://node_2d.tscn
+res://pet.gd
+res://settings_window.gd
+res://pet_mouse_manager.gd

@@ -163,11 +163,6 @@ func apply_always_on_top(enabled: bool):
 	if pet_node:
 		var window = pet_node.get_window()
 		window.always_on_top = enabled
-		
-		self.always_on_top = true
-		self.transient = true
-		self.exclusive = true
-		self.grab_focus()
 
 func _on_save():
 	if config:
