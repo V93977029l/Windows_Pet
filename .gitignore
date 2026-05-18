@@ -1,23 +1,21 @@
-# godot-cpp - ignore source but keep compiled libs
-gdextension/godot-cpp/*
-!gdextension/godot-cpp/bin
-gdextension/godot-cpp/bin/*
-!gdextension/godot-cpp/bin/*.lib
-!gdextension/godot-cpp/bin/*.a
+# Godot Engine
+.godot/
+imported/
 
-# Build intermediate files (excluding useful binaries)
-.sconsign.dblite
+# GDExtension build artifacts
 *.o
 *.obj
-*.bc
+*.lib
+*.a
 *.exp
 *.pdb
+*.dll
+*.so
+*.dylib
+*.bc
 
-# Exclude lib files except in godot-cpp/bin
-*/*.lib
-!gdextension/godot-cpp/bin/*.lib
-
-# Build cache
+# SCons build cache
+.sconsign.dblite
 .sconf_temp
 .scons_node_count
 .cache/
@@ -38,10 +36,19 @@ venv/
 *.log
 logs/
 cache/
-
-.godot/shader_cache/
-.godot/imported/
-*.d3d12.cache
+.DS_Store
+Thumbs.db
 
 # Godot UID files
 *.uid
+
+# Temporary directories
+temp-godot-cpp/
+temp-godot-cpp-full/
+
+# godot-cpp - only keep compiled libs
+gdextension/godot-cpp/*
+!gdextension/godot-cpp/bin/
+gdextension/godot-cpp/bin/*
+!gdextension/godot-cpp/bin/*.lib
+!gdextension/godot-cpp/bin/*.a

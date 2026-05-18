@@ -1,0 +1,41 @@
+# Godot Engine
+
+# Editor directories and files
+.godot/
+imported/
+export_presets.cfg
+project.binary
+project.binary.import
+
+# Imported files
+*.import
+
+# Compiled files
+*.o
+*.obj
+*.lib
+*.a
+*.exp
+*.pdb
+*.dll
+*.so
+*.dylib
+
+# Build artifacts
+bin/
+build/
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.code-workspace
+
+# Python
+__pycache__/
+*.pyc
+
+# Misc
+*.log
+.DS_Store
+Thumbs.db

@@ -1,3 +1,1 @@
-res://pet.gd
-res://settings_window.gd
-res://pet_mouse_manager.gd
+res://addons/mouse_passthrough/mouse_passthrough.gdextension
