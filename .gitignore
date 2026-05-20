@@ -22,7 +22,6 @@ imported/
 scons_cache/
 
 # IDE
-.vscode/
 .idea/
 *.code-workspace
 
