@@ -1,3 +1,6 @@
+class_name DragController
+extends RefCounted
+
 var parent_node: Node2D
 var click_offset: Vector2i = Vector2i.ZERO
 var is_dragging: bool = false

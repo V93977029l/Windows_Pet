@@ -40,10 +40,11 @@ float fbm(vec2 st) {
 }
 
 void vertex() {
+    float edge_factor = abs(UV.x - 0.5) * 2.0;
     if (enable_dynamic) {
-        float wobble = sin(TIME * wobble_speed) * liquid_wobble * 2.0;
-        VERTEX.y += wobble * abs(UV.x - 0.5);
-        VERTEX.x += cos(TIME * wobble_speed * 0.7) * liquid_wobble * 1.5;
+        float wobble = sin(TIME * wobble_speed) * liquid_wobble * 20.0;
+        VERTEX.y += wobble * edge_factor;
+        VERTEX.x += cos(TIME * wobble_speed * 0.7) * liquid_wobble * 15.0 * edge_factor;
     }
 }
 
@@ -54,6 +55,7 @@ void fragment() {
     if (enable_dynamic) {
         distortion = fbm(uv * 3.0) * liquid_wobble;
     }
+    
     vec2 distorted_uv = uv + vec2(distortion * 0.1, distortion * 0.1);
     
     vec4 tex_color = texture(TEXTURE, distorted_uv);

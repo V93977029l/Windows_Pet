@@ -18,6 +18,7 @@ func set_pet_node(pet: Node2D):
 	pet_node = pet
 	if pet_node:
 		config = pet_node.config
+		setup_material_combo()
 		load_config()
 
 func _ready():
@@ -26,7 +27,6 @@ func _ready():
 	always_on_top = true
 	
 	setup_connections()
-	setup_material_combo()
 	
 	visible = true
 	await get_tree().process_frame
@@ -44,10 +44,25 @@ func setup_connections():
 	close_requested.connect(_on_close)
 
 func setup_material_combo():
+	if not pet_node or not pet_node.material_manager:
+		return
+	
 	material_combo.clear()
-	material_combo.add_item("液态玻璃")
-	material_combo.select(0)
-	material_combo.disabled = true
+	
+	var registry = pet_node.material_manager.registry
+	var presets = registry.get_all_presets()
+	
+	var current_material_name = pet_node.get_current_material_name()
+	var selected_index = 0
+	
+	for i in range(presets.size()):
+		var preset = presets[i]
+		material_combo.add_item(preset.name)
+		if preset.name == current_material_name:
+			selected_index = i
+	
+	material_combo.select(selected_index)
+	material_combo.disabled = false
 
 func load_config():
 	if not config:
@@ -59,11 +74,26 @@ func load_config():
 	scale_slider.value = clamp(config.pet_scale, 0.2, 4.0)
 	scale_input.text = format_float(config.pet_scale)
 	
-	material_combo.select(0)
-	dynamic_check.button_pressed = config.enable_dynamic
+	_select_current_material()
+	dynamic_check.button_pressed = _get_enable_dynamic()
 	always_on_top_check.button_pressed = config.window_always_on_top
 	
 	_is_updating_ui = false
+
+func _get_enable_dynamic() -> bool:
+	return true
+
+func _select_current_material():
+	var registry = pet_node.material_manager.registry
+	var presets = registry.get_all_presets()
+	
+	for i in range(presets.size()):
+		var preset = presets[i]
+		if preset.id == config.material_preset:
+			material_combo.select(i)
+			return
+	
+	material_combo.select(0)
 
 func format_float(value: float) -> String:
 	return str(round(value * 100) / 100)
@@ -100,19 +130,27 @@ func _on_scale_input_changed(text: String):
 
 func _on_apply_scale():
 	var value = config.pet_scale
+	apply_scale(value)
 	apply_high_res_scale(value)
 	print("✅ [设置] 缩放已应用: ", value)
 
 func _on_material_changed(index: int):
 	if _is_updating_ui:
 		return
-	print("[设置] 材质选择: ", material_combo.get_item_text(index))
+	
+	var registry = pet_node.material_manager.registry
+	var presets = registry.get_all_presets()
+	
+	if index < presets.size():
+		var preset = presets[index]
+		pet_node.material_manager.apply_preset(preset)
+		config.material_preset = preset.id
+		print("✅ [设置] 材质已切换为: ", preset.name)
 
 func _on_dynamic_changed(enabled: bool):
 	if _is_updating_ui:
 		return
 	
-	config.enable_dynamic = enabled
 	apply_dynamic_effect(enabled)
 
 func _on_always_on_top_changed(enabled: bool):
@@ -161,13 +199,12 @@ func _on_save():
 
 func _on_reset():
 	config.pet_scale = 1.0
-	config.enable_dynamic = true
 	config.window_always_on_top = true
 	
 	load_config()
 	
 	apply_scale(config.pet_scale)
-	apply_dynamic_effect(config.enable_dynamic)
+	apply_dynamic_effect(true)
 	apply_always_on_top(config.window_always_on_top)
 	
 	print("✅ [设置] 已恢复默认配置")

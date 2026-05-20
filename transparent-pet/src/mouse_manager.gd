@@ -1,4 +1,4 @@
-class_name TP_MouseManager
+class_name MouseManager
 
 var passthrough_manager = null
 var pet_node: Node2D = null
@@ -28,11 +28,8 @@ func is_mouse_over_sprite() -> bool:
 			return false
 		
 		var local_pos = sprite.to_local(mouse_pos)
-		var texture_size = sprite.texture.get_size()
-		var pixel_pos = Vector2(
-			int((local_pos.x + sprite_rect.size.x / 2) / sprite_rect.size.x * texture_size.x),
-			int((local_pos.y + sprite_rect.size.y / 2) / sprite_rect.size.y * texture_size.y)
-		)
+		var texture_size = sprite.texture.get_size() * sprite.scale
+		var pixel_pos = Vector2i(int(local_pos.x + texture_size.x / 2), int(local_pos.y + texture_size.y / 2))
 		
 		if pixel_pos.x < 0 or pixel_pos.x >= texture_size.x or pixel_pos.y < 0 or pixel_pos.y >= texture_size.y:
 			return false
