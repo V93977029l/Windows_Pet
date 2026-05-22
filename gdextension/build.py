@@ -303,7 +303,7 @@ def main():
     
     current_dir = Path(__file__).resolve().parent
     godot_project_path = current_dir / ".." / "transparent-pet"
-    godot_cpp_dir = current_dir / "godot-cpp"
+    godot_cpp_dir = current_dir / ".." / "external" / "godot-cpp"
     
     print(f"\n当前目录: {current_dir}")
     print(f"Godot项目路径: {godot_project_path}")
