@@ -1,6 +1,6 @@
 [submodule "external/godot-cpp"]
 	path = external/godot-cpp
 	url = https://github.com/godotengine/godot-cpp.git
-	branch = 4.6
+	branch = master
 	update = checkout
 	shallow = true
