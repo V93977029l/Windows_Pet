@@ -93,6 +93,13 @@ public:
      * 禁用鼠标穿透，确保窗口可以接收鼠标事件
      */
     void reset_mouse_passthrough();
+
+    /**
+     * @brief 隐藏任务栏图标
+     * 
+     * 通过添加 WS_EX_TOOLWINDOW 样式使窗口不在任务栏显示
+     */
+    void hide_taskbar_icon();
 };
 
 } // namespace godot

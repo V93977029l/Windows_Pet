@@ -6,12 +6,15 @@ extends Node2D
 @onready var mouse_manager = preload("res://src/mouse_manager.gd").new()
 @onready var material_manager: MaterialManager = MaterialManager.new()
 @onready var vector_renderer = preload("res://src/vector_renderer.gd").new()
+@onready var tray_manager: Node = null
 @onready var pet_sprite: Sprite2D = $Sprite2D
 
 const SVG_PATH: String = "res://assets/icons/pet_sprite.svg"
 
 func _ready():
 	print("✅ [桌宠] ====== 桌宠主程序初始化完成 ========")
+	
+	set_process_input(true)
 	
 	vector_renderer.init(pet_sprite, SVG_PATH)
 	material_manager.init(pet_sprite)
@@ -21,8 +24,19 @@ func _ready():
 	drag_controller.init(self)
 	passthrough_manager.init(self)
 	mouse_manager.init(self, pet_sprite, passthrough_manager)
+	tray_manager = preload("res://src/tray_manager.gd").new()
+	add_child(tray_manager)
+	tray_manager.init(self)
+	tray_manager.settings_requested.connect(_on_tray_settings_requested)
+	tray_manager.exit_requested.connect(_on_tray_exit_requested)
 	
 	config.print_config()
+
+func _on_tray_settings_requested():
+	open_settings_window()
+
+func _on_tray_exit_requested():
+	get_tree().quit()
 
 func init_materials():
 	var preset_id = config.material_preset
@@ -67,7 +81,7 @@ func _input(event: InputEvent):
 		open_settings_window()
 
 func open_settings_window():
-	var settings_scene = load("res://src/settings_window.tscn")
+	var settings_scene = load("res://scenes/settings_window.tscn")
 	if settings_scene:
 		var settings_window = settings_scene.instantiate()
 		get_tree().root.add_child(settings_window)

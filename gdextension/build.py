@@ -94,9 +94,20 @@ def copy_with_check(src, dst, description):
 def copy_dir_contents(src_dir, dst_dir, file_pattern=None):
     try:
         os.makedirs(dst_dir, exist_ok=True)
+        cleaned = False
+        for f in os.listdir(dst_dir):
+            if f.startswith("~"):
+                os.remove(os.path.join(dst_dir, f))
+                print(f"已清理: {f}")
+                cleaned = True
+        if cleaned:
+            print("已清理备份文件，需要重新编译以使 Godot 加载最新 DLL")
+        
         copied = False
 
         for filename in os.listdir(src_dir):
+            if filename.startswith("~"):
+                continue
             if file_pattern and not filename.endswith(file_pattern):
                 continue
 
@@ -168,7 +179,7 @@ def build_godot_cpp(godot_cpp_dir, platform, target, clean=False, force=False, j
     
     print(f"编译命令: {' '.join(cmd)}")
     print("编译中... (这可能需要几分钟，请耐心等待)")
-    if not run_command(cmd, cwd=godot_cpp_dir, verbose=False):
+    if not run_command(cmd, cwd=godot_cpp_dir, verbose=True):
         print("godot-cpp 编译失败")
         return False
     
@@ -209,7 +220,7 @@ def build_extension(ext_dir, platform, target, godot_cpp_dir, clean=False, force
     
     print(f"编译命令: {' '.join(cmd)}")
     print("编译中...")
-    if not run_command(cmd, cwd=ext_dir, verbose=False):
+    if not run_command(cmd, cwd=ext_dir, verbose=True):
         print(f"扩展编译失败")
         return False
     
@@ -329,20 +340,31 @@ def main():
     else:
         print("跳过 godot-cpp 编译")
     
-    mouse_passthrough_dir = current_dir / "mouse_passthrough_extension"
-    if os.path.exists(mouse_passthrough_dir):
-        if not build_extension(mouse_passthrough_dir, args.platform, args.target, godot_cpp_dir, args.clean, args.force, args.jobs):
-            print("错误: 扩展编译失败")
-            return 1
-        
-        if not deploy_extension(mouse_passthrough_dir, godot_project_path):
-            print("错误: 扩展部署失败")
-            return 1
-    else:
-        print(f"警告: 扩展目录不存在 - {mouse_passthrough_dir}")
-        return 1
+    extensions = ["mouse_passthrough_extension", "system_tray_extension"]
+    build_ok = True
     
-    verify_deployment(godot_project_path, "mouse_passthrough")
+    for ext_name in extensions:
+        ext_dir = current_dir / ext_name
+        if not os.path.exists(ext_dir):
+            print(f"警告: 扩展目录不存在 - {ext_dir}")
+            build_ok = False
+            continue
+        
+        if not build_extension(ext_dir, args.platform, args.target, godot_cpp_dir, args.clean, args.force, args.jobs):
+            print(f"错误: {ext_name} 编译失败")
+            build_ok = False
+            continue
+        
+        if not deploy_extension(ext_dir, godot_project_path):
+            print(f"错误: {ext_name} 部署失败")
+            build_ok = False
+            continue
+        
+        verify_deployment(godot_project_path, ext_name.replace("_extension", ""))
+    
+    if not build_ok:
+        print("\n警告: 部分扩展编译或部署失败")
+        return 1
     
     print("\n========================================")
     print("  编译完成！")

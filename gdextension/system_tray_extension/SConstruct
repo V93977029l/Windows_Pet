@@ -1,30 +1,34 @@
 #!/usr/bin/env python
 
 import os
+import sys
 
-# 导入godot-cpp的构建配置
+# Add game root to path for godot-cpp
+sys.path.insert(0, os.path.join(os.getcwd(), "..", ".."))
+
+# Import godot-cpp build configuration
 env = SConscript("../../external/godot-cpp/SConstruct")
 
-# 开启缓存功能
+# Enable cache
 scons_cache_path = os.environ.get("SCONS_CACHE", os.path.join(os.path.expanduser("~"), ".scons_cache"))
 if not os.path.exists(scons_cache_path):
     os.makedirs(scons_cache_path)
 CacheDir(scons_cache_path)
 Decider("MD5")
 
-# 添加源代码目录和godot-cpp包含目录
+# Add source directories and godot-cpp include directories
 env.Append(CPPPATH=["src/", "../../external/godot-cpp/include/"])
 sources = Glob("src/*.cpp")
 
-# 确保链接到godot-cpp库
+# Ensure linking to godot-cpp library
 env.Append(LIBPATH=["../../external/godot-cpp/bin"])
 
-# 构建共享库
+# Build shared library
 library = env.SharedLibrary(
-    "bin/libmouse_passthrough{}{}".format(env["suffix"], env["SHLIBSUFFIX"]),
+    "bin/libsystem_tray{}{}".format(env["suffix"], env["SHLIBSUFFIX"]),
     source=sources,
-    LIBS=["user32", "libgodot-cpp" + env["suffix"] + env["LIBSUFFIX"]]
+    LIBS=["user32", "shell32", "libgodot-cpp" + env["suffix"] + env["LIBSUFFIX"]]
 )
 
-# 设置构建目标
+# Set build target
 Default(library)

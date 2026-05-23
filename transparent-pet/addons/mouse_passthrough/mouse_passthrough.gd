@@ -34,7 +34,7 @@ func init_mouse_passthrough():
 			mouse_passthrough.set_window_title(window_title)
 			
 			mouse_passthrough.set_mouse_passthrough(true)
-			# 初始化后立即更新一次穿透状态，确保默认是可穿透的
+			mouse_passthrough.hide_taskbar_icon()
 			mouse_passthrough.update_mouse_passthrough(false)
 			print("✅ [插件:鼠标穿透] 鼠标穿透插件初始化成功")
 		else:

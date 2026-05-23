@@ -182,6 +182,41 @@ void MousePassthrough::reset_mouse_passthrough() {
 }
 
 /**
+ * @brief 隐藏任务栏图标
+ * 
+ * 通过添加 WS_EX_TOOLWINDOW 样式使窗口不在任务栏显示
+ */
+void MousePassthrough::hide_taskbar_icon() {
+#ifdef _WIN32
+    HWND hwnd = nullptr;
+
+    if (window_handle == 0) {
+        if (!window_title.is_empty()) {
+            hwnd = FindWindowW(nullptr, (LPCWSTR)window_title.utf16().get_data());
+            if (hwnd == nullptr) {
+                godot::String debug_title = window_title + " (DEBUG)";
+                hwnd = FindWindowW(nullptr, (LPCWSTR)debug_title.utf16().get_data());
+            }
+        }
+    } else {
+        hwnd = (HWND)window_handle;
+    }
+
+    if (hwnd == nullptr) {
+        godot::print_line(godot::String::utf8("[插件:鼠标穿透] 未找到窗口句柄，无法隐藏任务栏图标"));
+        return;
+    }
+
+    LONG ex_style = GetWindowLongW(hwnd, GWL_EXSTYLE);
+    ex_style |= WS_EX_TOOLWINDOW;
+    SetWindowLongW(hwnd, GWL_EXSTYLE, ex_style);
+    SetWindowPos(hwnd, nullptr, 0, 0, 0, 0,
+        SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED | SWP_NOACTIVATE);
+    godot::print_line(godot::String::utf8("[插件:鼠标穿透] 已隐藏任务栏图标 ✅"));
+#endif
+}
+
+/**
  * @brief 绑定方法到Godot
  * 
  * 将C++方法绑定到Godot，使其可以在GDScript中调用
@@ -204,6 +239,9 @@ void MousePassthrough::_bind_methods() {
     
     // 绑定reset_mouse_passthrough方法
     ClassDB::bind_method(D_METHOD("reset_mouse_passthrough"), &MousePassthrough::reset_mouse_passthrough);
+
+    // 绑定hide_taskbar_icon方法
+    ClassDB::bind_method(D_METHOD("hide_taskbar_icon"), &MousePassthrough::hide_taskbar_icon);
 
     // 添加mouse_passthrough属性
     ADD_PROPERTY(PropertyInfo(Variant::BOOL, "mouse_passthrough"), "set_mouse_passthrough", "get_mouse_passthrough");
