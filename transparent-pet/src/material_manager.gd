@@ -55,13 +55,9 @@ func init(sprite: Sprite2D):
 	target_sprite = sprite
 
 func _register_default_presets():
-	var blue_slime = MaterialPreset.new("blue_slime", "蓝色史莱姆")
-	blue_slime.description = "可爱的蓝色史莱姆材质"
+	var blue_slime = MaterialPreset.new("blue_slime", "可爱史莱姆")
+	blue_slime.description = "可爱的史莱姆材质"
 	registry.register_preset(blue_slime)
-
-	var liquid_glass = MaterialPreset.new("liquid_glass", "液态玻璃")
-	liquid_glass.description = "苹果风格液态玻璃效果"
-	registry.register_preset(liquid_glass)
 
 func apply_preset(preset):
 	if not target_sprite:
@@ -76,11 +72,7 @@ func apply_preset(preset):
 		print("[MaterialManager] Error: Invalid preset type")
 
 func _get_shader_for_preset(_preset_id: String) -> Resource:
-	match _preset_id:
-		"liquid_glass":
-			return preload("res://assets/shaders/liquid_glass.gdshader")
-		_:
-			return preload("res://assets/shaders/slime.gdshader")
+	return preload("res://assets/shaders/slime.gdshader")
 
 func _apply_preset_object(preset):
 	current_preset = preset
@@ -112,7 +104,7 @@ func set_dynamic_enabled(enabled: bool):
 func get_current_material_name() -> String:
 	if current_preset:
 		return current_preset.name
-	return "蓝色史莱姆"
+	return "可爱史莱姆"
 
 func get_current_preset():
 	return current_preset
