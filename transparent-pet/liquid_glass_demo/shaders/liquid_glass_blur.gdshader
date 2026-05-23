@@ -5,12 +5,12 @@ uniform vec2 u_resolution;
 uniform float u_dpr;
 uniform float u_blurRadius;
 
-const int MAX_KERNEL_SIZE = 64;
+const int MAX_KERNEL_SIZE = 200;
 uniform float u_blurWeights[MAX_KERNEL_SIZE];
 uniform bool u_vertical;
 
 void fragment() {
-    vec2 texelSize = 1.0 / u_resolution * u_dpr;
+    vec2 texelSize = 1.0 / u_resolution;
     
     vec4 color = vec4(0.0);
     float totalWeight = 0.0;

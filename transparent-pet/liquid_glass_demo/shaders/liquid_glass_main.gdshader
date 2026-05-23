@@ -4,33 +4,7 @@ const float N_R = 0.98;
 const float N_G = 1.0;
 const float N_B = 1.02;
 
-uniform sampler2D u_blurredBg;
-uniform sampler2D u_bg;
-uniform vec2 u_resolution;
-uniform float u_dpr;
-uniform vec2 u_mouse;
-uniform vec2 u_mouseSpring;
-uniform float u_mergeRate;
-uniform float u_shapeWidth;
-uniform float u_shapeHeight;
-uniform float u_shapeRadius;
-uniform float u_shapeRoundness;
-uniform vec4 u_tint;
-uniform float u_refThickness;
-uniform float u_refFactor;
-uniform float u_refDispersion;
-uniform float u_refFresnelRange;
-uniform float u_refFresnelHardness;
-uniform float u_refFresnelFactor;
-uniform float u_glareRange;
-uniform float u_glareConvergence;
-uniform float u_glareOppositeFactor;
-uniform float u_glareFactor;
-uniform float u_glareHardness;
-uniform float u_glareAngle;
-uniform int u_blurEdge;
-uniform int u_showShape1;
-uniform int STEP;
+const int MAX_ITEMS = 3;
 
 float sdCircle(vec2 p, float r) {
     return length(p) - r;
@@ -42,14 +16,14 @@ float superellipseCornerSDF(vec2 p, float r, float n) {
     return v - r;
 }
 
-float roundedRectSDF(vec2 p, vec2 center, float width, float height, float cornerRadius, float n) {
+float roundedRectSDF(vec2 p, vec2 center, float width, float height, float cornerRadius, float n, float dpr) {
     p -= center;
-    float cr = cornerRadius * u_dpr;
-    vec2 d = abs(p) - vec2(width * u_dpr, height * u_dpr) * 0.5;
+    float cr = cornerRadius * dpr;
+    vec2 d = abs(p) - vec2(width * dpr, height * dpr) * 0.5;
     
     float dist;
     if (d.x > -cr && d.y > -cr) {
-        vec2 cornerCenter = sign(p) * (vec2(width * u_dpr, height * u_dpr) * 0.5 - vec2(cr));
+        vec2 cornerCenter = sign(p) * (vec2(width * dpr, height * dpr) * 0.5 - vec2(cr));
         vec2 cornerP = p - cornerCenter;
         dist = superellipseCornerSDF(cornerP, cr, n);
     } else {
@@ -64,36 +38,117 @@ float smin(float a, float b, float k) {
     return mix(b, a, h) - k * h * (1.0 - h);
 }
 
-float mainSDF(vec2 p1, vec2 p2, vec2 p) {
-    vec2 p1n = (p - vec2(0.0)) / u_resolution.y;
-    vec2 p2n = (p - p2) / u_resolution.y;
+float sdSlime(vec2 p) {
+    p *= 2.0;
     
-    float d1 = u_showShape1 == 1 ? sdCircle(p1n, 100.0 * u_dpr / u_resolution.y) : 1.0;
-    float d2 = roundedRectSDF(
-        p2n,
-        vec2(0.0),
-        u_shapeWidth / u_resolution.y,
-        u_shapeHeight / u_resolution.y,
-        u_shapeRadius / u_resolution.y,
-        u_shapeRoundness
-    );
+    float body = length(p - vec2(0, -0.1)) - 0.5;
     
-    return smin(d1, d2, u_mergeRate);
+    float leftBlob = length(p - vec2(-0.35, 0.1)) - 0.28;
+    float rightBlob = length(p - vec2(0.35, 0.1)) - 0.28;
+    
+    float bottom = length(p - vec2(0, 0.4)) - 0.22;
+    
+    float d = 1.0;
+    d = min(d, body);
+    d = min(d, leftBlob);
+    d = min(d, rightBlob);
+    d = min(d, bottom);
+    
+    float mergeRadius = 0.15;
+    
+    d = smin(d, leftBlob, mergeRadius);
+    d = smin(d, rightBlob, mergeRadius);
+    d = smin(d, bottom, mergeRadius * 0.8);
+    
+    return d;
 }
 
-vec2 getNormal(vec2 p1, vec2 p2, vec2 p) {
-    float eps = 0.7071 * 0.0005;
-    vec2 e1 = vec2(1.0, 1.0);
-    vec2 e2 = vec2(-1.0, 1.0);
-    vec2 e3 = vec2(1.0, -1.0);
-    vec2 e4 = vec2(-1.0, -1.0);
+uniform sampler2D u_blurredBg;
+uniform sampler2D u_bg;
+uniform vec2 u_resolution;
+uniform float u_dpr;
+uniform vec2 u_mouse;
+uniform vec2 u_mouseSpring;
+uniform float u_mergeRate;
+
+uniform vec2 u_itemPositions[MAX_ITEMS];
+uniform float u_itemWidths[MAX_ITEMS];
+uniform float u_itemHeights[MAX_ITEMS];
+uniform float u_itemRadii[MAX_ITEMS];
+uniform float u_itemRoundness[MAX_ITEMS];
+uniform float u_itemShapeTypes[MAX_ITEMS];
+uniform float u_itemEnabled[MAX_ITEMS];
+uniform float u_itemScales[MAX_ITEMS];
+
+uniform vec4 u_tint;
+uniform float u_refThickness;
+uniform float u_refFactor;
+uniform float u_refDispersion;
+uniform float u_refFresnelRange;
+uniform float u_refFresnelHardness;
+uniform float u_refFresnelFactor;
+uniform float u_glareRange;
+uniform float u_glareConvergence;
+uniform float u_glareOppositeFactor;
+uniform float u_glareFactor;
+uniform float u_glareHardness;
+uniform float u_glareAngle;
+uniform int u_blurEdge;
+uniform int STEP;
+
+float getItemSDF(int index, vec2 p) {
+    if (u_itemEnabled[index] < 0.5) {
+        return 1.0;
+    }
     
-    return normalize(
-        e1 * mainSDF(p1, p2, p + eps * e1) +
-        e2 * mainSDF(p1, p2, p + eps * e2) +
-        e3 * mainSDF(p1, p2, p + eps * e3) +
-        e4 * mainSDF(p1, p2, p + eps * e4)
-    );
+    vec2 position = u_itemPositions[index];
+    float width = u_itemWidths[index];
+    float height = u_itemHeights[index];
+    float radius = u_itemRadii[index];
+    float roundness = u_itemRoundness[index];
+    float shapeType = u_itemShapeTypes[index];
+    float scale = u_itemScales[index];
+    
+    vec2 pn = (p - position) / u_resolution.y;
+    
+    if (shapeType < 0.5) {
+        return sdCircle(pn, radius * u_dpr * scale / u_resolution.y);
+    } else if (shapeType < 1.5) {
+        return roundedRectSDF(
+            pn,
+            vec2(0.0),
+            width * scale / u_resolution.y,
+            height * scale / u_resolution.y,
+            radius * scale / u_resolution.y,
+            roundness,
+            u_dpr
+        );
+    } else {
+        float slimeD = sdSlime(pn * u_resolution.y / (width * u_dpr * scale));
+        return slimeD * width * u_dpr * scale / u_resolution.y;
+    }
+}
+
+float mainSDF(vec2 p) {
+    float result = 1.0;
+    
+    for (int i = 0; i < MAX_ITEMS; i++) {
+        float d = getItemSDF(i, p);
+        result = smin(result, d, u_mergeRate);
+    }
+    
+    return result;
+}
+
+vec2 getNormal(vec2 p) {
+    vec2 h = vec2(max(abs(dFdx(p.x)), 0.0001), max(abs(dFdy(p.y)), 0.0001));
+    
+    vec2 grad = vec2(
+        mainSDF(p + vec2(h.x, 0.0)) - mainSDF(p - vec2(h.x, 0.0)),
+        mainSDF(p + vec2(0.0, h.y)) - mainSDF(p - vec2(0.0, h.y))
+    ) / (2.0 * h);
+    
+    return grad * 1.414213562 * 1000.0;
 }
 
 vec3 hsv2rgb(vec3 c) {
@@ -196,10 +251,7 @@ vec4 getTextureDispersion(sampler2D tex1, sampler2D tex2, float mixRate, vec2 of
 
 void fragment() {
     vec2 resolution1x = u_resolution.xy / u_dpr;
-    vec2 center = u_resolution.xy * 0.5;
-    vec2 p1 = vec2(0.0);
-    vec2 p2 = u_mouseSpring;
-    float merged = mainSDF(p1, p2, FRAGCOORD.xy);
+    float merged = mainSDF(FRAGCOORD.xy);
     
     vec4 outColor;
     
@@ -218,7 +270,7 @@ void fragment() {
         outColor = vec4(col, 1.0);
     } else if (STEP <= 2) {
         if (merged < 0.0) {
-            vec2 normal = getNormal(p1, p2, FRAGCOORD.xy);
+            vec2 normal = getNormal(FRAGCOORD.xy);
             float angle = atan(normal.y, normal.x);
             float hue = (angle < 0.0 ? angle + 2.0 * PI : angle) / (2.0 * PI);
             vec3 normalColor = hsv2rgb(vec3(hue, 1.0, 1.0));
@@ -245,7 +297,7 @@ void fragment() {
                 outColor = mix(outColor, vec4(u_tint.rgb, 1.0), u_tint.a * 0.8);
             } else {
                 float edgeH = nmerged / u_refThickness;
-                vec2 normal = getNormal(p1, p2, FRAGCOORD.xy);
+                vec2 normal = getNormal(FRAGCOORD.xy);
                 
                 vec4 blurredPixel = getTextureDispersion(
                     u_bg,
@@ -290,11 +342,14 @@ void fragment() {
                 outColor = mix(outColor, vec4(LCH_TO_SRGB(glareTintLCH), 1.0), glareAngleFactor * glareGeoFactor * length(normal));
             }
         } else {
-        outColor = texture(u_bg, UV);
+            outColor = texture(u_bg, UV);
+        }
+    
+        float dx = dFdx(merged);
+        float dy = dFdy(merged);
+        float aaWidth = sqrt(dx * dx + dy * dy) * 2.0;
+        outColor = mix(outColor, texture(u_bg, UV), smoothstep(-aaWidth, aaWidth, merged));
     }
     
-    outColor = mix(outColor, texture(u_bg, UV), smoothstep(-0.001, 0.001, merged));
-}
-
-COLOR = outColor;
+    COLOR = outColor;
 }

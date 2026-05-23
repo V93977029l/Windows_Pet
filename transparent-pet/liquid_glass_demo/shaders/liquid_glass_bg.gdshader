@@ -2,14 +2,8 @@ shader_type canvas_item;
 
 uniform vec2 u_resolution;
 uniform float u_dpr;
-uniform vec2 u_mouse;
-uniform vec2 u_mouseSpring;
 uniform float u_time;
-uniform float u_mergeRate;
-uniform float u_shapeWidth;
-uniform float u_shapeHeight;
-uniform float u_shapeRadius;
-uniform float u_shapeRoundness;
+
 uniform float u_shadowExpand;
 uniform float u_shadowFactor;
 uniform vec2 u_shadowPosition;
@@ -17,7 +11,8 @@ uniform int u_bgType;
 uniform sampler2D u_bgTexture;
 uniform float u_bgTextureRatio;
 uniform int u_bgTextureReady;
-uniform int u_showShape1;
+
+uniform sampler2D u_shapeTexture;
 
 float chessboard(vec2 uv, float size, int mode) {
     float yBars = step(size * 2.0, mod(uv.y * 2.0, size * 4.0));
@@ -33,56 +28,8 @@ float chessboard(vec2 uv, float size, int mode) {
 }
 
 float halfColor(vec2 uv) {
-    return step(0.5, uv.y);
-}
-
-float sdCircle(vec2 p, float r) {
-    return length(p) - r;
-}
-
-float superellipseCornerSDF(vec2 p, float r, float n) {
-    p = abs(p);
-    float v = pow(pow(p.x, n) + pow(p.y, n), 1.0 / n);
-    return v - r;
-}
-
-float roundedRectSDF(vec2 p, vec2 center, float width, float height, float cornerRadius, float n) {
-    p -= center;
-    float cr = cornerRadius * u_dpr;
-    vec2 d = abs(p) - vec2(width * u_dpr, height * u_dpr) * 0.5;
-    
-    float dist;
-    if (d.x > -cr && d.y > -cr) {
-        vec2 cornerCenter = sign(p) * (vec2(width * u_dpr, height * u_dpr) * 0.5 - vec2(cr));
-        vec2 cornerP = p - cornerCenter;
-        dist = superellipseCornerSDF(cornerP, cr, n);
-    } else {
-        dist = min(max(d.x, d.y), 0.0) + length(max(d, vec2(0.0)));
-    }
-    
-    return dist;
-}
-
-float smin(float a, float b, float k) {
-    float h = clamp(0.5 + 0.5 * (b - a) / k, 0.0, 1.0);
-    return mix(b, a, h) - k * h * (1.0 - h);
-}
-
-float mainSDF(vec2 p1, vec2 p2, vec2 p) {
-    vec2 p1n = (p - vec2(0.0)) / u_resolution.y;
-    vec2 p2n = (p - p2) / u_resolution.y;
-    
-    float d1 = u_showShape1 == 1 ? sdCircle(p1n, 100.0 * u_dpr / u_resolution.y) : 1.0;
-    float d2 = roundedRectSDF(
-        p2n,
-        vec2(0.0),
-        u_shapeWidth / u_resolution.y,
-        u_shapeHeight / u_resolution.y,
-        u_shapeRadius / u_resolution.y,
-        u_shapeRoundness
-    );
-    
-    return smin(d1, d2, u_mergeRate);
+    // 真正的渐变，使用 smoothstep 平滑过渡
+    return smoothstep(0.35, 0.65, uv.y);
 }
 
 vec2 getCoverUV(vec2 uv, float canvasAspect, float textureAspect) {
@@ -114,7 +61,7 @@ void fragment() {
     } else if (u_bgType <= 2) {
         bgColor = vec3(halfColor(FRAGCOORD.xy / u_resolution) * 0.6 + 0.3);
     } else if (u_bgType <= 3) {
-        bgAlpha = 0.0; // 透明背景
+        bgAlpha = 0.0;
     } else if (u_bgType <= 11) {
         if (u_bgTextureReady != 1) {
             bgColor = vec3(1.0 - chessboard(FRAGCOORD.xy / u_dpr, 20.0, 2) / 4.0);
@@ -124,12 +71,8 @@ void fragment() {
         }
     }
     
-    vec2 center = u_resolution.xy * 0.5;
-    vec2 p1 = vec2(0.0);
-    vec2 p2 = u_mouseSpring;
-    
-    float merged = mainSDF(p1, p2, FRAGCOORD.xy);
-    float shadow = exp(-1.0 / u_shadowExpand * abs(merged) * resolution1x.y) * 0.6 * u_shadowFactor;
+    float shapeValue = texture(u_shapeTexture, UV).r;
+    float shadow = exp(-1.0 / u_shadowExpand * shapeValue * resolution1x.y) * 0.6 * u_shadowFactor;
     
     COLOR = vec4(bgColor - vec3(shadow), bgAlpha);
 }
