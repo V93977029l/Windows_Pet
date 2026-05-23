@@ -1,6 +1,8 @@
 {
 	"godotTools.editorPath.godot4": "f:\\SteamLibrary\\steamapps\\common\\Godot Engine\\Godot_v4.5-stable_mono_win64.exe",
 	"files.exclude": {
-		"**/*.uid": true
+		"**/*.uid": true,
+		".obsidian": true,
+		"**/.godot": true
 	}
 }
