@@ -86,21 +86,17 @@ bool MousePassthrough::get_mouse_passthrough() const {
  * 当has_opaque_pixel为false时，启用鼠标穿透（窗口可以穿透）
  */
 void MousePassthrough::update_mouse_passthrough(bool has_opaque_pixel) {
-    // 检查鼠标穿透是否启用
     if (!mouse_passthrough_enabled) {
         return;
     }
 
 #ifdef _WIN32
-    // 使用存储的窗口句柄
     HWND hwnd = nullptr;
     
     if (window_handle == 0) {
-        // 尝试通过标题获取窗口句柄
         if (!window_title.is_empty()) {
             hwnd = FindWindowW(nullptr, (LPCWSTR)window_title.utf16().get_data());
             if (hwnd == nullptr) {
-                // 尝试添加DEBUG后缀
                 godot::String debug_title = window_title + " (DEBUG)";
                 hwnd = FindWindowW(nullptr, (LPCWSTR)debug_title.utf16().get_data());
             }
@@ -110,31 +106,27 @@ void MousePassthrough::update_mouse_passthrough(bool has_opaque_pixel) {
     }
     
     if (hwnd == nullptr) {
-        godot::print_line(godot::String::utf8("[插件:鼠标穿透] 未找到窗口句柄"));
         return;
     }
     
-    // 获取当前窗口样式
     LONG ex_style = GetWindowLong(hwnd, GWL_EXSTYLE);
 
     if (has_opaque_pixel) {
-        // 禁用鼠标穿透
         ex_style &= ~WS_EX_TRANSPARENT;
     } else {
-        // 启用鼠标穿透
         ex_style |= WS_EX_TRANSPARENT;
         ex_style |= WS_EX_LAYERED;
     }
     
-    // 设置新的窗口样式
+    if (hide_taskbar) {
+        ex_style |= WS_EX_TOOLWINDOW;
+        ex_style &= ~WS_EX_APPWINDOW;
+    }
+    
     LONG result = SetWindowLong(hwnd, GWL_EXSTYLE, ex_style);
     
     if (result != 0) {
-        // 更新窗口以应用更改
         SetWindowPos(hwnd, nullptr, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
-        godot::print_line(godot::String::utf8("[插件:鼠标穿透] ") + (has_opaque_pixel ? godot::String::utf8("禁用穿透") : godot::String::utf8("启用穿透")) + godot::String::utf8(" ✅"));
-    } else {
-        godot::print_line(godot::String::utf8("[插件:鼠标穿透] ") + (has_opaque_pixel ? godot::String::utf8("禁用穿透") : godot::String::utf8("启用穿透")) + godot::String::utf8(" ❌"));
     }
 #endif
 }
@@ -146,15 +138,12 @@ void MousePassthrough::update_mouse_passthrough(bool has_opaque_pixel) {
  */
 void MousePassthrough::reset_mouse_passthrough() {
 #ifdef _WIN32
-    // 使用存储的窗口句柄
     HWND hwnd = nullptr;
     
     if (window_handle == 0) {
-        // 尝试通过标题获取窗口句柄
         if (!window_title.is_empty()) {
             hwnd = FindWindowW(nullptr, (LPCWSTR)window_title.utf16().get_data());
             if (hwnd == nullptr) {
-                // 尝试添加DEBUG后缀
                 godot::String debug_title = window_title + " (DEBUG)";
                 hwnd = FindWindowW(nullptr, (LPCWSTR)debug_title.utf16().get_data());
             }
@@ -164,20 +153,18 @@ void MousePassthrough::reset_mouse_passthrough() {
     }
     
     if (hwnd == nullptr) {
-        godot::print_line(godot::String::utf8("[插件:鼠标穿透] 未找到窗口句柄，无法重置鼠标穿透"));
         return;
     }
     
-    godot::print_line(godot::String::utf8("[插件:鼠标穿透] 重置鼠标穿透状态"));
-    
-    // 禁用鼠标穿透
     LONG ex_style = GetWindowLong(hwnd, GWL_EXSTYLE);
     ex_style &= ~WS_EX_TRANSPARENT;
+    if (hide_taskbar) {
+        ex_style |= WS_EX_TOOLWINDOW;
+        ex_style &= ~WS_EX_APPWINDOW;
+    }
     SetWindowLong(hwnd, GWL_EXSTYLE, ex_style);
     
-    // 更新窗口以应用更改
     SetWindowPos(hwnd, nullptr, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
-    godot::print_line(godot::String::utf8("[插件:鼠标穿透] 鼠标穿透状态已重置"));
 #endif
 }
 
@@ -187,6 +174,7 @@ void MousePassthrough::reset_mouse_passthrough() {
  * 通过添加 WS_EX_TOOLWINDOW 样式使窗口不在任务栏显示
  */
 void MousePassthrough::hide_taskbar_icon() {
+    hide_taskbar = true;
 #ifdef _WIN32
     HWND hwnd = nullptr;
 
@@ -203,12 +191,13 @@ void MousePassthrough::hide_taskbar_icon() {
     }
 
     if (hwnd == nullptr) {
-        godot::print_line(godot::String::utf8("[插件:鼠标穿透] 未找到窗口句柄，无法隐藏任务栏图标"));
+        godot::print_line(godot::String::utf8("[插件:鼠标穿透] hide_taskbar_icon: 暂未找到窗口，将在每帧更新时自动重试"));
         return;
     }
 
     LONG ex_style = GetWindowLongW(hwnd, GWL_EXSTYLE);
     ex_style |= WS_EX_TOOLWINDOW;
+    ex_style &= ~WS_EX_APPWINDOW;
     SetWindowLongW(hwnd, GWL_EXSTYLE, ex_style);
     SetWindowPos(hwnd, nullptr, 0, 0, 0, 0,
         SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED | SWP_NOACTIVATE);

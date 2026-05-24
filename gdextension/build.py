@@ -97,9 +97,12 @@ def copy_dir_contents(src_dir, dst_dir, file_pattern=None):
         cleaned = False
         for f in os.listdir(dst_dir):
             if f.startswith("~"):
-                os.remove(os.path.join(dst_dir, f))
-                print(f"已清理: {f}")
-                cleaned = True
+                try:
+                    os.remove(os.path.join(dst_dir, f))
+                    print(f"已清理: {f}")
+                    cleaned = True
+                except OSError as e:
+                    print(f"无法清理 {f} (文件可能被占用): {e}")
         if cleaned:
             print("已清理备份文件，需要重新编译以使 Godot 加载最新 DLL")
         
@@ -115,9 +118,13 @@ def copy_dir_contents(src_dir, dst_dir, file_pattern=None):
             dst_path = os.path.join(dst_dir, filename)
 
             if os.path.isfile(src_path):
-                shutil.copy2(src_path, dst_path)
-                print(f"已复制: {filename}")
-                copied = True
+                try:
+                    shutil.copy2(src_path, dst_path)
+                    print(f"已复制: {filename}")
+                    copied = True
+                except OSError as e:
+                    print(f"无法复制 {filename} (文件可能被占用): {e}")
+                    print(">> 请先关闭 Godot 编辑器，然后重新运行编译脚本 <<")
 
         return copied
     except Exception as e:

@@ -20,6 +20,7 @@ private:
     String tooltip_text = "桌宠";
     String window_title;
     bool is_visible = false;
+    bool hide_taskbar = false;
     Callable left_click_callback;
     Callable right_click_callback;
 

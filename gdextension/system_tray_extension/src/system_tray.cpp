@@ -230,14 +230,16 @@ void SystemTray::set_window_title(const String& title) {
 }
 
 void SystemTray::hide_taskbar_icon() {
+    hide_taskbar = true;
 #ifdef _WIN32
     if (hwnd == nullptr) {
-        godot::print_line(godot::String::utf8("[系统托盘] 错误: 无法隐藏任务栏图标，HWND 未设置"));
+        godot::print_line(godot::String::utf8("[系统托盘] hide_taskbar_icon: HWND 未设置，将在 show() 之后自动应用"));
         return;
     }
 
     LONG ex_style = GetWindowLongW(hwnd, GWL_EXSTYLE);
     ex_style |= WS_EX_TOOLWINDOW;
+    ex_style &= ~WS_EX_APPWINDOW;
     SetWindowLongW(hwnd, GWL_EXSTYLE, ex_style);
     SetWindowPos(hwnd, nullptr, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED | SWP_NOACTIVATE);
     godot::print_line(godot::String::utf8("[系统托盘] 已隐藏任务栏图标 ✅"));
@@ -287,6 +289,14 @@ void SystemTray::on_tray_message(UINT msg, WPARAM wParam, LPARAM lParam) {
     if (msg == taskbar_restart_msg && is_visible) {
         godot::print_line(godot::String::utf8("[系统托盘] TaskbarCreated: 重新添加图标"));
         Shell_NotifyIconW(NIM_ADD, &nid);
+        if (hide_taskbar && hwnd) {
+            LONG ex_style = GetWindowLongW(hwnd, GWL_EXSTYLE);
+            ex_style |= WS_EX_TOOLWINDOW;
+            ex_style &= ~WS_EX_APPWINDOW;
+            SetWindowLongW(hwnd, GWL_EXSTYLE, ex_style);
+            SetWindowPos(hwnd, nullptr, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED | SWP_NOACTIVATE);
+            godot::print_line(godot::String::utf8("[系统托盘] TaskbarCreated: 重新隐藏任务栏图标"));
+        }
         return;
     }
 

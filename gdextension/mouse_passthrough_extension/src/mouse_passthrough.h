@@ -23,6 +23,11 @@ private:
     bool mouse_passthrough_enabled = true;
     
     /**
+     * @brief 是否已请求隐藏任务栏图标
+     */
+    bool hide_taskbar = false;
+    
+    /**
      * @brief 窗口句柄
      */
     uint64_t window_handle = 0;
