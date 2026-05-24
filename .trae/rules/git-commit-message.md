@@ -3,4 +3,5 @@ alwaysApply: true
 scene: git_message
 ---
 
-用中文生成提交信息
+使用无窗口模式调试Godot项目在每次编写完成后看看能否正常编译:F:\SteamLibrary\steamapps\common\Godot Engine
+使用中文思考和回答问题

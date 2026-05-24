@@ -2,6 +2,7 @@ extends RefCounted
 
 var config: ConfigFile = ConfigFile.new()
 var config_path: String = "res://data/pet_config.cfg"
+var save_path: String = "user://pet_config.cfg"
 
 var pet_scale: float = 1.0
 var material_preset: String = "blue_slime"
@@ -14,11 +15,16 @@ func _init():
 	load_config()
 
 func load_config():
-	var err = config.load(config_path)
+	var err = OK
+	if FileAccess.file_exists(save_path):
+		err = config.load(save_path)
+	else:
+		err = config.load(config_path)
+
 	if err == OK:
-		print("✅ [配置] 配置文件加载成功: ", config_path)
 		_read_pet_section()
 		_read_window_section()
+		print("✅ [配置] 配置文件加载成功")
 	else:
 		print("⚠️ [配置] 配置文件不存在或加载失败，使用默认值")
 		_save_config()
@@ -39,14 +45,12 @@ func _save_config():
 	config.set_value("window", "initial_x", window_initial_x)
 	config.set_value("window", "initial_y", window_initial_y)
 	config.set_value("window", "always_on_top", window_always_on_top)
-	
-	DirAccess.make_dir_recursive_absolute("res://data")
-	
-	var err = config.save(config_path)
+
+	var err = config.save(save_path)
 	if err == OK:
-		print("✅ [配置] 配置文件已保存: ", config_path)
+		print("✅ [配置] 配置文件已保存: ", save_path)
 	else:
-		print("❌ [配置] 配置文件保存失败")
+		printerr("[配置] 配置文件保存失败: ", save_path)
 
 func save_config():
 	_save_config()

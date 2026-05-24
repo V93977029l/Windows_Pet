@@ -23,7 +23,7 @@ func load_svg_content():
 		file.close()
 		print("✅ [矢量渲染] SVG内容加载成功")
 	else:
-		print("❌ [矢量渲染] 无法读取SVG文件: ", svg_path)
+		print("⚠️ [矢量渲染] 无法读取原始SVG，仅供编辑器模式使用")
 
 func update_scale(new_scale: float):
 	if sprite:

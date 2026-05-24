@@ -163,8 +163,11 @@ def build_godot_cpp(godot_cpp_dir, platform, target, clean=False, force=False, j
     if jobs is None:
         jobs = os.cpu_count() or 4
     
-    lib_name = f"libgodot-cpp.{platform}.{target}.x86_64.lib"
+    lib_name = f"libgodot-cpp.{platform}.{target}.x86_64.a"
     target_lib = os.path.join(godot_cpp_dir, "bin", lib_name)
+    if not os.path.exists(target_lib):
+        lib_name = f"libgodot-cpp.{platform}.{target}.x86_64.lib"
+        target_lib = os.path.join(godot_cpp_dir, "bin", lib_name)
     
     if not force and not clean and not need_rebuild([os.path.join(godot_cpp_dir, "src")], target_lib):
         print(f"godot-cpp 缓存有效，跳过编译")

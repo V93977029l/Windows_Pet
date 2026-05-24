@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://dmx6t8k2jhwq7"]
 
-[ext_resource type="Script" uid="uid://bs7ke3xxby1oa" path="res://src/main.gd" id="1"]
+[ext_resource type="Script" path="res://src/main.gd" id="1"]
 [ext_resource type="Script" uid="uid://cc0hkh2866jkv" path="res://liquid_glass_demo/liquid_glass_renderer.gd" id="2"]
 [ext_resource type="Script" uid="uid://b6l40hej6t5s2" path="res://liquid_glass_demo/liquid_glass_control_panel.gd" id="3"]
 [ext_resource type="Shader" uid="uid://cmpqq6g7a82sj" path="res://liquid_glass_demo/shaders/liquid_glass_bg.gdshader" id="4"]

@@ -51,3 +51,5 @@ gdextension/godot-cpp/*
 gdextension/godot-cpp/bin/*
 !gdextension/godot-cpp/bin/*.lib
 !gdextension/godot-cpp/bin/*.a
+
+export/

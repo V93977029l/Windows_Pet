@@ -43,8 +43,11 @@ func _create_tray():
 	system_tray.set_window_title("TransparentPet")
 	system_tray.create("桌宠")
 	
-	var ico_path = ProjectSettings.globalize_path("res://assets/icons/app_icon.ico")
-	system_tray.set_icon(ico_path)
+	var ico_path = _get_icon_path("res://assets/icons/app_icon.ico")
+	if not ico_path.is_empty():
+		system_tray.set_icon(ico_path)
+	else:
+		print("⚠️ [托盘] 图标文件不可用，使用默认图标")
 	
 	system_tray.set_left_click_callback(Callable(self, "_on_tray_left_click"))
 	system_tray.set_right_click_callback(Callable(self, "_on_tray_menu_exit"))
@@ -53,6 +56,47 @@ func _create_tray():
 	system_tray.hide_taskbar_icon()
 	
 	print("✅ [托盘] 原生系统托盘已创建")
+
+func _get_icon_path(p_res_path: String) -> String:
+	var file_name = p_res_path.get_file()
+	var user_path = "user://" + file_name
+
+	if FileAccess.file_exists(user_path):
+		var path = ProjectSettings.globalize_path(user_path)
+		if FileAccess.file_exists(path):
+			return path
+
+	if OS.has_feature("editor"):
+		var global_path = ProjectSettings.globalize_path(p_res_path)
+		if FileAccess.file_exists(global_path):
+			return global_path
+
+	var exe_dir = OS.get_executable_path().get_base_dir()
+	var local_path = exe_dir.path_join(file_name)
+	if FileAccess.file_exists(local_path):
+		return local_path
+
+	var file = FileAccess.open(p_res_path, FileAccess.READ)
+	if not file:
+		printerr("[托盘] 无法读取图标: ", p_res_path)
+		return ""
+
+	var data = file.get_buffer(file.get_length())
+	file.close()
+
+	DirAccess.make_dir_recursive_absolute(OS.get_user_data_dir())
+
+	var out = FileAccess.open(user_path, FileAccess.WRITE)
+	if not out:
+		printerr("[托盘] 无法写入临时图标: ", user_path)
+		return ""
+
+	out.store_buffer(data)
+	out.close()
+
+	var result = ProjectSettings.globalize_path(user_path)
+	print("📁 [托盘] 图标已提取到: ", result)
+	return result
 
 func _on_tray_left_click():
 	print("🖱️ [托盘] 左键点击 → 设置")
