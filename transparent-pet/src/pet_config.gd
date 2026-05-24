@@ -11,6 +11,8 @@ var window_initial_x: int = -1
 var window_initial_y: int = -1
 var window_always_on_top: bool = true
 
+var autostart_enabled: bool = false
+
 func _init():
 	load_config()
 
@@ -24,6 +26,7 @@ func load_config():
 	if err == OK:
 		_read_pet_section()
 		_read_window_section()
+		_read_autostart_section()
 		print("✅ [配置] 配置文件加载成功")
 	else:
 		print("⚠️ [配置] 配置文件不存在或加载失败，使用默认值")
@@ -39,12 +42,16 @@ func _read_window_section():
 	window_initial_y = config.get_value("window", "initial_y", -1)
 	window_always_on_top = config.get_value("window", "always_on_top", true)
 
+func _read_autostart_section():
+	autostart_enabled = config.get_value("autostart", "enabled", false)
+
 func _save_config():
 	config.set_value("pet", "scale", pet_scale)
 	config.set_value("pet", "material_preset", material_preset)
 	config.set_value("window", "initial_x", window_initial_x)
 	config.set_value("window", "initial_y", window_initial_y)
 	config.set_value("window", "always_on_top", window_always_on_top)
+	config.set_value("autostart", "enabled", autostart_enabled)
 
 	var err = config.save(save_path)
 	if err == OK:
@@ -64,6 +71,8 @@ func print_config():
 	print("    ├── initial_x: ", window_initial_x)
 	print("    ├── initial_y: ", window_initial_y)
 	print("    └── always_on_top: ", window_always_on_top)
+	print("[autostart]")
+	print("    └── enabled: ", autostart_enabled)
 	print()
 
 func get_material_name() -> String:

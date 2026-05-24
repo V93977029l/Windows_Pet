@@ -110,6 +110,19 @@ text = "窗口置顶"
 layout_mode = 2
 text = "启用窗口置顶"
 
+[node name="AutoStart" type="VBoxContainer" parent="Background/MainHBox/CenterVBox" unique_id=2100000001]
+custom_minimum_size = Vector2(0, 50)
+layout_mode = 2
+
+[node name="Label6" type="Label" parent="Background/MainHBox/CenterVBox/AutoStart" unique_id=2100000002]
+custom_minimum_size = Vector2(0, 24)
+layout_mode = 2
+text = "开机自启动"
+
+[node name="Check" type="CheckButton" parent="Background/MainHBox/CenterVBox/AutoStart" unique_id=2100000003]
+layout_mode = 2
+text = "启用开机自启动"
+
 [node name="HSeparator2" type="HSeparator" parent="Background/MainHBox/CenterVBox" unique_id=1147612808]
 custom_minimum_size = Vector2(0, 10)
 layout_mode = 2
