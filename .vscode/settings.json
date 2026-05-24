@@ -3,6 +3,7 @@
 	"files.exclude": {
 		"**/*.uid": true,
 		".obsidian": true,
-		"**/.godot": true
+		"**/.godot": true,
+		"**/*.o": true
 	}
 }
