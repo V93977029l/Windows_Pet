@@ -2,6 +2,7 @@ class_name MouseManager
 
 var passthrough_manager = null
 var pet_node: Node2D = null
+var glass_node: Node2D = null
 var parent_node: Node2D = null
 var last_is_over_sprite = false
 
@@ -10,14 +11,17 @@ func init(p_node: Node2D, p_pet_node: Node2D, p_passthrough_manager):
 	pet_node = p_pet_node
 	passthrough_manager = p_passthrough_manager
 
-func is_mouse_over_sprite() -> bool:
-	if not pet_node:
+func set_glass_sprite(p_glass_sprite: Sprite2D):
+	glass_node = p_glass_sprite
+
+func _is_mouse_over_node(node: Node2D) -> bool:
+	if not node:
 		return false
 	
 	var mouse_pos = parent_node.get_global_mouse_position()
 	
-	if pet_node is Sprite2D:
-		var sprite = pet_node as Sprite2D
+	if node is Sprite2D:
+		var sprite = node as Sprite2D
 		if not sprite.texture:
 			return false
 		
@@ -41,8 +45,8 @@ func is_mouse_over_sprite() -> bool:
 		var color = image.get_pixel(pixel_pos.x, pixel_pos.y)
 		return color.a > 0
 		
-	elif pet_node is Polygon2D:
-		var polygon = pet_node as Polygon2D
+	elif node is Polygon2D:
+		var polygon = node as Polygon2D
 		var local_pos = polygon.to_local(mouse_pos)
 		
 		var min_x = INF
@@ -61,15 +65,18 @@ func is_mouse_over_sprite() -> bool:
 	
 	return false
 
+func is_mouse_over_any() -> bool:
+	return _is_mouse_over_node(pet_node) or _is_mouse_over_node(glass_node)
+
 func update_mouse_passthrough():
 	if passthrough_manager:
-		var is_over_sprite = is_mouse_over_sprite()
+		var is_over = is_mouse_over_any()
 		
-		if is_over_sprite != last_is_over_sprite:
-			if is_over_sprite:
+		if is_over != last_is_over_sprite:
+			if is_over:
 				print("📋 [桌宠鼠标] 鼠标进入 - 禁用穿透")
 			else:
 				print("📋 [桌宠鼠标] 鼠标离开 - 启用穿透")
-			last_is_over_sprite = is_over_sprite
+			last_is_over_sprite = is_over
 			
-			passthrough_manager.update_mouse_passthrough(is_over_sprite)
+			passthrough_manager.update_mouse_passthrough(is_over)
