@@ -396,7 +396,9 @@ func _on_draggable_input_event(_viewport: Node, event: InputEvent, _shape_idx: i
 # =============================================================================
 func _bring_to_front(target_id: String):
 	for entry in draggable_list:
-		entry.render.z_index = 1 if entry.id == target_id else 0
+		var new_z = 1 if entry.id == target_id else 0
+		entry.render.z_index = new_z
+		entry.sprite.z_index = new_z
 	# 重新排序以保持碰撞检测顺序与渲染顺序一致
 	draggable_list.sort_custom(func(a, b): return a.sprite.z_index > b.sprite.z_index)
 
