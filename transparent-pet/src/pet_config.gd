@@ -59,10 +59,11 @@ var save_path: String = "user://pet_config.cfg"
 ## 默认值 1.0 表示原始大小（100%）
 var pet_scale: float = 1.0
 
-## 当前使用的材质预设id
-## 默认值 "slime_1" 对应 "1号史莱姆(普通)" 预设
-## 该id用于从 MaterialRegistry 中查找对应的材质配置
-var material_preset: String = "slime_1"
+## 1号史莱姆使用的材质预设id
+var slime_1_material: String = "slime_1"
+
+## 2号史莱姆使用的材质预设id
+var slime_2_material: String = "slime_2"
 
 ## =========================================================================
 ## [window] 栏目 —— 窗口相关配置
@@ -136,15 +137,13 @@ func load_config():
 ## 读取 [pet] 配置段
 ## 【读取的配置项】
 ##   scale: 精灵缩放倍率
-##   material_preset: 材质预设id
-## 【安全措施】
-##   - 使用 config.get_value() 的第三个参数提供默认值
-##   - scale 使用 clamp() 限幅到 [0.2, 4.0]，防止异常配置值
-##   - material_preset 默认值为 "slime_1"
+##   slime_1_material: 1号史莱姆材质
+##   slime_2_material: 2号史莱姆材质
 func _read_pet_section():
 	pet_scale = config.get_value("pet", "scale", 1.0)
 	pet_scale = clamp(pet_scale, 0.2, 4.0)
-	material_preset = config.get_value("pet", "material_preset", "slime_1")
+	slime_1_material = config.get_value("pet", "slime_1_material", "slime_1")
+	slime_2_material = config.get_value("pet", "slime_2_material", "slime_2")
 
 
 ## 读取 [window] 配置段
@@ -183,7 +182,8 @@ func _read_autostart_section():
 ##   配置保存失败不应该影响桌宠的正常运行。
 func _save_config():
 	config.set_value("pet", "scale", pet_scale)
-	config.set_value("pet", "material_preset", material_preset)
+	config.set_value("pet", "slime_1_material", slime_1_material)
+	config.set_value("pet", "slime_2_material", slime_2_material)
 	config.set_value("window", "initial_x", window_initial_x)
 	config.set_value("window", "initial_y", window_initial_y)
 	config.set_value("window", "always_on_top", window_always_on_top)
@@ -210,7 +210,8 @@ func print_config():
 	print("\n📋 [配置] 当前配置参数:")
 	print("├── [pet]")
 	print("│   ├── scale: ", pet_scale)
-	print("│   └── material_preset: ", material_preset)
+	print("│   ├── slime_1_material: ", slime_1_material)
+	print("│   └── slime_2_material: ", slime_2_material)
 	print("└── [window]")
 	print("    ├── initial_x: ", window_initial_x)
 	print("    ├── initial_y: ", window_initial_y)

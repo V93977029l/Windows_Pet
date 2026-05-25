@@ -233,13 +233,12 @@ func _on_tray_exit_requested():
 #   这种回退机制确保即使配置文件损坏，桌宠也能以默认外观启动
 # =============================================================================
 func init_materials():
-	var preset_id = config.material_preset
+	# 初始化1号史莱姆材质
+	var preset_id = config.slime_1_material
 	var preset = material_manager.get_preset_by_id(preset_id)
 	if preset:
 		material_manager.apply_preset(preset)
 	else:
-		# 回退机制：当前预设无效时使用默认的蓝色史莱姆外观
-		# 这是一个安全网，防止因配置错误导致精灵不可见
 		var fallback = material_manager.get_preset_by_id("slime_1")
 		material_manager.apply_preset(fallback)
 
@@ -290,7 +289,9 @@ func center_sprite():
 # 返回值: String - 当前激活的材质预设名称
 # 用途: 供外部（如设置窗口）查询当前使用的外观主题
 # =============================================================================
-func get_current_material_name() -> String:
+func get_current_material_name(slime_id: String = "slime_1") -> String:
+	if slime_id == "slime_2":
+		return "2号史莱姆(液态玻璃)"
 	return material_manager.get_current_material_name()
 
 # =============================================================================
