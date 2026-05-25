@@ -45,6 +45,9 @@ var config = null
 ## 重置按钮
 @onready var reset_button: Button = $Background/MainHBox/CenterVBox/Buttons/Reset
 
+## 抛射参数设置按钮
+@onready var throw_btn: Button = $Background/MainHBox/CenterVBox/ThrowBtn
+
 ## =========================================================================
 ## 成员变量
 ## =========================================================================
@@ -53,19 +56,19 @@ var config = null
 var _is_updating_ui: bool = false
 ## 当前选中的史莱姆索引 (0=slime_1, 1=slime_2)
 var _current_slime_index: int = 0
+## 是否有待处理的初始化
+var _pending_setup: bool = false
 
 ## =========================================================================
 ## 初始化方法
 ## =========================================================================
 
-## 设置主节点引用并初始化UI
+## 设置主节点引用（延迟到_ready中初始化UI）
 func set_pet_node(pet: Node2D):
 	pet_node = pet
 	if pet_node:
 		config = pet_node.config
-		_setup_slime_selector()
-		setup_material_combo()
-		load_config()
+		_pending_setup = true
 
 ## 窗口就绪回调
 func _ready():
@@ -73,7 +76,12 @@ func _ready():
 	transparent = false
 	always_on_top = true
 	
-	setup_connections()
+	if _pending_setup:
+		_setup_slime_selector()
+		setup_material_combo()
+		setup_connections()
+		load_config()
+		_pending_setup = false
 	
 	visible = true
 	await get_tree().process_frame
@@ -102,6 +110,7 @@ func setup_connections():
 	autostart_check.toggled.connect(_on_autostart_changed)
 	save_button.pressed.connect(_on_save)
 	reset_button.pressed.connect(_on_reset)
+	throw_btn.pressed.connect(_on_throw_settings)
 	close_requested.connect(_on_close)
 
 ## 初始化材质选择下拉菜单
@@ -425,3 +434,18 @@ func _on_reset():
 ## 窗口关闭的处理
 func _on_close():
 	queue_free()
+
+
+## 打开抛射参数设置弹窗
+func _on_throw_settings():
+	var dialog_scene = load("res://scenes/throw_settings_dialog.tscn")
+	if dialog_scene:
+		var dialog = dialog_scene.instantiate()
+		get_tree().root.add_child(dialog)
+		dialog.set_pet_node(pet_node)
+
+		var window_pos = get_position()
+		var window_size = get_size()
+		dialog.position = Vector2i(window_pos.x + window_size.x + 10, window_pos.y)
+
+		print("✅ [设置] 打开抛射参数设置弹窗")

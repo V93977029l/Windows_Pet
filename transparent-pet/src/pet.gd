@@ -164,6 +164,15 @@ func _ready():
 	# 传入 self（当前 Node2D），让 drag_controller 可以访问全局坐标系统
 	drag_controller.init(self)
 
+	# 从配置中同步抛射参数到拖拽控制器
+	drag_controller.update_throw_params(
+		config.throw_gravity,
+		config.throw_min_speed,
+		config.throw_max_speed,
+		config.throw_multiplier,
+		config.throw_enabled
+	)
+
 	# 初始化鼠标穿透管理器
 	# 让窗口在非精灵区域对鼠标透明（点击穿透到桌面应用）
 	passthrough_manager.init(self)
@@ -197,6 +206,9 @@ func _ready():
 	# 注册所有可拖拽物体到碰撞检测链
 	# 必须在所有精灵和渲染器初始化之后调用
 	_register_draggables()
+
+	# 启动时默认打开设置窗口（延迟调用避免在_ready阶段冲突）
+	open_settings_window.call_deferred()
 
 # =============================================================================
 # _on_tray_settings_requested() - 托盘"设置"信号回调
@@ -306,9 +318,9 @@ func get_current_material_name(slime_id: String = "slime_1") -> String:
 #   3. 更新鼠标穿透区域（响应精灵移动）
 # 注意: 玻璃项使用物理像素坐标，所以需要乘以 DPR
 # =============================================================================
-func _process(_delta: float):
+func _process(delta: float):
 	# 拖拽更新：如果当前有精灵正在被拖拽，drag_controller 会更新其位置
-	drag_controller.update_drag()
+	drag_controller.update_drag(delta)
 
 	# 同步玻璃特效项的位置
 	# glass_item 使用物理像素坐标（用于 shader 渲染），
@@ -483,12 +495,11 @@ func open_settings_window():
 	var settings_scene = load("res://scenes/settings_window.tscn")
 	if settings_scene:
 		var settings_window = settings_scene.instantiate()
-		get_tree().root.add_child(settings_window)
 
-		# 依赖注入：将主控制器引用传递给设置窗口
 		settings_window.set_pet_node(self)
 
-		# 窗口定位：以精灵位置为基准，向右偏移 50px，向上偏移 130px
+		get_tree().root.add_child(settings_window)
+
 		var pet_pos = slime_1_sprite.global_position
 		var settings_pos = Vector2(pet_pos.x + 50, pet_pos.y - 130)
 		settings_window.position = settings_pos

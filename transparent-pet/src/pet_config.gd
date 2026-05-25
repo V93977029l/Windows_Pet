@@ -94,6 +94,25 @@ var window_always_on_top: bool = true
 ## 默认 false，由用户手动开启
 var autostart_enabled: bool = false
 
+## =========================================================================
+## [throw] 栏目 —— 抛射物理相关配置
+## =========================================================================
+
+## 是否启用抛射效果
+var throw_enabled: bool = true
+
+## 重力加速度（像素/秒²）
+var throw_gravity: float = 800.0
+
+## 最小抛射触发速度（像素/秒）
+var throw_min_speed: float = 350.0
+
+## 最大抛射速度上限（像素/秒）
+var throw_max_speed: float = 800.0
+
+## 抛射速度放大系数
+var throw_multiplier: float = 2.0
+
 
 ## 构造函数
 ## 【核心逻辑】
@@ -128,6 +147,7 @@ func load_config():
 		_read_pet_section()
 		_read_window_section()
 		_read_autostart_section()
+		_read_throw_section()
 		print("✅ [配置] 配置文件加载成功")
 	else:
 		print("⚠️ [配置] 配置文件不存在或加载失败，使用默认值")
@@ -168,6 +188,14 @@ func _read_autostart_section():
 	autostart_enabled = config.get_value("autostart", "enabled", false)
 
 
+func _read_throw_section():
+	throw_enabled = config.get_value("throw", "enabled", true)
+	throw_gravity = config.get_value("throw", "gravity", 800.0)
+	throw_min_speed = config.get_value("throw", "min_speed", 350.0)
+	throw_max_speed = config.get_value("throw", "max_speed", 800.0)
+	throw_multiplier = config.get_value("throw", "multiplier", 2.0)
+
+
 ## 保存配置到文件（内部方法）
 ## 【核心逻辑】
 ##   1. 将所有运行时配置属性写入 config 对象
@@ -188,6 +216,11 @@ func _save_config():
 	config.set_value("window", "initial_y", window_initial_y)
 	config.set_value("window", "always_on_top", window_always_on_top)
 	config.set_value("autostart", "enabled", autostart_enabled)
+	config.set_value("throw", "enabled", throw_enabled)
+	config.set_value("throw", "gravity", throw_gravity)
+	config.set_value("throw", "min_speed", throw_min_speed)
+	config.set_value("throw", "max_speed", throw_max_speed)
+	config.set_value("throw", "multiplier", throw_multiplier)
 
 	var err = config.save(save_path)
 	if err == OK:
@@ -218,6 +251,12 @@ func print_config():
 	print("    └── always_on_top: ", window_always_on_top)
 	print("[autostart]")
 	print("    └── enabled: ", autostart_enabled)
+	print("[throw]")
+	print("    ├── enabled: ", throw_enabled)
+	print("    ├── gravity: ", throw_gravity)
+	print("    ├── min_speed: ", throw_min_speed)
+	print("    ├── max_speed: ", throw_max_speed)
+	print("    └── multiplier: ", throw_multiplier)
 	print()
 
 

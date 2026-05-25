@@ -166,6 +166,12 @@ custom_minimum_size = Vector2(110, 35)
 layout_mode = 2
 text = "恢复默认"
 
+[node name="ThrowBtn" type="Button" parent="Background/MainHBox/CenterVBox" unique_id=3100000001]
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
+size_flags_horizontal = 3
+text = "抛射参数设置"
+
 [node name="BottomSpacer" type="Control" parent="Background/MainHBox/CenterVBox" unique_id=105344302]
 custom_minimum_size = Vector2(0, 30)
 layout_mode = 2
