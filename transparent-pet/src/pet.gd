@@ -363,23 +363,7 @@ func _register_draggables():
 #   - 遍历排序后的列表确保上层精灵优先响应
 #   - _bring_to_front 让被点击的精灵视觉上浮到最上层
 # =============================================================================
-func _on_draggable_input_event(_viewport: Node, event: InputEvent, _shape_idx: int):
-	# 只处理鼠标按钮事件，忽略键盘、手柄等其他输入
-	if not (event is InputEventMouseButton):
-		return
 
-	if event.pressed:
-		# 鼠标按下：查找被点击的精灵
-		for entry in draggable_list:
-			if _mouse_in_sprite(entry.sprite):
-				# 将被点击的精灵提升到最前面
-				_bring_to_front(entry.id)
-				# 开始拖拽该精灵
-				drag_controller.handle_area_input_event(event, entry.sprite)
-				return
-	else:
-		# 鼠标释放：停止拖拽，传入 null 表示无拖拽目标
-		drag_controller.handle_area_input_event(event, null)
 
 # =============================================================================
 # _bring_to_front(target_id) - 将指定精灵提升到最前面
@@ -466,12 +450,16 @@ func _mouse_in_sprite(sprite: Sprite2D) -> bool:
 #     方便用户在项目设置中自定义键位
 # =============================================================================
 func _input(event: InputEvent):
-	# 鼠标左键释放时终止拖拽
-	# 必须在这里处理，因为松开位置可能不在任何 Area2D 上
-	if event is InputEventMouseButton and not event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-		drag_controller.handle_area_input_event(event, null)
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+		if event.pressed:
+			for entry in draggable_list:
+				if _mouse_in_sprite(entry.sprite):
+					_bring_to_front(entry.id)
+					drag_controller.handle_area_input_event(event, entry.sprite)
+					return
+		else:
+			drag_controller.handle_area_input_event(event, null)
 
-	# 快捷键打开设置：由 Input Map 中的 "OpenSettings" action 定义
 	if event.is_action_pressed("OpenSettings"):
 		open_settings_window()
 

@@ -152,5 +152,4 @@ texture = ExtResource("2")
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Slime1/Area2D" unique_id=783787472]
 shape = SubResource("SubResource_circle")
 
-[connection signal="input_event" from="LiquidGlassRenderer/Slime2/Area2D" to="." method="_on_draggable_input_event"]
-[connection signal="input_event" from="Slime1/Area2D" to="." method="_on_draggable_input_event"]
+
