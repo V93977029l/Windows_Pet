@@ -103,19 +103,12 @@ alwaysApply: true
 / (res://)
 |
 ├── core/                  # 核心系统与基础设施 (Core Systems & Infrastructure)
-|
 ├── modules/               # 游戏功能模块 (Gameplay Feature Modules)
-|
 ├── assets/                # 全局共享资源 (Global Shared Assets)
-|
 ├── addons/                # 第三方插件 (Third-party Addons)
-|
 ├── prototypes/            # 原型与实验区 (Prototypes & Sandbox)
-|
 ├── tools/                 # 自定义编辑器工具 (Custom Editor Tools)
-|
 ├── tests/                 # 自动化测试脚本 (Automated Tests)
-|
 └── docs/                  # 项目文档 (Project Documentation)
 ```
 
@@ -167,7 +160,7 @@ core/
 
 这是体现模块化思想的核心。每个子文件夹都是一个垂直切片，包含了一个完整功能所需的一切。
 
-**以 `player` 模块（虽然当前项目是个桌宠项目，没有Player角色）为例：**
+**以 `player` 模块（虽然当前项目是个桌宠项目，没有player角色）为例：**
 
 ```
 modules/
@@ -208,9 +201,7 @@ modules/
     *   **公共属性**: 如 `var is_invincible: bool`。
     所有其他模块与`player`模块的交互，**必须且只能**通过`api.gd`中定义的接口进行。这为模块间建立了一道清晰的防火墙，也为未来的AI Agent代码生成提供了可解析的契约。
 
-**预创建的其他游戏必要模块文件夹：**
-
-根据商业游戏项目的常见需求，我们预先创建以下模块文件夹结构，团队可以根据实际项目需求进行增删：
+**以RPG游戏为例，游戏必要模块文件夹：**
 
 ```
 modules/
