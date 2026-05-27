@@ -1,11 +1,11 @@
 [gd_scene format=3 uid="uid://dmx6t8k2jhwq7"]
 
-[ext_resource type="Script" path="res://src/main.gd" id="1"]
-[ext_resource type="Script" uid="uid://cc0hkh2866jkv" path="res://liquid_glass_demo/liquid_glass_renderer.gd" id="2"]
-[ext_resource type="Script" uid="uid://b6l40hej6t5s2" path="res://liquid_glass_demo/liquid_glass_control_panel.gd" id="3"]
-[ext_resource type="Shader" uid="uid://cmpqq6g7a82sj" path="res://liquid_glass_demo/shaders/liquid_glass_bg.gdshader" id="4"]
-[ext_resource type="Shader" uid="uid://cd104jilxxqvg" path="res://liquid_glass_demo/shaders/liquid_glass_blur.gdshader" id="5"]
-[ext_resource type="Shader" uid="uid://brrkuqr4wybx5" path="res://liquid_glass_demo/shaders/liquid_glass_main.gdshader" id="6"]
+[ext_resource type="Script" path="res://prototypes/liquid_glass/scenes/liquid_glass_demo_main.gd" id="1"]
+[ext_resource type="Script" uid="uid://cc0hkh2866jkv" path="res://prototypes/liquid_glass/scripts/liquid_glass_renderer.gd" id="2"]
+[ext_resource type="Script" uid="uid://b6l40hej6t5s2" path="res://prototypes/liquid_glass/scripts/liquid_glass_control_panel.gd" id="3"]
+[ext_resource type="Shader" uid="uid://cmpqq6g7a82sj" path="res://prototypes/liquid_glass/shaders/liquid_glass_bg.gdshader" id="4"]
+[ext_resource type="Shader" uid="uid://cd104jilxxqvg" path="res://prototypes/liquid_glass/shaders/liquid_glass_blur.gdshader" id="5"]
+[ext_resource type="Shader" uid="uid://brrkuqr4wybx5" path="res://prototypes/liquid_glass/shaders/liquid_glass_main.gdshader" id="6"]
 
 [sub_resource type="ShaderMaterial" id="SubResource_bg"]
 shader = ExtResource("4")

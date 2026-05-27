@@ -2,7 +2,7 @@
 alwaysApply: true
 ---
 使用中文进行思考，用中文回答问题。
-每次编辑Godot项目后，需要使用无窗口模式调试Godot项目看看能否正常编译，调试路径为:F:\SteamLibrary\steamapps\common\Godot Engine。
+！重要：每次编辑Godot项目后，需要使用无窗口模式调试Godot项目看看能否正常编译，调试路径为:F:\SteamLibrary\steamapps\common\Godot Engine。
 
 ---
 

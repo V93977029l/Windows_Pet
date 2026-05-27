@@ -50,22 +50,22 @@ extends Node2D
 # -----------------------------------------------------------------------------
 
 # 配置管理器：管理宠物的所有可配置参数（缩放、位置、材质预设等）
-@onready var config = preload("res://src/pet_config.gd").new()
+@onready var config = preload("res://core/autoload/config_manager.gd").new()
 
 # 拖拽控制器：处理鼠标拖拽精灵的物理逻辑（位移计算、边界限制等）
-@onready var drag_controller = preload("res://src/drag_controller.gd").new()
+@onready var drag_controller = preload("res://modules/pet/scripts/drag_controller.gd").new()
 
 # 鼠标穿透管理器：控制窗体在非精灵区域的鼠标穿透行为（让点击穿透到桌面）
 @onready var passthrough_manager = preload("res://addons/mouse_passthrough/mouse_passthrough.gd").new()
 
 # 鼠标交互管理器：统一管理鼠标进入/离开/点击精灵的事件分发
-@onready var mouse_manager = preload("res://src/mouse_manager.gd").new()
+@onready var mouse_manager = preload("res://modules/pet/scripts/mouse_manager.gd").new()
 
 # 材质管理器：管理精灵的外观材质预设（颜色、光泽、透明度等视觉属性）
 @onready var material_manager: MaterialManager = MaterialManager.new()
 
 # 矢量渲染器：将 SVG 矢量图渲染为精灵纹理，支持无损缩放
-@onready var vector_renderer = preload("res://src/vector_renderer.gd").new()
+@onready var vector_renderer = preload("res://modules/pet/scripts/vector_renderer.gd").new()
 
 # 系统托盘管理器：在 Windows 系统托盘中创建图标和右键菜单
 @onready var tray_manager: Node = null
@@ -99,7 +99,7 @@ var liquid_glass_renderer: Node2D = null
 var glass_item: GlassItem = null
 
 # 液态玻璃场景资源路径
-const LIQUID_GLASS_SCENE: String = "res://scenes/liquid_glass_renderer.tscn"
+const LIQUID_GLASS_SCENE: String = "res://prototypes/liquid_glass/scenes/liquid_glass_renderer.tscn"
 
 # =============================================================================
 # 可拖拽物体列表（Draggable List）
@@ -192,7 +192,7 @@ func _ready():
 
 	# 延迟创建托盘管理器并添加到场景树
 	# 使用 preload 避免循环依赖，在运行时动态加载
-	tray_manager = preload("res://src/tray_manager.gd").new()
+	tray_manager = preload("res://core/services/tray_manager.gd").new()
 	add_child(tray_manager)
 	tray_manager.init(self)
 
@@ -484,7 +484,7 @@ func _input(event: InputEvent):
 #   - 通过 set_pet_node(self) 注入依赖，遵循依赖注入模式
 # =============================================================================
 func open_settings_window():
-	var settings_scene = load("res://scenes/settings_window.tscn")
+	var settings_scene = load("res://modules/pet/ui/settings_window.tscn")
 	if settings_scene:
 		var settings_window = settings_scene.instantiate()
 

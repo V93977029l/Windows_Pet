@@ -411,7 +411,7 @@ func _on_close():
 
 ## 打开抛射参数设置弹窗
 func _on_throw_settings():
-	var dialog_scene = load("res://scenes/throw_settings_dialog.tscn")
+	var dialog_scene = load("res://modules/pet/ui/throw_settings_dialog.tscn")
 	if dialog_scene:
 		var dialog = dialog_scene.instantiate()
 		get_tree().root.add_child(dialog)
