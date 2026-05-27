@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://c2pktm0gbvst4"]
 
 [ext_resource type="Script" path="res://modules/pet/scripts/pet.gd" id="1"]
-[ext_resource type="Texture2D" uid="uid://ba8cy67rmbwk3" path="res://assets/icons/pet_sprite.svg" id="2"]
+[ext_resource type="Texture2D" uid="uid://ba8cy67rmbwk3" path="res://modules/pet/assets/pet_sprite.svg" id="2"]
 
 [node name="PetRoot" type="Node2D" unique_id=1253214835]
 script = ExtResource("1")

@@ -220,7 +220,7 @@ func apply_preset(preset):
 ##   当前只有一个Shader，所以忽略预设id参数直接返回。
 ##   将来若有多种Shader，可在此方法中根据 preset_id 分发。
 func _get_shader_for_preset(_preset_id: String) -> Resource:
-	return preload("res://assets/shaders/slime.gdshader")
+	return preload("res://modules/display/shaders/slime.gdshader")
 
 
 ## 应用 MaterialPreset 对象到目标精灵

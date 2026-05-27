@@ -15,7 +15,7 @@ var glass_item: GlassItem = null
 
 var draggable_list: Array = []
 
-const SVG_PATH: String = "res://assets/icons/pet_sprite.svg"
+const SVG_PATH: String = "res://modules/pet/assets/pet_sprite.svg"
 
 
 func _ready():

@@ -123,7 +123,7 @@ func _create_tray():
 	system_tray.set_window_title("TransparentPet")
 	system_tray.create("桌宠")
 	
-	var ico_path = _get_icon_path("res://assets/icons/app_icon.ico")
+	var ico_path = _get_icon_path("res://core/services/app_icon.ico")
 	if not ico_path.is_empty():
 		system_tray.set_icon(ico_path)
 	else:
@@ -140,7 +140,7 @@ func _create_tray():
 
 ## 获取托盘图标文件的绝对路径（多级回退策略）
 ## 【参数】
-##   p_res_path: String - 图标文件的资源路径（如 "res://assets/icons/app_icon.ico"）
+##   p_res_path: String - 图标文件的资源路径（如 "res://core/services/app_icon.ico"）
 ## 【返回值】 String - 图标文件的绝对系统路径，找不到时返回空字符串
 ## 【回退策略】（按优先级）
 ##   1. user:// 目录 — 用户数据目录下的缓存文件
