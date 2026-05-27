@@ -4,8 +4,8 @@
             "name": "Godot GDExtension",
             "includePath": [
                 "${workspaceFolder}/**",
-                "${workspaceFolder}/gdextension/godot-cpp/include",
-                "${workspaceFolder}/gdextension/godot-cpp/gen/include"
+                "${workspaceFolder}/external/godot-cpp",
+                "${workspaceFolder}/external/godot-cpp/gen/include"
             ],
             "defines": [
                 "_DEBUG",
