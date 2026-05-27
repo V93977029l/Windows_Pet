@@ -74,8 +74,8 @@ func _await_apply():
 	config.throw_max_speed = max_speed_slider.value
 	config.throw_multiplier = multiplier_slider.value
 
-	if pet_node and pet_node.drag_controller:
-		pet_node.drag_controller.update_throw_params(
+	if pet_node and pet_node.has_method("update_throw_params"):
+		pet_node.update_throw_params(
 			config.throw_gravity,
 			config.throw_min_speed,
 			config.throw_max_speed,

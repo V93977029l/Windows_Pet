@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://d3hb67io4rhhx"]
 
-[ext_resource type="Script" path="res://modules/pet/ui/settings_window.gd" id="1"]
+[ext_resource type="Script" path="res://modules/settings/ui/settings_window.gd" id="1"]
 
 [node name="SettingsWindow" type="Window" unique_id=2010493237]
 oversampling_override = 1.0
@@ -166,4 +166,3 @@ layout_mode = 2
 [node name="RightSpacer" type="Control" parent="Background/MainHBox" unique_id=153449765]
 custom_minimum_size = Vector2(50, 0)
 layout_mode = 2
-
