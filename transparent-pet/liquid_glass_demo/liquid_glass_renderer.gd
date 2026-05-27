@@ -394,7 +394,8 @@ func _ready():
 	update_viewport_sizes()
 	update_blur_weights()
 
-	init_default_items()
+	# 不初始化默认物品，避免残影，由外部代码（如 pet.gd）负责添加物品
+	# init_default_items()
 	update_items_uniforms()
 
 	get_viewport().size_changed.connect(_on_viewport_resize)

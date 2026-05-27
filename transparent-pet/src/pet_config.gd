@@ -41,7 +41,7 @@ var config: ConfigFile = ConfigFile.new()
 
 ## 默认配置文件路径（项目内置，随打包分发，只读）
 ## 使用 res:// 前缀表示这是项目资源路径
-var config_path: String = "res://data/pet_config.cfg"
+var config_path: String = "res://config/pet_config.cfg"
 
 ## 用户配置文件路径（保存用户个性化设置，可读写）
 ## 使用 user:// 前缀表示用户数据目录，不同OS下路径不同：
@@ -113,6 +113,61 @@ var throw_max_speed: float = 800.0
 ## 抛射速度放大系数
 var throw_multiplier: float = 2.0
 
+## =========================================================================
+## [physics] 栏目 —— 物理碰撞相关配置
+## =========================================================================
+
+## 速度采样缓冲大小（帧数）
+var physics_velocity_buffer_size: int = 8
+## 地面反弹阻尼系数
+var physics_ground_bounce: float = 0.3
+## 墙壁反弹阻尼系数
+var physics_wall_bounce: float = 0.7
+## 地面摩擦力（像素/秒²）
+var physics_ground_friction: float = 500.0
+## 安全网坠落阈值（像素）
+var physics_fall_threshold: float = 500.0
+
+## =========================================================================
+## [liquid_glass] 栏目 —— 液态玻璃视觉效果配置
+## =========================================================================
+
+## 背景形状类型
+var glass_bg_type: int = 3
+## 是否启用边缘模糊
+var glass_blur_edge: bool = true
+## 模糊半径
+var glass_blur_radius: float = 2.0
+## 着色颜色 R 通道
+var glass_tint_r: float = 0.3
+## 着色颜色 G 通道
+var glass_tint_g: float = 0.6
+## 着色颜色 B 通道
+var glass_tint_b: float = 0.9
+## 着色透明度
+var glass_tint_alpha: float = 0.35
+## 玻璃项宽度
+var glass_item_width: float = 200.0
+## 玻璃项高度
+var glass_item_height: float = 132.0
+## 玻璃项圆角半径
+var glass_item_radius: float = 65.0
+
+## =========================================================================
+## [svg] 栏目 —— SVG 纹理碰撞偏移配置
+## =========================================================================
+
+## 碰撞半宽占纹理宽度的比例（左右对称）
+var svg_half_w_ratio: float = 0.4
+## 碰撞顶部偏移占纹理高度的比例
+var svg_top_offset_ratio: float = 0.35
+## 碰撞底部偏移占纹理高度的比例（比顶部大，因图形偏向画布下方）
+var svg_bottom_offset_ratio: float = 0.417
+## 回退纹理宽度
+var svg_fallback_size_x: int = 200
+## 回退纹理高度
+var svg_fallback_size_y: int = 132
+
 
 ## 构造函数
 ## 【核心逻辑】
@@ -148,6 +203,9 @@ func load_config():
 		_read_window_section()
 		_read_autostart_section()
 		_read_throw_section()
+		_read_physics_section()
+		_read_liquid_glass_section()
+		_read_svg_section()
 		print("✅ [配置] 配置文件加载成功")
 	else:
 		print("⚠️ [配置] 配置文件不存在或加载失败，使用默认值")
@@ -196,6 +254,35 @@ func _read_throw_section():
 	throw_multiplier = config.get_value("throw", "multiplier", 2.0)
 
 
+func _read_physics_section():
+	physics_velocity_buffer_size = config.get_value("physics", "velocity_buffer_size", 8)
+	physics_ground_bounce = config.get_value("physics", "ground_bounce", 0.3)
+	physics_wall_bounce = config.get_value("physics", "wall_bounce", 0.7)
+	physics_ground_friction = config.get_value("physics", "ground_friction", 500.0)
+	physics_fall_threshold = config.get_value("physics", "fall_threshold", 500.0)
+
+
+func _read_liquid_glass_section():
+	glass_bg_type = config.get_value("liquid_glass", "bg_type", 3)
+	glass_blur_edge = config.get_value("liquid_glass", "blur_edge", true)
+	glass_blur_radius = config.get_value("liquid_glass", "blur_radius", 2.0)
+	glass_tint_r = config.get_value("liquid_glass", "tint_r", 0.3)
+	glass_tint_g = config.get_value("liquid_glass", "tint_g", 0.6)
+	glass_tint_b = config.get_value("liquid_glass", "tint_b", 0.9)
+	glass_tint_alpha = config.get_value("liquid_glass", "tint_alpha", 0.35)
+	glass_item_width = config.get_value("liquid_glass", "item_width", 200.0)
+	glass_item_height = config.get_value("liquid_glass", "item_height", 132.0)
+	glass_item_radius = config.get_value("liquid_glass", "item_radius", 65.0)
+
+
+func _read_svg_section():
+	svg_half_w_ratio = config.get_value("svg", "half_w_ratio", 0.4)
+	svg_top_offset_ratio = config.get_value("svg", "top_offset_ratio", 0.35)
+	svg_bottom_offset_ratio = config.get_value("svg", "bottom_offset_ratio", 0.417)
+	svg_fallback_size_x = config.get_value("svg", "fallback_size_x", 200)
+	svg_fallback_size_y = config.get_value("svg", "fallback_size_y", 132)
+
+
 ## 保存配置到文件（内部方法）
 ## 【核心逻辑】
 ##   1. 将所有运行时配置属性写入 config 对象
@@ -221,6 +308,26 @@ func _save_config():
 	config.set_value("throw", "min_speed", throw_min_speed)
 	config.set_value("throw", "max_speed", throw_max_speed)
 	config.set_value("throw", "multiplier", throw_multiplier)
+	config.set_value("physics", "velocity_buffer_size", physics_velocity_buffer_size)
+	config.set_value("physics", "ground_bounce", physics_ground_bounce)
+	config.set_value("physics", "wall_bounce", physics_wall_bounce)
+	config.set_value("physics", "ground_friction", physics_ground_friction)
+	config.set_value("physics", "fall_threshold", physics_fall_threshold)
+	config.set_value("liquid_glass", "bg_type", glass_bg_type)
+	config.set_value("liquid_glass", "blur_edge", glass_blur_edge)
+	config.set_value("liquid_glass", "blur_radius", glass_blur_radius)
+	config.set_value("liquid_glass", "tint_r", glass_tint_r)
+	config.set_value("liquid_glass", "tint_g", glass_tint_g)
+	config.set_value("liquid_glass", "tint_b", glass_tint_b)
+	config.set_value("liquid_glass", "tint_alpha", glass_tint_alpha)
+	config.set_value("liquid_glass", "item_width", glass_item_width)
+	config.set_value("liquid_glass", "item_height", glass_item_height)
+	config.set_value("liquid_glass", "item_radius", glass_item_radius)
+	config.set_value("svg", "half_w_ratio", svg_half_w_ratio)
+	config.set_value("svg", "top_offset_ratio", svg_top_offset_ratio)
+	config.set_value("svg", "bottom_offset_ratio", svg_bottom_offset_ratio)
+	config.set_value("svg", "fallback_size_x", svg_fallback_size_x)
+	config.set_value("svg", "fallback_size_y", svg_fallback_size_y)
 
 	var err = config.save(save_path)
 	if err == OK:
@@ -257,6 +364,27 @@ func print_config():
 	print("    ├── min_speed: ", throw_min_speed)
 	print("    ├── max_speed: ", throw_max_speed)
 	print("    └── multiplier: ", throw_multiplier)
+	print("[physics]")
+	print("    ├── velocity_buffer_size: ", physics_velocity_buffer_size)
+	print("    ├── ground_bounce: ", physics_ground_bounce)
+	print("    ├── wall_bounce: ", physics_wall_bounce)
+	print("    ├── ground_friction: ", physics_ground_friction)
+	print("    └── fall_threshold: ", physics_fall_threshold)
+	print("[liquid_glass]")
+	print("    ├── bg_type: ", glass_bg_type)
+	print("    ├── blur_edge: ", glass_blur_edge)
+	print("    ├── blur_radius: ", glass_blur_radius)
+	print("    ├── tint: (", glass_tint_r, ", ", glass_tint_g, ", ", glass_tint_b, ")")
+	print("    ├── tint_alpha: ", glass_tint_alpha)
+	print("    ├── item_width: ", glass_item_width)
+	print("    ├── item_height: ", glass_item_height)
+	print("    └── item_radius: ", glass_item_radius)
+	print("[svg]")
+	print("    ├── half_w_ratio: ", svg_half_w_ratio)
+	print("    ├── top_offset_ratio: ", svg_top_offset_ratio)
+	print("    ├── bottom_offset_ratio: ", svg_bottom_offset_ratio)
+	print("    ├── fallback_size_x: ", svg_fallback_size_x)
+	print("    └── fallback_size_y: ", svg_fallback_size_y)
 	print()
 
 

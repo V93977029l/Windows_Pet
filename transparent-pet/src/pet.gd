@@ -78,29 +78,28 @@ extends Node2D
 # Godot 会按照声明顺序从上到下初始化这些变量。
 # =============================================================================
 
-# 普通史莱姆精灵节点（Slime1）
+# 史莱姆精灵节点（Slime）
 # 类型: Sprite2D
-# 用途: 显示第一个（普通）史莱姆的外观，是主要的交互目标
-# 场景路径: 根节点/Slime1
-@onready var slime_1_sprite: Sprite2D = $Slime1
+# 用途: 显示史莱姆的外观，是主要的交互目标
+# 场景路径: 根节点/Slime
+@onready var slime_sprite: Sprite2D = $Slime
 
-# 液态玻璃史莱姆精灵节点（Slime2）
-# 类型: Sprite2D
-# 用途: 显示第二个（玻璃效果）史莱姆的外观，渲染为半透明液态玻璃材质
-# 场景路径: 根节点/LiquidGlassRenderer/Slime2
-@onready var slime_2_sprite: Sprite2D = $LiquidGlassRenderer/Slime2
+
 
 # 液态玻璃渲染器节点
 # 类型: Node2D
 # 用途: 控制液态玻璃特效的渲染参数（模糊、着色、形状等）
 #       通过 shader 实现类似水滴/玻璃的折射与模糊视觉效果
-# 场景路径: 根节点/LiquidGlassRenderer
-@onready var liquid_glass_renderer: Node2D = $LiquidGlassRenderer
+# 动态实例化：仅在 slime_2（液态玻璃）材质激活时才从场景文件加载
+var liquid_glass_renderer: Node2D = null
 
 # 当前激活的玻璃项实例
 # 存储 _setup_liquid_glass_slime() 中创建的 GlassItem 对象引用
 # 用于在 _process() 每帧更新其屏幕位置
 var glass_item: GlassItem = null
+
+# 液态玻璃场景资源路径
+const LIQUID_GLASS_SCENE: String = "res://scenes/liquid_glass_renderer.tscn"
 
 # =============================================================================
 # 可拖拽物体列表（Draggable List）
@@ -143,12 +142,12 @@ func _ready():
 	# 启用输入处理，让 _input() 能接收全局输入事件（如快捷键）
 	set_process_input(true)
 
-	# 使用矢量渲染器将 SVG 渲染到 slime_1_sprite 上
+	# 使用矢量渲染器将 SVG 渲染到 slime_sprite 上
 	# 矢量渲染的优势：任意缩放不失真，适合 DPI 变化的场景
-	vector_renderer.init(slime_1_sprite, SVG_PATH)
+	vector_renderer.init(slime_sprite, SVG_PATH)
 
-	# 初始化材质管理器，将材质应用到 slime_1_sprite
-	material_manager.init(slime_1_sprite)
+	# 初始化材质管理器，将材质应用到 slime_sprite
+	material_manager.init(slime_sprite)
 
 	# 根据配置预设应用材质外观（颜色方案等）
 	init_materials()
@@ -156,9 +155,7 @@ func _ready():
 	# 将精灵居中放置到屏幕中央或配置文件指定的初始位置
 	center_sprite()
 
-	# 让 slime_2_sprite（玻璃效果）初始位置与 slime_1_sprite（普通）完全重叠
-	# 这样两个史莱姆在视觉上从同一位置开始
-	slime_2_sprite.global_position = slime_1_sprite.global_position
+
 
 	# 初始化拖拽控制器
 	# 传入 self（当前 Node2D），让 drag_controller 可以访问全局坐标系统
@@ -172,18 +169,26 @@ func _ready():
 		config.throw_multiplier,
 		config.throw_enabled
 	)
+	drag_controller.update_physics_params(
+		config.physics_ground_bounce,
+		config.physics_wall_bounce,
+		config.physics_ground_friction,
+		config.physics_fall_threshold
+	)
+	drag_controller.update_svg_params(
+		config.svg_half_w_ratio,
+		config.svg_bottom_offset_ratio,
+		config.svg_fallback_size_x,
+		config.svg_fallback_size_y
+	)
 
 	# 初始化鼠标穿透管理器
 	# 让窗口在非精灵区域对鼠标透明（点击穿透到桌面应用）
 	passthrough_manager.init(self)
 
 	# 初始化鼠标交互管理器
-	# 绑定 slime_1_sprite 和穿透管理器，处理鼠标与精灵的交互
-	mouse_manager.init(self, slime_1_sprite, passthrough_manager)
-
-	# 将 slime_2_sprite 注册到鼠标管理器
-	# 使得玻璃效果史莱姆也能响应鼠标交互
-	mouse_manager.set_slime_2_sprite(slime_2_sprite)
+	# 绑定 slime_sprite 和穿透管理器，处理鼠标与精灵的交互
+	mouse_manager.init(self, slime_sprite, passthrough_manager)
 
 	# 延迟创建托盘管理器并添加到场景树
 	# 使用 preload 避免循环依赖，在运行时动态加载
@@ -200,8 +205,9 @@ func _ready():
 	# 打印当前配置到控制台，方便调试
 	config.print_config()
 
-	# 组装液态玻璃史莱姆特效（创建 GlassItem + 渲染参数）
-	_setup_liquid_glass_slime()
+	# 只有当材质是液态玻璃时才创建渲染器并组装特效
+	if config.slime_1_material == "slime_2":
+		_setup_liquid_glass_slime()
 
 	# 注册所有可拖拽物体到碰撞检测链
 	# 必须在所有精灵和渲染器初始化之后调用
@@ -269,7 +275,7 @@ func init_materials():
 #   - 坐标值为 -1 表示"未设置"，此时使用屏幕中央作为默认值
 # =============================================================================
 func center_sprite():
-	if slime_1_sprite:
+	if slime_sprite:
 		# 获取主显示器分辨率（物理像素）
 		# DisplayServer.screen_get_size() 返回 Vector2i，不含 DPI 缩放
 		var screen_size_i: Vector2i = DisplayServer.screen_get_size()
@@ -286,12 +292,12 @@ func center_sprite():
 			target_y = config.window_initial_y
 
 		# 设置精灵全局位置
-		slime_1_sprite.global_position = Vector2(target_x, target_y)
+		slime_sprite.global_position = Vector2(target_x, target_y)
 
 		# 应用初始缩放比例
 		update_pet_scale(config.pet_scale)
 
-		print("[精灵] 精灵全局位置：", slime_1_sprite.global_position)
+		print("[精灵] 精灵全局位置：", slime_sprite.global_position)
 		print("[精灵] 精灵缩放大小：", config.pet_scale)
 
 # =============================================================================
@@ -301,9 +307,7 @@ func center_sprite():
 # 返回值: String - 当前激活的材质预设名称
 # 用途: 供外部（如设置窗口）查询当前使用的外观主题
 # =============================================================================
-func get_current_material_name(slime_id: String = "slime_1") -> String:
-	if slime_id == "slime_2":
-		return "2号史莱姆(液态玻璃)"
+func get_current_material_name(_slime_id: String = "slime_1") -> String:
 	return material_manager.get_current_material_name()
 
 # =============================================================================
@@ -324,11 +328,11 @@ func _process(delta: float):
 
 	# 同步玻璃特效项的位置
 	# glass_item 使用物理像素坐标（用于 shader 渲染），
-	# slime_2_sprite.global_position 是逻辑坐标，
+	# slime_sprite.global_position 是逻辑坐标，
 	# 需要通过 content_scale_factor (DPR) 转换
-	if glass_item:
+	if glass_item and liquid_glass_renderer:
 		var dpr: float = get_tree().root.content_scale_factor
-		glass_item.position = slime_2_sprite.global_position * dpr
+		glass_item.position = slime_sprite.global_position * dpr
 		# 通知渲染器重新计算 uniform 参数，使 shader 中的位置信息保持最新
 		liquid_glass_renderer.update_items_uniforms()
 
@@ -341,21 +345,18 @@ func _process(delta: float):
 # 参数: 无
 # 返回值: 无
 # 核心逻辑:
-#   1. 将两个史莱姆精灵注册到 draggable_list
+#   1. 将史莱姆精灵注册到 draggable_list
 #   2. 按 z_index 降序排列（z_index 大的在前面，优先被检测）
 # 设计原因:
-#   - 使用独立列表管理可拖拽物体，而非硬编码两个精灵，
+#   - 使用独立列表管理可拖拽物体，而非硬编码，
 #     便于未来扩展更多可交互元素
 #   - 排序确保在上层的精灵先响应点击事件
 #   - "render" 字段指向需要调整 z_index 的节点：
-#     slime_1_sprite 直接调整自身，
+#     slime_sprite 直接调整自身，
 #     liquid_glass_renderer 作为容器调整整个玻璃效果组
 # =============================================================================
 func _register_draggables():
-	draggable_list.append({"sprite": slime_1_sprite, "id": "slime_1", "render": slime_1_sprite})
-	draggable_list.append({"sprite": slime_2_sprite, "id": "slime_2", "render": liquid_glass_renderer})
-	# 按 z_index 降序排列：z_index 越大越靠前，优先参与碰撞检测
-	draggable_list.sort_custom(func(a, b): return a.sprite.z_index > b.sprite.z_index)
+	draggable_list.append({"sprite": slime_sprite, "id": "slime", "render": slime_sprite})
 	print("✅ [碰撞链] 已注册 %d 个可拖拽物体" % draggable_list.size())
 
 # =============================================================================
@@ -379,25 +380,16 @@ func _register_draggables():
 
 
 # =============================================================================
-# _bring_to_front(target_id) - 将指定精灵提升到最前面
+# _bring_to_front(target_id) - 将精灵提升到最前面
 # =============================================================================
 # 参数:
-#   target_id: String - 要置顶的精灵 ID（"slime_1" 或 "slime_2"）
+#   target_id: String - 要置顶的精灵 ID
 # 返回值: 无
-# 核心逻辑:
-#   1. 遍历所有可拖拽物体，将目标设为 z_index=1，其余设为 z_index=0
-#   2. 重新排序 draggable_list 以反映新的 z_index 顺序
-# 设计原因:
-#   - z_index=1 的节点渲染在所有 z_index=0 节点之上
-#   - 重新排序列表确保后续的碰撞检测从最上层开始
 # =============================================================================
-func _bring_to_front(target_id: String):
-	for entry in draggable_list:
-		var new_z = 1 if entry.id == target_id else 0
-		entry.render.z_index = new_z
-		entry.sprite.z_index = new_z
-	# 重新排序以保持碰撞检测顺序与渲染顺序一致
-	draggable_list.sort_custom(func(a, b): return a.sprite.z_index > b.sprite.z_index)
+func _bring_to_front(_target_id: String):
+	slime_sprite.z_index = 1
+	if liquid_glass_renderer:
+		liquid_glass_renderer.z_index = 1
 
 # =============================================================================
 # _mouse_in_sprite(sprite) - 检测鼠标是否在精灵的可见区域内
@@ -500,7 +492,7 @@ func open_settings_window():
 
 		get_tree().root.add_child(settings_window)
 
-		var pet_pos = slime_1_sprite.global_position
+		var pet_pos = slime_sprite.global_position
 		var settings_pos = Vector2(pet_pos.x + 50, pet_pos.y - 130)
 		settings_window.position = settings_pos
 
@@ -557,14 +549,69 @@ func get_window_position() -> Vector2i:
 	return owner.get_window().position if owner else Vector2i.ZERO
 
 # =============================================================================
+# _ensure_liquid_glass_renderer() - 确保液态玻璃渲染器已实例化
+# =============================================================================
+# 参数: 无
+# 返回值: bool - true 表示渲染器已就绪（新建或已存在）
+# 核心逻辑:
+#   1. 如果渲染器已存在则直接返回
+#   2. 否则从场景文件加载并添加到自身
+# =============================================================================
+func _ensure_liquid_glass_renderer() -> bool:
+	if liquid_glass_renderer:
+		return true
+	var scene = load(LIQUID_GLASS_SCENE)
+	if not scene:
+		printerr("[液态玻璃] 无法加载场景: ", LIQUID_GLASS_SCENE)
+		return false
+	liquid_glass_renderer = scene.instantiate()
+	add_child(liquid_glass_renderer)
+	print("✅ [液态玻璃] 渲染器已动态创建")
+	return true
+
+# =============================================================================
+# _teardown_liquid_glass() - 移除液态玻璃渲染器
+# =============================================================================
+# 参数: 无
+# 返回值: 无
+# 核心逻辑: 清除 glass_item 引用，销毁渲染器节点
+# =============================================================================
+func _teardown_liquid_glass():
+	glass_item = null
+	if liquid_glass_renderer:
+		liquid_glass_renderer.queue_free()
+		liquid_glass_renderer = null
+		print("✅ [液态玻璃] 渲染器已移除")
+	# 恢复普通 Sprite 的可见性
+	if slime_sprite:
+		slime_sprite.modulate.a = 1.0
+
+# =============================================================================
+# on_material_changed() - 材质变化时被设置窗口调用
+# =============================================================================
+# 参数:
+#   preset_id: String - 新材质的预设 id（"slime_1" 或 "slime_2"）
+# 返回值: 无
+# 核心逻辑:
+#   slime_1 → 销毁液态玻璃渲染器
+#   slime_2 → 创建渲染器并组装特效
+# =============================================================================
+func on_material_changed(preset_id: String):
+	if preset_id == "slime_2":
+		_setup_liquid_glass_slime()
+	else:
+		_teardown_liquid_glass()
+
+# =============================================================================
 # _setup_liquid_glass_slime() - 组装液态玻璃史莱姆特效
 # =============================================================================
 # 参数: 无
 # 返回值: 无
 # 核心逻辑:
 #   1. 配置液态玻璃渲染器的视觉参数（模糊、着色等）
-#   2. 创建一个史莱姆形状的 GlassItem 并添加到渲染器
-#   3. 将 GlassItem 位置同步到 slime_2_sprite
+#   2. 完全清空默认物品，避免残影
+#   3. 创建一个史莱姆形状的 GlassItem 并添加到渲染器
+#   4. 将 GlassItem 位置同步到 slime_sprite
 # 设计原因:
 #   - 液态玻璃效果通过 shader 实现模拟水滴/玻璃的折射和模糊
 #   - bg_type=3 选择史莱姆形状的背景模式
@@ -572,47 +619,46 @@ func get_window_position() -> Vector2i:
 #   - GlassItem 使用物理像素坐标（乘以 DPR），与 shader 坐标系统一致
 # =============================================================================
 func _setup_liquid_glass_slime():
-	# 安全守卫：确保渲染器节点存在
-	if not liquid_glass_renderer:
+	# 确保渲染器已动态实例化，若加载失败则退出
+	if not _ensure_liquid_glass_renderer():
 		return
 
-	# 安全守卫：确保普通史莱姆精灵存在
-	if not slime_1_sprite:
+	# 安全守卫：确保史莱姆精灵存在
+	if not slime_sprite:
 		return
 
-	# 配置渲染器背景类型：3 = 史莱姆形状背景
-	liquid_glass_renderer.bg_type = 3
+	# 配置渲染器背景类型
+	liquid_glass_renderer.bg_type = config.glass_bg_type
 	# 启用边缘模糊效果，让玻璃看起来更自然
-	liquid_glass_renderer.blur_edge = true
-	# 模糊半径：2.0 像素，提供柔和的边缘过渡
-	liquid_glass_renderer.blur_radius = 2.0
+	liquid_glass_renderer.blur_edge = config.glass_blur_edge
+	# 模糊半径
+	liquid_glass_renderer.blur_radius = config.glass_blur_radius
 
-	# 配置玻璃着色颜色：柔和的蓝色调
-	# R=0.3, G=0.6, B=0.9 产生类似水滴的淡蓝色
-	var glass_color = Color(0.3, 0.6, 0.9, 1.0)
+	# 配置玻璃着色颜色
+	var glass_color = Color(config.glass_tint_r, config.glass_tint_g, config.glass_tint_b, 1.0)
 	liquid_glass_renderer.tint = glass_color
-	# 着色透明度：0.35 让玻璃效果半透明，可以看到背景
-	liquid_glass_renderer.tint_alpha = 0.35
+	# 着色透明度
+	liquid_glass_renderer.tint_alpha = config.glass_tint_alpha
 
-	# 获取渲染器内部的项目管理器并清空旧数据
+	# 获取渲染器内部的项目管理器并完全清空旧数据
 	var item_manager = liquid_glass_renderer.get_item_manager()
 	item_manager.clear_all()
 
 	# 获取设备像素比，用于将逻辑坐标转换为物理像素坐标
 	var dpr: float = get_tree().root.content_scale_factor
-	var pos = slime_2_sprite.global_position * dpr
+	var pos = slime_sprite.global_position * dpr
 
 	# 创建史莱姆形状的玻璃项
 	var slime_item = GlassItem.new()
 	# 形状类型：SLIME = 类似水滴/史莱姆的有机形状
 	slime_item.shape_type = GlassItem.ShapeType.SLIME
-	# 初始位置：与 slime_2_sprite 重叠（物理像素坐标）
+	# 初始位置：与 slime_sprite 重叠（物理像素坐标）
 	slime_item.position = pos
-	# 玻璃项的宽高尺寸
-	slime_item.width = 200.0
-	slime_item.height = 132.0
-	# 圆角半径：控制形状的圆润程度
-	slime_item.radius = 65.0
+	# 玻璃项的宽高尺寸（从配置读取）
+	slime_item.width = config.glass_item_width
+	slime_item.height = config.glass_item_height
+	# 圆角半径（从配置读取）
+	slime_item.radius = config.glass_item_radius
 	# 缩放：与宠物配置保持一致
 	slime_item.scale = config.pet_scale
 	# 启用渲染
@@ -628,4 +674,7 @@ func _setup_liquid_glass_slime():
 	liquid_glass_renderer.update_items_uniforms()
 	liquid_glass_renderer.update_all_uniforms()
 
-	print("✅ [液态玻璃] 已创建，跟1号史莱姆(普通)位置同步")
+	print("✅ [液态玻璃] 已创建，跟史莱姆位置同步")
+	# 隐藏普通 Sprite，视觉完全由液态玻璃渲染器接管
+	if slime_sprite:
+		slime_sprite.modulate.a = 0.0

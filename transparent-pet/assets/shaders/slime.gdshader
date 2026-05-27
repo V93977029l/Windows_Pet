@@ -56,10 +56,15 @@ uniform float wobble_speed = 2.0;
 //   值越大 → 发光范围越窄（仅边缘极亮，中心暗）
 uniform float fresnel_power = 3.0;
 
-// enable_dynamic: 是否启用动态效果总开关
-//   true  → 顶点形变 + 纹理噪声扰动 + 时间变化的颜色噪声
-//   false → 完全静态，适合作为预览或性能优化
-uniform bool enable_dynamic = true;
+// enable_breathing: 呼吸效果开关（顶点形变）
+//   true  → 顶点正弦波动态形变，产生果冻般的整体晃动
+//   false → 顶点保持静止
+uniform bool enable_breathing = true;
+
+// enable_motion_effect: 动效开关（材质内部扰动）
+//   true  → 纹理噪声扰动 + 时间变化的颜色噪声
+//   false → 材质纹理完全静态
+uniform bool enable_motion_effect = true;
 
 // ================================================================
 // ██████  噪声函数（Noise Functions）
@@ -173,13 +178,13 @@ float fbm(vec2 st) {
 //     → 水平正弦晃动（不同频率0.7倍，不同幅度15.0），
 //       使得 X/Y 晃动不同步，产生更自然的弹性感
 //
-//   当 enable_dynamic = false 时跳过所有形变
+//   当 enable_breathing = false 时跳过所有形变
 void vertex() {
     // 计算边缘因子：UV.x离0.5越远（越靠近左右边缘），形变越大
     float edge_factor = abs(UV.x - 0.5) * 2.0;
-    if (enable_dynamic) {
-        // Y轴正弦形变：上下晃动
-        float wobble = sin(TIME * wobble_speed) * liquid_wobble * 20.0;
+    if (enable_breathing) {
+        // Y轴正弦形变：上下晃动（幅度为原来的 10.0）
+        float wobble = sin(TIME * wobble_speed) * liquid_wobble * 10.0;
         VERTEX.y += wobble * edge_factor;
         // X轴余弦形变：水平晃动（频率×0.7与Y轴不同步，更自然）
         VERTEX.x += cos(TIME * wobble_speed * 0.7) * liquid_wobble * 15.0 * edge_factor;
@@ -214,7 +219,7 @@ void fragment() {
 
     // ====== 步骤1：计算FBM噪声扰动 ======
     float distortion = 0.0;
-    if (enable_dynamic) {
+    if (enable_motion_effect) {
         // 使用 FBM 生成有机的流动噪声纹理
         // uv*3.0 控制噪声的细节密度
         // liquid_wobble 控制扰动强度
@@ -284,10 +289,10 @@ void fragment() {
     final_color.g = mix(final_color.g, 0.95, dist_to_edge * 0.4);
     final_color.b = mix(final_color.b, 1.0, dist_to_edge * 0.6);
 
-    // ====== 步骤6：动态微扰动（如果启用） ======
+    // ====== 步骤6：动态微扰动（如果启用动效） ======
     // 添加高频FBM噪声作为颜色微变化，模拟液体内部的不均匀性
     // uv*10.0 产生更高细节的噪声，TIME*2.0 驱动快速流动
-    if (enable_dynamic) {
+    if (enable_motion_effect) {
         final_color.rgb += fbm(uv * 10.0 + TIME * 2.0) * 0.05;
     }
 

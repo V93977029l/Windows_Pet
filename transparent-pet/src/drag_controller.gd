@@ -16,6 +16,15 @@ var throw_max_speed: float = 800.0
 var throw_multiplier: float = 2.0
 var throw_enabled: bool = true
 
+var ground_bounce: float = 0.3
+var wall_bounce: float = 0.7
+var ground_friction: float = 500.0
+var fall_threshold: float = 500.0
+
+var svg_half_w_ratio: float = 0.4
+var svg_bottom_offset_ratio: float = 0.417
+var svg_fallback: Vector2 = Vector2(200, 132)
+
 const VELOCITY_BUFFER_SIZE: int = 8
 var velocity_buffer: Array[Vector2] = []
 var pos_buffer: Array[Vector2] = []
@@ -40,12 +49,26 @@ func update_throw_params(gravity: float, min_speed: float, max_speed: float, mul
 	print("✅ [抛射] 参数已更新: 重力=", gravity, " 最小=", min_speed, " 最大=", max_speed, " 倍率=", multiplier, " 启用=", enabled)
 
 
+func update_physics_params(ground_b: float, wall_b: float, friction: float, fall: float):
+	ground_bounce = ground_b
+	wall_bounce = wall_b
+	ground_friction = friction
+	fall_threshold = fall
+	print("✅ [物理] 参数已更新: 地面弹性=", ground_b, " 墙壁弹性=", wall_b, " 摩擦力=", friction, " 安全阈值=", fall)
+
+
+func update_svg_params(half_w_ratio: float, bottom_offset_ratio: float, fallback_x: int, fallback_y: int):
+	svg_half_w_ratio = half_w_ratio
+	svg_bottom_offset_ratio = bottom_offset_ratio
+	svg_fallback = Vector2(fallback_x, fallback_y)
+
+
 func handle_area_input_event(event: InputEvent, target_sprite: Sprite2D = null):
 	if not parent_node:
 		return
 
 	if not target_sprite:
-		target_sprite = parent_node.get_node("Slime1")
+		target_sprite = parent_node.get_node("Slime")
 
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
 		if event.pressed:
@@ -117,10 +140,42 @@ func update_drag(delta: float = 0.0167):
 		throw_velocity.y += throw_gravity * delta
 
 		var new_pos = drag_target.global_position + throw_velocity * delta
+		var screen_size = parent_node.get_tree().root.get_viewport().get_size()
+
+		# 矩形碰撞半尺寸（按 SVG 实际轮廓相对于画布中心的偏移）
+		var tex_size = drag_target.texture.get_size() if drag_target.texture else svg_fallback
+		var half_w = tex_size.x * svg_half_w_ratio * drag_target.scale.x
+		var bottom_h = tex_size.y * svg_bottom_offset_ratio * drag_target.scale.y
+
+		# 底部：落在地面上时反弹，并标记为接地状态
+		var on_ground = false
+		if new_pos.y + bottom_h > screen_size.y:
+			new_pos.y = screen_size.y - bottom_h
+			throw_velocity.y = -abs(throw_velocity.y) * ground_bounce
+			on_ground = true
+
+		# 左墙反弹
+		if new_pos.x - half_w < 0:
+			new_pos.x = half_w
+			throw_velocity.x = abs(throw_velocity.x) * wall_bounce
+
+		# 右墙反弹
+		if new_pos.x + half_w > screen_size.x:
+			new_pos.x = screen_size.x - half_w
+			throw_velocity.x = -abs(throw_velocity.x) * wall_bounce
+
+		# 地面摩擦力：接地的每一帧都持续减速水平速度
+		if on_ground:
+			var friction_amount = ground_friction * delta
+			if abs(throw_velocity.x) <= friction_amount:
+				throw_velocity.x = 0.0
+			else:
+				throw_velocity.x -= sign(throw_velocity.x) * friction_amount
+
 		drag_target.global_position = new_pos
 
-		var screen_size = parent_node.get_tree().root.get_viewport().get_size()
-		if new_pos.y > screen_size.y + 200 or new_pos.x < -200 or new_pos.x > screen_size.x + 200:
+		# 安全网：若掉出屏幕下方太远（如窗口被隐藏），强制停止
+		if new_pos.y > screen_size.y + fall_threshold:
 			is_throwing = false
 			throw_velocity = Vector2.ZERO
-			print("[抛射] 超出屏幕，结束抛物线运动")
+			print("[抛射] 安全网触发，结束抛物线运动")

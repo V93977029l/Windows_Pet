@@ -48,23 +48,6 @@ vertical_alignment = 1
 custom_minimum_size = Vector2(0, 10)
 layout_mode = 2
 
-[node name="SlimeSelector" type="VBoxContainer" parent="Background/MainHBox/CenterVBox" unique_id=667788990]
-custom_minimum_size = Vector2(0, 70)
-layout_mode = 2
-
-[node name="LabelSlimeSelect" type="Label" parent="Background/MainHBox/CenterVBox/SlimeSelector" unique_id=334455667]
-custom_minimum_size = Vector2(0, 24)
-layout_mode = 2
-text = "当前选择史莱姆"
-
-[node name="SlimeCombo" type="OptionButton" parent="Background/MainHBox/CenterVBox/SlimeSelector" unique_id=112233445]
-layout_mode = 2
-size_flags_horizontal = 3
-
-[node name="HSeparator2" type="HSeparator" parent="Background/MainHBox/CenterVBox" unique_id=778899001]
-custom_minimum_size = Vector2(0, 10)
-layout_mode = 2
-
 [node name="Scale" type="VBoxContainer" parent="Background/MainHBox/CenterVBox" unique_id=1752053830]
 custom_minimum_size = Vector2(0, 120)
 layout_mode = 2
@@ -109,7 +92,7 @@ layout_mode = 2
 size_flags_horizontal = 3
 
 [node name="DynamicEffect" type="VBoxContainer" parent="Background/MainHBox/CenterVBox" unique_id=1153088862]
-custom_minimum_size = Vector2(0, 50)
+custom_minimum_size = Vector2(0, 100)
 layout_mode = 2
 
 [node name="Label5" type="Label" parent="Background/MainHBox/CenterVBox/DynamicEffect" unique_id=1630467367]
@@ -117,9 +100,13 @@ custom_minimum_size = Vector2(0, 24)
 layout_mode = 2
 text = "动态效果"
 
-[node name="Check" type="CheckButton" parent="Background/MainHBox/CenterVBox/DynamicEffect" unique_id=2016287119]
+[node name="BreathingCheck" type="CheckButton" parent="Background/MainHBox/CenterVBox/DynamicEffect" unique_id=2016287119]
 layout_mode = 2
-text = "启用液态流动效果"
+text = "呼吸（整体形变）"
+
+[node name="MotionCheck" type="CheckButton" parent="Background/MainHBox/CenterVBox/DynamicEffect" unique_id=2016287120]
+layout_mode = 2
+text = "动效（材质扰动）"
 
 [node name="AlwaysOnTop" type="VBoxContainer" parent="Background/MainHBox/CenterVBox" unique_id=1965370006]
 custom_minimum_size = Vector2(0, 50)

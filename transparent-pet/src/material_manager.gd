@@ -178,6 +178,12 @@ func _register_default_presets():
 	slime_1.description = "基础蓝色史莱姆材质，支持动态流动效果"
 	registry.register_preset(slime_1)
 
+	# 2号史莱姆（液态玻璃）- 玻璃特效材质
+	# 携带液态玻璃渲染器，实现透明/折射/模糊视觉效果
+	var slime_2 = MaterialPreset.new("slime_2", "2号史莱姆(液态玻璃)")
+	slime_2.description = "透明水滴质感，支持折射/模糊/光晕效果"
+	registry.register_preset(slime_2)
+
 
 ## 应用材质预设（入口方法，自动分发）
 ## 【参数】
@@ -263,19 +269,28 @@ func apply_preset_dict(preset_data: Dictionary):
 	print("[MaterialManager] Applied preset dict: ", preset_id)
 
 
-## 开关动态效果
+## 开关呼吸效果（顶点形变）
 ## 【参数】
-##   enabled: bool - true启用动态效果，false禁用
-## 【核心逻辑】
-##   设置Shader中的 enable_dynamic 参数。
-##   该参数控制Shader中的动态流动动画是否播放。
-##   禁用动态效果可以节省CPU/GPU资源（如用户不需要动画时）。
-## 【边界情况】
-##   如果 current_material 为 null（未应用任何材质）→ 静默跳过
-func set_dynamic_enabled(enabled: bool):
+##   enabled: bool - true启用整体晃动，false静止
+func set_breathing_enabled(enabled: bool):
 	if current_material:
-		current_material.set_shader_parameter("enable_dynamic", enabled)
-		print("[MaterialManager] Dynamic effect ", "enabled" if enabled else "disabled")
+		current_material.set_shader_parameter("enable_breathing", enabled)
+		print("[MaterialManager] Breathing ", "enabled" if enabled else "disabled")
+
+
+## 开关动效（材质内部扰动）
+## 【参数】
+##   enabled: bool - true启用噪声扰动，false静态纹理
+func set_motion_effect_enabled(enabled: bool):
+	if current_material:
+		current_material.set_shader_parameter("enable_motion_effect", enabled)
+		print("[MaterialManager] Motion effect ", "enabled" if enabled else "disabled")
+
+
+## 开关动态效果（兼容旧接口，同时控制呼吸和动效）
+func set_dynamic_enabled(enabled: bool):
+	set_breathing_enabled(enabled)
+	set_motion_effect_enabled(enabled)
 
 
 ## 获取当前材质的显示名称
