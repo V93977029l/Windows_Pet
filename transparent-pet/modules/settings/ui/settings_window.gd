@@ -1,7 +1,9 @@
 extends Window
 
+const PetConsts = preload("res://modules/pet/scripts/pet_constants.gd")
+
 var pet_node: Node2D = null
-var _is_updating_ui: bool = false
+var _update_guard: UIUtils.UIUpdateGuard = UIUtils.UIUpdateGuard.new()
 var _pending_setup: bool = false
 
 @onready var scale_slider: HSlider = $Background/MainHBox/CenterVBox/Scale/HBox2/Slider2
@@ -71,19 +73,19 @@ func setup_material_combo():
 
 
 func load_config():
-	_is_updating_ui = true
+	_update_guard.try_lock()
 
-	scale_slider.value = clamp(ConfigManager.cfg_get("pet", "pet_scale", 1.0), 0.2, 4.0)
-	scale_input.text = format_float(ConfigManager.cfg_get("pet", "pet_scale", 1.0))
+	scale_slider.value = clamp(ConfigManager.cfg_get("pet", "pet_scale", PetConsts.PET_SCALE_DEFAULT), ProjectConstants.PET_SCALE_MIN, ProjectConstants.PET_SCALE_MAX)
+	scale_input.text = NumberUtils.format_float(ConfigManager.cfg_get("pet", "pet_scale", PetConsts.PET_SCALE_DEFAULT))
 
 	_select_current_material()
 
 	breathing_check.button_pressed = true
 	motion_check.button_pressed = true
-	always_on_top_check.button_pressed = ConfigManager.cfg_get("window", "window_always_on_top", true)
+	always_on_top_check.button_pressed = ConfigManager.cfg_get("window", "window_always_on_top", PetConsts.WINDOW_ALWAYS_ON_TOP_DEFAULT)
 	autostart_check.button_pressed = _check_autostart_status()
 
-	_is_updating_ui = false
+	_update_guard.unlock()
 
 
 func _select_current_material():
@@ -99,39 +101,35 @@ func _select_current_material():
 	material_combo.select(0)
 
 
-func format_float(value: float) -> String:
-	return str(round(value * 100) / 100)
-
-
 func _on_scale_slider_changed(value: float):
-	if _is_updating_ui:
+	if _update_guard.is_guarded():
 		return
 
-	var rounded = clamp(value, 0.2, 4.0)
-	_is_updating_ui = true
-	scale_input.text = format_float(rounded)
-	_is_updating_ui = false
+	var rounded = clamp(value, ProjectConstants.PET_SCALE_MIN, ProjectConstants.PET_SCALE_MAX)
+	_update_guard.try_lock()
+	scale_input.text = NumberUtils.format_float(rounded)
+	_update_guard.unlock()
 
 	ConfigManager.cfg_set("pet", "pet_scale", rounded)
 
 
 func _on_scale_input_changed(text: String):
-	if _is_updating_ui:
+	if _update_guard.is_guarded():
 		return
 
-	var current_scale = ConfigManager.cfg_get("pet", "pet_scale", 1.0)
+	var current_scale = ConfigManager.cfg_get("pet", "pet_scale", PetConsts.PET_SCALE_DEFAULT)
 	if not text.is_valid_float():
-		scale_input.text = format_float(current_scale)
+		scale_input.text = NumberUtils.format_float(current_scale)
 		return
 
 	var value = text.to_float()
-	if value < 0.2 or value > 4.0:
-		scale_input.text = format_float(current_scale)
+	if value < ProjectConstants.PET_SCALE_MIN or value > ProjectConstants.PET_SCALE_MAX:
+		scale_input.text = NumberUtils.format_float(current_scale)
 		return
 
-	_is_updating_ui = true
+	_update_guard.try_lock()
 	scale_slider.value = value
-	_is_updating_ui = false
+	_update_guard.unlock()
 
 	ConfigManager.cfg_set("pet", "pet_scale", value)
 
@@ -144,7 +142,7 @@ func _on_apply_scale():
 
 
 func _on_material_changed(index: int):
-	if _is_updating_ui:
+	if _update_guard.is_guarded():
 		return
 
 	var presets = pet_node.get_all_presets()
@@ -161,21 +159,21 @@ func _on_material_changed(index: int):
 
 
 func _on_breathing_changed(enabled: bool):
-	if _is_updating_ui:
+	if _update_guard.is_guarded():
 		return
 	if pet_node:
 		pet_node.set_breathing_enabled(enabled)
 
 
 func _on_motion_changed(enabled: bool):
-	if _is_updating_ui:
+	if _update_guard.is_guarded():
 		return
 	if pet_node:
 		pet_node.set_motion_effect_enabled(enabled)
 
 
 func _on_always_on_top_changed(enabled: bool):
-	if _is_updating_ui:
+	if _update_guard.is_guarded():
 		return
 
 	ConfigManager.cfg_set("window", "window_always_on_top", enabled)
@@ -183,14 +181,14 @@ func _on_always_on_top_changed(enabled: bool):
 
 
 func _on_autostart_changed(enabled: bool):
-	if _is_updating_ui:
+	if _update_guard.is_guarded():
 		return
 
 	if not _set_autostart(enabled):
 		ConfigManager.cfg_set("window", "autostart_enabled", not enabled)
-		_is_updating_ui = true
+		_update_guard.try_lock()
 		autostart_check.button_pressed = not enabled
-		_is_updating_ui = false
+		_update_guard.unlock()
 		return
 
 	ConfigManager.cfg_set("window", "autostart_enabled", enabled)
@@ -302,20 +300,20 @@ func _on_save():
 
 
 func _on_reset():
-	ConfigManager.cfg_set("pet", "pet_scale", 1.0)
+	ConfigManager.cfg_set("pet", "pet_scale", PetConsts.PET_SCALE_DEFAULT)
 	ConfigManager.cfg_set("pet", "slime_1_material", "slime_1")
-	ConfigManager.cfg_set("window", "window_always_on_top", true)
-	ConfigManager.cfg_set("window", "autostart_enabled", false)
+	ConfigManager.cfg_set("window", "window_always_on_top", PetConsts.WINDOW_ALWAYS_ON_TOP_DEFAULT)
+	ConfigManager.cfg_set("window", "autostart_enabled", PetConsts.WINDOW_AUTOSTART_DEFAULT)
 
 	load_config()
 
 	_set_autostart(false)
 
-	apply_scale(ConfigManager.cfg_get("pet", "pet_scale", 1.0))
+	apply_scale(ConfigManager.cfg_get("pet", "pet_scale", PetConsts.PET_SCALE_DEFAULT))
 	if pet_node:
 		pet_node.set_breathing_enabled(true)
 		pet_node.set_motion_effect_enabled(true)
-	apply_always_on_top(ConfigManager.cfg_get("window", "window_always_on_top", true))
+	apply_always_on_top(ConfigManager.cfg_get("window", "window_always_on_top", PetConsts.WINDOW_ALWAYS_ON_TOP_DEFAULT))
 
 	print("✅ [设置] 已恢复默认配置")
 
@@ -325,7 +323,7 @@ func _on_close():
 
 
 func _on_throw_settings():
-	var dialog_scene = load("res://modules/settings/ui/throw_settings_dialog.tscn")
+	var dialog_scene = load(ProjectConstants.THROW_DIALOG_SCENE)
 	if dialog_scene:
 		var dialog = dialog_scene.instantiate()
 		get_tree().root.add_child(dialog)

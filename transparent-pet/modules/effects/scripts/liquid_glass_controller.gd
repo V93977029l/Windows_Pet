@@ -7,7 +7,7 @@ var target_sprite: Sprite2D = null
 var liquid_glass_renderer: Node2D = null
 var glass_item: GlassItem = null
 
-const LIQUID_GLASS_SCENE: String = "res://prototypes/liquid_glass/scenes/liquid_glass_renderer.tscn"
+const LIQUID_GLASS_SCENE: String = ProjectConstants.LIQUID_GLASS_SCENE
 
 
 func init(p_node: Node2D, p_sprite: Sprite2D):
@@ -90,7 +90,7 @@ func _setup_liquid_glass():
 	var item_manager = liquid_glass_renderer.get_item_manager()
 	item_manager.clear_all()
 
-	var dpr: float = parent_node.get_tree().root.content_scale_factor
+	var dpr := DisplayUtils.get_dpr(parent_node)
 	var pos = target_sprite.global_position * dpr
 
 	var slime_item = GlassItem.new()

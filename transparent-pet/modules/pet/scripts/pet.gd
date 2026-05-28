@@ -14,7 +14,8 @@ var glass_item: GlassItem = null
 
 var draggable_list: Array = []
 
-const SVG_PATH: String = "res://modules/pet/assets/pet_sprite.svg"
+const SVG_PATH: String = ProjectConstants.SVG_PATH
+const PetConsts = preload("res://modules/pet/scripts/pet_constants.gd")
 
 
 func _ready():
@@ -28,9 +29,7 @@ func _ready():
 	ConfigManager.load_defaults("liquid_glass")
 
 	# ── 1. 显示子系统 ──
-	var VectorRendererCls = preload("res://modules/display/scripts/vector_renderer.gd")
-	var vector_renderer = VectorRendererCls.new()
-	vector_renderer.init(slime_sprite, SVG_PATH)
+	var vector_renderer = NodeUtils.create_and_init("res://modules/display/scripts/vector_renderer.gd", [slime_sprite, SVG_PATH])
 
 	var material_manager: MaterialManager = MaterialManager.new()
 	material_manager.init(slime_sprite)
@@ -44,32 +43,30 @@ func _ready():
 	center_sprite()
 
 	# ── 2. 交互子系统 ──
-	var DragCtrl = preload("res://modules/interaction/scripts/drag_controller.gd")
-	var drag_controller = DragCtrl.new()
-	drag_controller.init(self)
+	var drag_controller = NodeUtils.create_and_init("res://modules/interaction/scripts/drag_controller.gd", [self])
 
 	var MouseMgr = preload("res://modules/interaction/scripts/mouse_manager.gd")
 	var mouse_manager = MouseMgr.new()
 	mouse_manager.init(self, slime_sprite, passthrough_manager)
 
 	drag_controller.update_throw_params(
-		ConfigManager.cfg_get("throw", "throw_gravity", 800.0),
-		ConfigManager.cfg_get("throw", "throw_min_speed", 350.0),
-		ConfigManager.cfg_get("throw", "throw_max_speed", 800.0),
-		ConfigManager.cfg_get("throw", "throw_multiplier", 2.0),
-		ConfigManager.cfg_get("throw", "throw_enabled", true)
+		ConfigManager.cfg_get("throw", "throw_gravity", PetConsts.THROW_GRAVITY_DEFAULT),
+		ConfigManager.cfg_get("throw", "throw_min_speed", PetConsts.THROW_MIN_SPEED_DEFAULT),
+		ConfigManager.cfg_get("throw", "throw_max_speed", PetConsts.THROW_MAX_SPEED_DEFAULT),
+		ConfigManager.cfg_get("throw", "throw_multiplier", PetConsts.THROW_MULTIPLIER_DEFAULT),
+		ConfigManager.cfg_get("throw", "throw_enabled", PetConsts.THROW_ENABLED_DEFAULT)
 	)
 	drag_controller.update_physics_params(
-		ConfigManager.cfg_get("physics", "physics_ground_bounce", 0.3),
-		ConfigManager.cfg_get("physics", "physics_wall_bounce", 0.7),
-		ConfigManager.cfg_get("physics", "physics_ground_friction", 500.0),
-		ConfigManager.cfg_get("physics", "physics_fall_threshold", 500.0)
+		ConfigManager.cfg_get("physics", "physics_ground_bounce", PetConsts.PHYSICS_GROUND_BOUNCE_DEFAULT),
+		ConfigManager.cfg_get("physics", "physics_wall_bounce", PetConsts.PHYSICS_WALL_BOUNCE_DEFAULT),
+		ConfigManager.cfg_get("physics", "physics_ground_friction", PetConsts.PHYSICS_GROUND_FRICTION_DEFAULT),
+		ConfigManager.cfg_get("physics", "physics_fall_threshold", PetConsts.PHYSICS_FALL_THRESHOLD_DEFAULT)
 	)
 	drag_controller.update_svg_params(
-		ConfigManager.cfg_get("svg", "svg_half_w_ratio", 0.4),
-		ConfigManager.cfg_get("svg", "svg_bottom_offset_ratio", 0.417),
-		ConfigManager.cfg_get("svg", "svg_fallback_size_x", 200),
-		ConfigManager.cfg_get("svg", "svg_fallback_size_y", 132)
+		ConfigManager.cfg_get("svg", "svg_half_w_ratio", PetConsts.SVG_HALF_W_RATIO_DEFAULT),
+		ConfigManager.cfg_get("svg", "svg_bottom_offset_ratio", PetConsts.SVG_BOTTOM_OFFSET_RATIO_DEFAULT),
+		ConfigManager.cfg_get("svg", "svg_fallback_size_x", PetConsts.SVG_FALLBACK_SIZE_X_DEFAULT),
+		ConfigManager.cfg_get("svg", "svg_fallback_size_y", PetConsts.SVG_FALLBACK_SIZE_Y_DEFAULT)
 	)
 
 	interaction_controller = {
@@ -86,9 +83,8 @@ func _ready():
 	effects_controller.init(self, slime_sprite)
 
 	# ── 4. 系统托盘 ──
-	tray_manager = preload("res://core/services/tray_manager.gd").new()
+	tray_manager = NodeUtils.create_and_init("res://core/services/tray_manager.gd", [self])
 	add_child(tray_manager)
-	tray_manager.init(self)
 	tray_manager.settings_requested.connect(_on_tray_settings_requested)
 	tray_manager.exit_requested.connect(_on_tray_exit_requested)
 
@@ -98,7 +94,7 @@ func _ready():
 
 	_register_draggables()
 
-	if ConfigManager.cfg_get("window", "open_settings_on_start", true):
+	if ConfigManager.cfg_get("window", "open_settings_on_start", PetConsts.WINDOW_OPEN_SETTINGS_DEFAULT):
 		open_settings_window.call_deferred()
 
 
@@ -116,8 +112,7 @@ func center_sprite():
 	if not slime_sprite:
 		return
 
-	var screen_size_i: Vector2i = DisplayServer.screen_get_size()
-	var screen_size: Vector2 = Vector2(screen_size_i.x, screen_size_i.y)
+	var screen_size := DisplayUtils.get_screen_size()
 
 	var target_x: float = screen_size.x / 2
 	var target_y: float = screen_size.y / 2
@@ -128,7 +123,7 @@ func center_sprite():
 		target_y = ConfigManager.cfg_get("window", "window_initial_y", -1)
 
 	slime_sprite.global_position = Vector2(target_x, target_y)
-	update_pet_scale(ConfigManager.cfg_get("pet", "pet_scale", 1.0))
+	update_pet_scale(ConfigManager.cfg_get("pet", "pet_scale", PetConsts.PET_SCALE_DEFAULT))
 
 	# 加载上次关闭时的位置
 	var saved_pos: Vector2 = DataManager.data_get("pet_position", Vector2.INF)
@@ -137,14 +132,14 @@ func center_sprite():
 		print("[精灵] 恢复保存位置：", saved_pos)
 
 	print("[精灵] 精灵全局位置：", slime_sprite.global_position)
-	print("[精灵] 精灵缩放大小：", ConfigManager.cfg_get("pet", "pet_scale", 1.0))
+	print("[精灵] 精灵缩放大小：", ConfigManager.cfg_get("pet", "pet_scale", PetConsts.PET_SCALE_DEFAULT))
 
 
 func _process(delta: float):
 	interaction_controller.drag.update_drag(delta)
 
 	if effects_controller.has_active_effect():
-		var dpr: float = get_tree().root.content_scale_factor
+		var dpr := DisplayUtils.get_dpr(self)
 		effects_controller.sync_position(slime_sprite.global_position, dpr)
 
 	interaction_controller.mouse.update_mouse_passthrough()
@@ -205,11 +200,11 @@ func set_always_on_top(enabled: bool):
 
 
 func get_window_size() -> Vector2i:
-	return owner.get_window().size if owner else Vector2i.ZERO
+	return DisplayUtils.get_window_size(self)
 
 
 func get_window_position() -> Vector2i:
-	return owner.get_window().position if owner else Vector2i.ZERO
+	return DisplayUtils.get_window_position(self)
 
 
 func get_sprite_global_position() -> Vector2:
@@ -249,27 +244,27 @@ func set_motion_effect_enabled(enabled: bool):
 
 func get_throw_params() -> Dictionary:
 	return {
-		"enabled": ConfigManager.cfg_get("throw", "throw_enabled", true),
-		"gravity": ConfigManager.cfg_get("throw", "throw_gravity", 800.0),
-		"min_speed": ConfigManager.cfg_get("throw", "throw_min_speed", 350.0),
-		"max_speed": ConfigManager.cfg_get("throw", "throw_max_speed", 800.0),
-		"multiplier": ConfigManager.cfg_get("throw", "throw_multiplier", 2.0)
+		"enabled": ConfigManager.cfg_get("throw", "throw_enabled", PetConsts.THROW_ENABLED_DEFAULT),
+		"gravity": ConfigManager.cfg_get("throw", "throw_gravity", PetConsts.THROW_GRAVITY_DEFAULT),
+		"min_speed": ConfigManager.cfg_get("throw", "throw_min_speed", PetConsts.THROW_MIN_SPEED_DEFAULT),
+		"max_speed": ConfigManager.cfg_get("throw", "throw_max_speed", PetConsts.THROW_MAX_SPEED_DEFAULT),
+		"multiplier": ConfigManager.cfg_get("throw", "throw_multiplier", PetConsts.THROW_MULTIPLIER_DEFAULT)
 	}
 
 
 func set_throw_params(params: Dictionary):
-	ConfigManager.cfg_set("throw", "throw_enabled", params.get("enabled", true))
-	ConfigManager.cfg_set("throw", "throw_gravity", params.get("gravity", 800.0))
-	ConfigManager.cfg_set("throw", "throw_min_speed", params.get("min_speed", 350.0))
-	ConfigManager.cfg_set("throw", "throw_max_speed", params.get("max_speed", 800.0))
-	ConfigManager.cfg_set("throw", "throw_multiplier", params.get("multiplier", 2.0))
+	ConfigManager.cfg_set("throw", "throw_enabled", params.get("enabled", PetConsts.THROW_ENABLED_DEFAULT))
+	ConfigManager.cfg_set("throw", "throw_gravity", params.get("gravity", PetConsts.THROW_GRAVITY_DEFAULT))
+	ConfigManager.cfg_set("throw", "throw_min_speed", params.get("min_speed", PetConsts.THROW_MIN_SPEED_DEFAULT))
+	ConfigManager.cfg_set("throw", "throw_max_speed", params.get("max_speed", PetConsts.THROW_MAX_SPEED_DEFAULT))
+	ConfigManager.cfg_set("throw", "throw_multiplier", params.get("multiplier", PetConsts.THROW_MULTIPLIER_DEFAULT))
 
 	interaction_controller.drag.update_throw_params(
-		ConfigManager.cfg_get("throw", "throw_gravity", 800.0),
-		ConfigManager.cfg_get("throw", "throw_min_speed", 350.0),
-		ConfigManager.cfg_get("throw", "throw_max_speed", 800.0),
-		ConfigManager.cfg_get("throw", "throw_multiplier", 2.0),
-		ConfigManager.cfg_get("throw", "throw_enabled", true)
+		ConfigManager.cfg_get("throw", "throw_gravity", PetConsts.THROW_GRAVITY_DEFAULT),
+		ConfigManager.cfg_get("throw", "throw_min_speed", PetConsts.THROW_MIN_SPEED_DEFAULT),
+		ConfigManager.cfg_get("throw", "throw_max_speed", PetConsts.THROW_MAX_SPEED_DEFAULT),
+		ConfigManager.cfg_get("throw", "throw_multiplier", PetConsts.THROW_MULTIPLIER_DEFAULT),
+		ConfigManager.cfg_get("throw", "throw_enabled", PetConsts.THROW_ENABLED_DEFAULT)
 	)
 
 
@@ -296,12 +291,11 @@ func _on_tray_exit_requested():
 # ── 设置窗口 ──
 
 func open_settings_window():
-	var settings_scene = load("res://modules/settings/ui/settings_window.tscn")
-	if settings_scene:
-		var settings_window = settings_scene.instantiate()
+	var settings_window = NodeUtils.instantiate_scene(ProjectConstants.SETTINGS_WINDOW_SCENE)
+	if settings_window:
 		settings_window.set_pet_node(self)
 		get_tree().root.add_child(settings_window)
 
 		var pet_pos = slime_sprite.global_position
-		var settings_pos = Vector2(pet_pos.x + 50, pet_pos.y - 130)
-		settings_window.position = settings_pos
+		var settings_pos = pet_pos + ProjectConstants.SETTINGS_WINDOW_OFFSET
+		settings_window.position = Vector2i(int(settings_pos.x), int(settings_pos.y))

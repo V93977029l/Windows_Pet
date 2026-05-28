@@ -1,6 +1,8 @@
 class_name DragController
 extends RefCounted
 
+const PetConsts = preload("res://modules/pet/scripts/pet_constants.gd")
+
 var parent_node: Node2D
 
 var click_offset: Vector2i = Vector2i.ZERO
@@ -25,7 +27,7 @@ var svg_half_w_ratio: float = 0.4
 var svg_bottom_offset_ratio: float = 0.417
 var svg_fallback: Vector2 = Vector2(200, 132)
 
-const VELOCITY_BUFFER_SIZE: int = 8
+const VELOCITY_BUFFER_SIZE: int = PetConsts.VELOCITY_BUFFER_SIZE_DEFAULT
 var velocity_buffer: Array[Vector2] = []
 var pos_buffer: Array[Vector2] = []
 
@@ -93,11 +95,7 @@ func handle_area_input_event(event: InputEvent, target_sprite: Sprite2D = null):
 				print("[拖动] 左键松开，停止拖动（抛射已禁用）")
 				return
 
-			var avg_velocity = Vector2.ZERO
-			if velocity_buffer.size() > 0:
-				for v in velocity_buffer:
-					avg_velocity += v
-				avg_velocity /= velocity_buffer.size()
+			var avg_velocity = MathUtils.average_vector2(velocity_buffer)
 
 			throw_velocity = avg_velocity * throw_multiplier
 
@@ -130,9 +128,7 @@ func update_drag(delta: float = 0.0167):
 		if time_delta > 0:
 			var frame_velocity = (mouse_global - last_mouse_pos) / (time_delta / 1000.0)
 
-			velocity_buffer.append(frame_velocity)
-			while velocity_buffer.size() > VELOCITY_BUFFER_SIZE:
-				velocity_buffer.pop_front()
+			MathUtils.push_sliding_window(velocity_buffer, frame_velocity, VELOCITY_BUFFER_SIZE)
 
 		last_mouse_pos = mouse_global
 		last_frame_time = current_time
@@ -140,7 +136,7 @@ func update_drag(delta: float = 0.0167):
 		throw_velocity.y += throw_gravity * delta
 
 		var new_pos = drag_target.global_position + throw_velocity * delta
-		var screen_size = parent_node.get_tree().root.get_viewport().get_size()
+		var screen_size = DisplayUtils.get_viewport_size(parent_node)
 
 		# 矩形碰撞半尺寸（按 SVG 实际轮廓相对于画布中心的偏移）
 		var tex_size = drag_target.texture.get_size() if drag_target.texture else svg_fallback

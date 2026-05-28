@@ -159,49 +159,11 @@ func _create_tray():
 ##   - 所有路径都不存在 → 返回空字符串，调用方使用默认图标
 ##   - user:// 路径写入失败 → 返回空字符串
 func _get_icon_path(p_res_path: String) -> String:
-	var file_name = p_res_path.get_file()
-	var user_path = "user://" + file_name
+	var result := FileUtils.resolve_file_path(p_res_path)
+	if not result.is_empty():
+		return result
 
-	# 策略1: 检查用户缓存目录中是否有已提取的图标
-	if FileAccess.file_exists(user_path):
-		var path = ProjectSettings.globalize_path(user_path)
-		if FileAccess.file_exists(path):
-			return path
-
-	# 策略2: 编辑器模式下直接访问项目资源
-	if OS.has_feature("editor"):
-		var global_path = ProjectSettings.globalize_path(p_res_path)
-		if FileAccess.file_exists(global_path):
-			return global_path
-
-	# 策略3: 导出后在EXE所在目录查找
-	var exe_dir = OS.get_executable_path().get_base_dir()
-	var local_path = exe_dir.path_join(file_name)
-	if FileAccess.file_exists(local_path):
-		return local_path
-
-	# 策略4: 从 res:// 读取并提取到 user:// 目录
-	var file = FileAccess.open(p_res_path, FileAccess.READ)
-	if not file:
-		printerr("[托盘] 无法读取图标: ", p_res_path)
-		return ""
-
-	var data = file.get_buffer(file.get_length())
-	file.close()
-
-	DirAccess.make_dir_recursive_absolute(OS.get_user_data_dir())
-
-	var out = FileAccess.open(user_path, FileAccess.WRITE)
-	if not out:
-		printerr("[托盘] 无法写入临时图标: ", user_path)
-		return ""
-
-	out.store_buffer(data)
-	out.close()
-
-	var result = ProjectSettings.globalize_path(user_path)
-	print("📁 [托盘] 图标已提取到: ", result)
-	return result
+	return FileUtils.extract_resource_to_user(p_res_path)
 
 
 ## 托盘左键点击回调

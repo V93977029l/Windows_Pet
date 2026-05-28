@@ -1,7 +1,9 @@
 extends Window
 
+const PetConsts = preload("res://modules/pet/scripts/pet_constants.gd")
+
 var pet_node: Node2D = null
-var _is_updating_ui: bool = false
+var _update_guard: UIUtils.UIUpdateGuard = UIUtils.UIUpdateGuard.new()
 var _pending_setup: bool = false
 
 @onready var enable_check: CheckButton = $Background/VBox/Enable/HBox/Check
@@ -47,19 +49,19 @@ func _ready():
 
 
 func load_config():
-	_is_updating_ui = true
+	_update_guard.try_lock()
 
-	enable_check.button_pressed = ConfigManager.cfg_get("throw", "throw_enabled", true)
-	gravity_slider.value = ConfigManager.cfg_get("throw", "throw_gravity", 800.0)
-	gravity_input.text = _fmt(ConfigManager.cfg_get("throw", "throw_gravity", 800.0))
-	min_speed_slider.value = ConfigManager.cfg_get("throw", "throw_min_speed", 350.0)
-	min_speed_input.text = _fmt(ConfigManager.cfg_get("throw", "throw_min_speed", 350.0))
-	max_speed_slider.value = ConfigManager.cfg_get("throw", "throw_max_speed", 800.0)
-	max_speed_input.text = _fmt(ConfigManager.cfg_get("throw", "throw_max_speed", 800.0))
-	multiplier_slider.value = ConfigManager.cfg_get("throw", "throw_multiplier", 2.0)
-	multiplier_input.text = _fmt(ConfigManager.cfg_get("throw", "throw_multiplier", 2.0))
+	enable_check.button_pressed = ConfigManager.cfg_get("throw", "throw_enabled", PetConsts.THROW_ENABLED_DEFAULT)
+	gravity_slider.value = ConfigManager.cfg_get("throw", "throw_gravity", PetConsts.THROW_GRAVITY_DEFAULT)
+	gravity_input.text = NumberUtils.format_float(ConfigManager.cfg_get("throw", "throw_gravity", PetConsts.THROW_GRAVITY_DEFAULT), 1)
+	min_speed_slider.value = ConfigManager.cfg_get("throw", "throw_min_speed", PetConsts.THROW_MIN_SPEED_DEFAULT)
+	min_speed_input.text = NumberUtils.format_float(ConfigManager.cfg_get("throw", "throw_min_speed", PetConsts.THROW_MIN_SPEED_DEFAULT), 1)
+	max_speed_slider.value = ConfigManager.cfg_get("throw", "throw_max_speed", PetConsts.THROW_MAX_SPEED_DEFAULT)
+	max_speed_input.text = NumberUtils.format_float(ConfigManager.cfg_get("throw", "throw_max_speed", PetConsts.THROW_MAX_SPEED_DEFAULT), 1)
+	multiplier_slider.value = ConfigManager.cfg_get("throw", "throw_multiplier", PetConsts.THROW_MULTIPLIER_DEFAULT)
+	multiplier_input.text = NumberUtils.format_float(ConfigManager.cfg_get("throw", "throw_multiplier", PetConsts.THROW_MULTIPLIER_DEFAULT), 1)
 
-	_is_updating_ui = false
+	_update_guard.unlock()
 
 
 func _await_apply():
@@ -80,108 +82,108 @@ func _await_apply():
 
 
 func _on_enable_changed(enabled: bool):
-	if _is_updating_ui:
+	if _update_guard.is_guarded():
 		return
 	ConfigManager.cfg_set("throw", "throw_enabled", enabled)
 	_await_apply()
 
 
 func _on_gravity_slider_changed(value: float):
-	if _is_updating_ui:
+	if _update_guard.is_guarded():
 		return
-	_is_updating_ui = true
-	gravity_input.text = _fmt(value)
-	_is_updating_ui = false
+	_update_guard.try_lock()
+	gravity_input.text = NumberUtils.format_float(value, 1)
+	_update_guard.unlock()
 	ConfigManager.cfg_set("throw", "throw_gravity", value)
 	_await_apply()
 
 
 func _on_gravity_input_changed(text: String):
-	if _is_updating_ui:
+	if _update_guard.is_guarded():
 		return
 	if not text.is_valid_float():
 		return
 	var value = text.to_float()
 	if value < 100.0 or value > 3000.0:
 		return
-	_is_updating_ui = true
+	_update_guard.try_lock()
 	gravity_slider.value = value
-	_is_updating_ui = false
+	_update_guard.unlock()
 	ConfigManager.cfg_set("throw", "throw_gravity", value)
 	_await_apply()
 
 
 func _on_min_speed_slider_changed(value: float):
-	if _is_updating_ui:
+	if _update_guard.is_guarded():
 		return
-	_is_updating_ui = true
-	min_speed_input.text = _fmt(value)
-	_is_updating_ui = false
+	_update_guard.try_lock()
+	min_speed_input.text = NumberUtils.format_float(value, 1)
+	_update_guard.unlock()
 	ConfigManager.cfg_set("throw", "throw_min_speed", value)
 	_await_apply()
 
 
 func _on_min_speed_input_changed(text: String):
-	if _is_updating_ui:
+	if _update_guard.is_guarded():
 		return
 	if not text.is_valid_float():
 		return
 	var value = text.to_float()
 	if value < 50.0 or value > 2000.0:
 		return
-	_is_updating_ui = true
+	_update_guard.try_lock()
 	min_speed_slider.value = value
-	_is_updating_ui = false
+	_update_guard.unlock()
 	ConfigManager.cfg_set("throw", "throw_min_speed", value)
 	_await_apply()
 
 
 func _on_max_speed_slider_changed(value: float):
-	if _is_updating_ui:
+	if _update_guard.is_guarded():
 		return
-	_is_updating_ui = true
-	max_speed_input.text = _fmt(value)
-	_is_updating_ui = false
+	_update_guard.try_lock()
+	max_speed_input.text = NumberUtils.format_float(value, 1)
+	_update_guard.unlock()
 	ConfigManager.cfg_set("throw", "throw_max_speed", value)
 	_await_apply()
 
 
 func _on_max_speed_input_changed(text: String):
-	if _is_updating_ui:
+	if _update_guard.is_guarded():
 		return
 	if not text.is_valid_float():
 		return
 	var value = text.to_float()
 	if value < 200.0 or value > 3000.0:
 		return
-	_is_updating_ui = true
+	_update_guard.try_lock()
 	max_speed_slider.value = value
-	_is_updating_ui = false
+	_update_guard.unlock()
 	ConfigManager.cfg_set("throw", "throw_max_speed", value)
 	_await_apply()
 
 
 func _on_multiplier_slider_changed(value: float):
-	if _is_updating_ui:
+	if _update_guard.is_guarded():
 		return
-	_is_updating_ui = true
-	multiplier_input.text = _fmt(value)
-	_is_updating_ui = false
+	_update_guard.try_lock()
+	multiplier_input.text = NumberUtils.format_float(value, 1)
+	_update_guard.unlock()
 	ConfigManager.cfg_set("throw", "throw_multiplier", value)
 	_await_apply()
 
 
 func _on_multiplier_input_changed(text: String):
-	if _is_updating_ui:
+	if _update_guard.is_guarded():
 		return
 	if not text.is_valid_float():
 		return
 	var value = text.to_float()
 	if value < 0.1 or value > 10.0:
 		return
-	_is_updating_ui = true
+	_update_guard.try_lock()
 	multiplier_slider.value = value
-	_is_updating_ui = false
+	_update_guard.unlock()
 	ConfigManager.cfg_set("throw", "throw_multiplier", value)
 	_await_apply()
 
@@ -192,11 +194,11 @@ func _on_save():
 
 
 func _on_reset():
-	ConfigManager.cfg_set("throw", "throw_enabled", true)
-	ConfigManager.cfg_set("throw", "throw_gravity", 800.0)
-	ConfigManager.cfg_set("throw", "throw_min_speed", 350.0)
-	ConfigManager.cfg_set("throw", "throw_max_speed", 800.0)
-	ConfigManager.cfg_set("throw", "throw_multiplier", 2.0)
+	ConfigManager.cfg_set("throw", "throw_enabled", PetConsts.THROW_ENABLED_DEFAULT)
+	ConfigManager.cfg_set("throw", "throw_gravity", PetConsts.THROW_GRAVITY_DEFAULT)
+	ConfigManager.cfg_set("throw", "throw_min_speed", PetConsts.THROW_MIN_SPEED_DEFAULT)
+	ConfigManager.cfg_set("throw", "throw_max_speed", PetConsts.THROW_MAX_SPEED_DEFAULT)
+	ConfigManager.cfg_set("throw", "throw_multiplier", PetConsts.THROW_MULTIPLIER_DEFAULT)
 	load_config()
 	_await_apply()
 	print("✅ [抛射设置] 已恢复默认")
@@ -204,7 +206,3 @@ func _on_reset():
 
 func _on_close():
 	queue_free()
-
-
-func _fmt(value: float) -> String:
-	return str(round(value * 10) / 10)
