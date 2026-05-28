@@ -98,7 +98,8 @@ func _ready():
 
 	_register_draggables()
 
-	open_settings_window.call_deferred()
+	if ConfigManager.cfg_get("window", "open_settings_on_start", true):
+		open_settings_window.call_deferred()
 
 
 func _init_materials():
