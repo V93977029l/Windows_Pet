@@ -6,7 +6,7 @@ signal effect_activated(effect_id: String)
 @warning_ignore("unused_signal")
 signal effect_deactivated(effect_id: String)
 
-func init(_parent_node: Node2D, _target_sprite: Sprite2D, _config):
+func init(_parent_node: Node2D, _target_sprite: Sprite2D):
 	push_error("[PetEffects] init() must be overridden")
 
 func activate_effect(_effect_id: String):

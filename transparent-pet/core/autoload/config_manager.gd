@@ -1,397 +1,76 @@
-## PetConfig - 桌宠配置管理器
-## =========================================================================
-## 【架构定位】
-##   本类是桌宠应用的配置持久化系统，负责所有用户可调参数的
-##   加载、保存和默认值管理。它继承 RefCounted 作为纯数据层，
-##   不包含任何UI逻辑，只专注于配置数据的读写。
-##
-## 【设计模式】
-##   采用"数据访问对象（DAO）"模式——将配置文件的底层读写操作
-##   封装到本类中，对外暴露简洁的属性访问接口。上层（如
-##   settings_window.gd）只需读写属性，无需关心文件I/O细节。
-##
-## 【核心职责】
-##   1. 配置文件的加载与保存（使用Godot内置的ConfigFile类）
-##   2. 配置参数的默认值定义与运行时读写
-##   3. 配置参数的合法范围校验（如缩放倍率限制在0.2~4.0）
-##
-## 【配置文件策略】
-##   - config_path: 项目内置默认配置（只读，随打包分发）
-##   - save_path: 用户个性化配置（读写，保存在user://目录下）
-##   加载时优先读取 save_path（用户配置），不存在时回退到 config_path（默认）。
-##   保存时始终写入 save_path。
-##
-## 【配置结构】（pet_config.cfg）
-##   [pet]
-##     scale = 1.0              # 精灵缩放倍率 (0.2 ~ 4.0)
-##     material_preset = "slime_1"  # 当前选中的材质预设id
-##   [window]
-##     initial_x = -1           # 窗口初始X坐标（-1表示使用默认位置）
-##     initial_y = -1           # 窗口初始Y坐标（-1表示使用默认位置）
-##     always_on_top = true     # 窗口是否始终置顶
-##   [autostart]
-##     enabled = false          # 是否开机自启动
-## =========================================================================
+extends Node
 
-extends RefCounted
+var user_config_path: String:
+	get:
+		if OS.has_feature("editor") or OS.has_feature("debug"):
+			return ProjectSettings.globalize_path("res://../export/pet_config.cfg")
+		else:
+			return ProjectSettings.globalize_path("user://pet_config.cfg")
 
-## Godot内置的配置文件读写器
-## ConfigFile是Godot引擎提供的INI风格配置文件解析器
-var config: ConfigFile = ConfigFile.new()
+var _default_configs: Dictionary = {}
+var _user_config: ConfigFile
 
-## 默认配置文件路径（项目内置，随打包分发，只读）
-## 使用 res:// 前缀表示这是项目资源路径
-var config_path: String = "res://config/pet_config.cfg"
-
-## 用户配置文件路径（保存用户个性化设置，可读写）
-## 使用 user:// 前缀表示用户数据目录，不同OS下路径不同：
-##   Windows: %APPDATA%\Godot\app_userdata\{project_name}
-##   Linux: ~/.local/share/godot/app_userdata/{project_name}
-##   macOS: ~/Library/Application Support/Godot/app_userdata/{project_name}
-var save_path: String = "user://pet_config.cfg"
-
-## =========================================================================
-## [pet] 栏目 —— 桌宠相关配置
-## =========================================================================
-
-## 桌宠精灵的缩放倍率
-## 取值范围：0.2（最小，20%大小）~ 4.0（最大，400%大小）
-## 默认值 1.0 表示原始大小（100%）
-var pet_scale: float = 1.0
-
-## 1号史莱姆使用的材质预设id
-var slime_1_material: String = "slime_1"
-
-## 2号史莱姆使用的材质预设id
-var slime_2_material: String = "slime_2"
-
-## =========================================================================
-## [window] 栏目 —— 窗口相关配置
-## =========================================================================
-
-## 窗口初始X坐标（屏幕坐标像素）
-## -1 表示使用系统默认位置（由操作系统决定窗口出现的位置）
-## >= 0 的值表示窗口左上角的屏幕X坐标
-var window_initial_x: int = -1
-
-## 窗口初始Y坐标（屏幕坐标像素）
-## 与 window_initial_x 配合使用，共同决定窗口的初始位置
-var window_initial_y: int = -1
-
-## 窗口是否始终置顶（Always On Top）
-## true: 窗口始终显示在所有其他窗口之上（包括任务栏）
-## false: 窗口与其他窗口一样正常堆叠
-## 默认 true，使桌宠始终可见
-var window_always_on_top: bool = true
-
-## =========================================================================
-## [autostart] 栏目 —— 自启动相关配置
-## =========================================================================
-
-## 是否开启开机自启动
-## true: 向Windows注册表添加启动项，系统启动时自动运行
-## false: 不自动启动
-## 默认 false，由用户手动开启
-var autostart_enabled: bool = false
-
-## =========================================================================
-## [throw] 栏目 —— 抛射物理相关配置
-## =========================================================================
-
-## 是否启用抛射效果
-var throw_enabled: bool = true
-
-## 重力加速度（像素/秒²）
-var throw_gravity: float = 800.0
-
-## 最小抛射触发速度（像素/秒）
-var throw_min_speed: float = 350.0
-
-## 最大抛射速度上限（像素/秒）
-var throw_max_speed: float = 800.0
-
-## 抛射速度放大系数
-var throw_multiplier: float = 2.0
-
-## =========================================================================
-## [physics] 栏目 —— 物理碰撞相关配置
-## =========================================================================
-
-## 速度采样缓冲大小（帧数）
-var physics_velocity_buffer_size: int = 8
-## 地面反弹阻尼系数
-var physics_ground_bounce: float = 0.3
-## 墙壁反弹阻尼系数
-var physics_wall_bounce: float = 0.7
-## 地面摩擦力（像素/秒²）
-var physics_ground_friction: float = 500.0
-## 安全网坠落阈值（像素）
-var physics_fall_threshold: float = 500.0
-
-## =========================================================================
-## [liquid_glass] 栏目 —— 液态玻璃视觉效果配置
-## =========================================================================
-
-## 背景形状类型
-var glass_bg_type: int = 3
-## 是否启用边缘模糊
-var glass_blur_edge: bool = true
-## 模糊半径
-var glass_blur_radius: float = 2.0
-## 着色颜色 R 通道
-var glass_tint_r: float = 0.3
-## 着色颜色 G 通道
-var glass_tint_g: float = 0.6
-## 着色颜色 B 通道
-var glass_tint_b: float = 0.9
-## 着色透明度
-var glass_tint_alpha: float = 0.35
-## 玻璃项宽度
-var glass_item_width: float = 200.0
-## 玻璃项高度
-var glass_item_height: float = 132.0
-## 玻璃项圆角半径
-var glass_item_radius: float = 65.0
-
-## =========================================================================
-## [svg] 栏目 —— SVG 纹理碰撞偏移配置
-## =========================================================================
-
-## 碰撞半宽占纹理宽度的比例（左右对称）
-var svg_half_w_ratio: float = 0.4
-## 碰撞顶部偏移占纹理高度的比例
-var svg_top_offset_ratio: float = 0.35
-## 碰撞底部偏移占纹理高度的比例（比顶部大，因图形偏向画布下方）
-var svg_bottom_offset_ratio: float = 0.417
-## 回退纹理宽度
-var svg_fallback_size_x: int = 200
-## 回退纹理高度
-var svg_fallback_size_y: int = 132
-
-
-## 构造函数
-## 【核心逻辑】
-##   对象创建时立即加载配置，确保配置数据在对象使用的第一时间就可用。
-##   这是一种"急切加载（Eager Loading）"策略，避免了懒加载可能带来的
-##   首次访问延迟。
-func _init():
+func _ready():
 	load_config()
 
-
-## 加载配置文件
-## 【加载优先级】
-##   1. 优先加载 user:// 下的用户个性化配置（save_path）
-##   2. 若用户配置不存在，则加载 res:// 下的默认配置（config_path）
-##   3. 若两者都不存在/加载失败，使用代码中的硬编码默认值并自动保存
-## 【核心逻辑】
-##   使用 FileAccess.file_exists() 判断文件是否存在，
-##   调用 ConfigFile.load() 读取INI格式的配置文件，
-##   然后通过各 _read_*_section() 方法解析各配置段。
-## 【边界情况】
-##   - 两个配置文件都不存在 → 使用默认值并立即保存一份配置文件
-##   - 配置文件存在但解析失败 → 使用默认值
-##   - 配置值超出合法范围 → _read_pet_section() 中用 clamp() 限幅
+## 加载用户配置
 func load_config():
-	var err = OK
-	if FileAccess.file_exists(save_path):
-		err = config.load(save_path)
-	else:
-		err = config.load(config_path)
+	_user_config = ConfigFile.new()
+	if FileAccess.file_exists(user_config_path):
+		var err = _user_config.load(user_config_path)
+		if err != OK:
+			push_warning("[Config] Failed to load user config: ", err)
+	print("[Config] Loaded config")
 
-	if err == OK:
-		_read_pet_section()
-		_read_window_section()
-		_read_autostart_section()
-		_read_throw_section()
-		_read_physics_section()
-		_read_liquid_glass_section()
-		_read_svg_section()
-		print("✅ [配置] 配置文件加载成功")
-	else:
-		print("⚠️ [配置] 配置文件不存在或加载失败，使用默认值")
-		_save_config()
+## 加载指定模块的默认配置文件
+func load_defaults(module_name: String):
+	if module_name in _default_configs:
+		return
+	var cfg = ConfigFile.new()
+	var path = "res://config/%s.cfg" % module_name
+	var err = cfg.load(path)
+	if err != OK:
+		push_error("[Config] Failed to load defaults: ", path)
+		return
+	_default_configs[module_name] = cfg
+	print("[Config] Loaded defaults: ", module_name)
 
+## 获取配置值
+func cfg_get(section: String, key: String, default_value):
+	if _user_config.has_section_key(section, key):
+		return _user_config.get_value(section, key, default_value)
+	for cfg in _default_configs.values():
+		if cfg.has_section_key(section, key):
+			return cfg.get_value(section, key, default_value)
+	return default_value
 
-## 读取 [pet] 配置段
-## 【读取的配置项】
-##   scale: 精灵缩放倍率
-##   slime_1_material: 1号史莱姆材质
-##   slime_2_material: 2号史莱姆材质
-func _read_pet_section():
-	pet_scale = config.get_value("pet", "scale", 1.0)
-	pet_scale = clamp(pet_scale, 0.2, 4.0)
-	slime_1_material = config.get_value("pet", "slime_1_material", "slime_1")
-	slime_2_material = config.get_value("pet", "slime_2_material", "slime_2")
+## 设置配置值：只存与默认不同的值
+func cfg_set(section: String, key: String, value):
+	var default_val = _find_default(section, key)
+	if default_val != null:
+		if typeof(value) == TYPE_FLOAT and typeof(default_val) == TYPE_FLOAT:
+			if is_equal_approx(value, default_val):
+				_user_config.erase_section_key(section, key)
+				return
+		elif value == default_val:
+			_user_config.erase_section_key(section, key)
+			return
+	_user_config.set_value(section, key, value)
 
+## 查找默认值
+func _find_default(section: String, key: String):
+	for cfg in _default_configs.values():
+		if cfg.has_section_key(section, key):
+			return cfg.get_value(section, key)
+	return null
 
-## 读取 [window] 配置段
-## 【读取的配置项】
-##   initial_x: 窗口初始X坐标
-##   initial_y: 窗口初始Y坐标
-##   always_on_top: 窗口置顶标志
-## 【安全措施】
-##   所有值都提供合理的默认值，确保即使配置文件缺失任意字段也不会出错
-func _read_window_section():
-	window_initial_x = config.get_value("window", "initial_x", -1)
-	window_initial_y = config.get_value("window", "initial_y", -1)
-	window_always_on_top = config.get_value("window", "always_on_top", true)
-
-
-## 读取 [autostart] 配置段
-## 【读取的配置项】
-##   enabled: 自启动开关
-## 【安全措施】
-##   默认值为 false（不自动启动），这是"安全优于便利"的设计原则
-func _read_autostart_section():
-	autostart_enabled = config.get_value("autostart", "enabled", false)
-
-
-func _read_throw_section():
-	throw_enabled = config.get_value("throw", "enabled", true)
-	throw_gravity = config.get_value("throw", "gravity", 800.0)
-	throw_min_speed = config.get_value("throw", "min_speed", 350.0)
-	throw_max_speed = config.get_value("throw", "max_speed", 800.0)
-	throw_multiplier = config.get_value("throw", "multiplier", 2.0)
-
-
-func _read_physics_section():
-	physics_velocity_buffer_size = config.get_value("physics", "velocity_buffer_size", 8)
-	physics_ground_bounce = config.get_value("physics", "ground_bounce", 0.3)
-	physics_wall_bounce = config.get_value("physics", "wall_bounce", 0.7)
-	physics_ground_friction = config.get_value("physics", "ground_friction", 500.0)
-	physics_fall_threshold = config.get_value("physics", "fall_threshold", 500.0)
-
-
-func _read_liquid_glass_section():
-	glass_bg_type = config.get_value("liquid_glass", "bg_type", 3)
-	glass_blur_edge = config.get_value("liquid_glass", "blur_edge", true)
-	glass_blur_radius = config.get_value("liquid_glass", "blur_radius", 2.0)
-	glass_tint_r = config.get_value("liquid_glass", "tint_r", 0.3)
-	glass_tint_g = config.get_value("liquid_glass", "tint_g", 0.6)
-	glass_tint_b = config.get_value("liquid_glass", "tint_b", 0.9)
-	glass_tint_alpha = config.get_value("liquid_glass", "tint_alpha", 0.35)
-	glass_item_width = config.get_value("liquid_glass", "item_width", 200.0)
-	glass_item_height = config.get_value("liquid_glass", "item_height", 132.0)
-	glass_item_radius = config.get_value("liquid_glass", "item_radius", 65.0)
-
-
-func _read_svg_section():
-	svg_half_w_ratio = config.get_value("svg", "half_w_ratio", 0.4)
-	svg_top_offset_ratio = config.get_value("svg", "top_offset_ratio", 0.35)
-	svg_bottom_offset_ratio = config.get_value("svg", "bottom_offset_ratio", 0.417)
-	svg_fallback_size_x = config.get_value("svg", "fallback_size_x", 200)
-	svg_fallback_size_y = config.get_value("svg", "fallback_size_y", 132)
-
-
-## 保存配置到文件（内部方法）
-## 【核心逻辑】
-##   1. 将所有运行时配置属性写入 config 对象
-##   2. 调用 config.save() 持久化到 save_path
-##   3. 输出成功/失败日志
-## 【为什么分为 _save_config() 和 save_config()？】
-##   _save_config() 是内部实现，save_config() 是公共接口。
-##   这种封装允许将来在 save_config() 中添加额外的逻辑
-##   （如保存前校验、保存后通知等），而不改动内部实现。
-## 【边界情况】
-##   保存失败时会打印错误但不抛出异常——这是"优雅降级"策略，
-##   配置保存失败不应该影响桌宠的正常运行。
-func _save_config():
-	config.set_value("pet", "scale", pet_scale)
-	config.set_value("pet", "slime_1_material", slime_1_material)
-	config.set_value("pet", "slime_2_material", slime_2_material)
-	config.set_value("window", "initial_x", window_initial_x)
-	config.set_value("window", "initial_y", window_initial_y)
-	config.set_value("window", "always_on_top", window_always_on_top)
-	config.set_value("autostart", "enabled", autostart_enabled)
-	config.set_value("throw", "enabled", throw_enabled)
-	config.set_value("throw", "gravity", throw_gravity)
-	config.set_value("throw", "min_speed", throw_min_speed)
-	config.set_value("throw", "max_speed", throw_max_speed)
-	config.set_value("throw", "multiplier", throw_multiplier)
-	config.set_value("physics", "velocity_buffer_size", physics_velocity_buffer_size)
-	config.set_value("physics", "ground_bounce", physics_ground_bounce)
-	config.set_value("physics", "wall_bounce", physics_wall_bounce)
-	config.set_value("physics", "ground_friction", physics_ground_friction)
-	config.set_value("physics", "fall_threshold", physics_fall_threshold)
-	config.set_value("liquid_glass", "bg_type", glass_bg_type)
-	config.set_value("liquid_glass", "blur_edge", glass_blur_edge)
-	config.set_value("liquid_glass", "blur_radius", glass_blur_radius)
-	config.set_value("liquid_glass", "tint_r", glass_tint_r)
-	config.set_value("liquid_glass", "tint_g", glass_tint_g)
-	config.set_value("liquid_glass", "tint_b", glass_tint_b)
-	config.set_value("liquid_glass", "tint_alpha", glass_tint_alpha)
-	config.set_value("liquid_glass", "item_width", glass_item_width)
-	config.set_value("liquid_glass", "item_height", glass_item_height)
-	config.set_value("liquid_glass", "item_radius", glass_item_radius)
-	config.set_value("svg", "half_w_ratio", svg_half_w_ratio)
-	config.set_value("svg", "top_offset_ratio", svg_top_offset_ratio)
-	config.set_value("svg", "bottom_offset_ratio", svg_bottom_offset_ratio)
-	config.set_value("svg", "fallback_size_x", svg_fallback_size_x)
-	config.set_value("svg", "fallback_size_y", svg_fallback_size_y)
-
-	var err = config.save(save_path)
-	if err == OK:
-		print("✅ [配置] 配置文件已保存: ", save_path)
-	else:
-		printerr("[配置] 配置文件保存失败: ", save_path)
-
-
-## 保存配置到文件（公共接口）
-## 【用途】供外部调用（如设置窗口的保存按钮）
-## 【核心逻辑】直接委托给 _save_config()
+## 保存用户配置
 func save_config():
-	_save_config()
-
-
-## 打印当前所有配置参数到控制台（调试用）
-## 【用途】开发调试时查看当前配置状态
-## 【格式】树形结构展示，参照项目日志风格
-func print_config():
-	print("\n📋 [配置] 当前配置参数:")
-	print("├── [pet]")
-	print("│   ├── scale: ", pet_scale)
-	print("│   ├── slime_1_material: ", slime_1_material)
-	print("│   └── slime_2_material: ", slime_2_material)
-	print("└── [window]")
-	print("    ├── initial_x: ", window_initial_x)
-	print("    ├── initial_y: ", window_initial_y)
-	print("    └── always_on_top: ", window_always_on_top)
-	print("[autostart]")
-	print("    └── enabled: ", autostart_enabled)
-	print("[throw]")
-	print("    ├── enabled: ", throw_enabled)
-	print("    ├── gravity: ", throw_gravity)
-	print("    ├── min_speed: ", throw_min_speed)
-	print("    ├── max_speed: ", throw_max_speed)
-	print("    └── multiplier: ", throw_multiplier)
-	print("[physics]")
-	print("    ├── velocity_buffer_size: ", physics_velocity_buffer_size)
-	print("    ├── ground_bounce: ", physics_ground_bounce)
-	print("    ├── wall_bounce: ", physics_wall_bounce)
-	print("    ├── ground_friction: ", physics_ground_friction)
-	print("    └── fall_threshold: ", physics_fall_threshold)
-	print("[liquid_glass]")
-	print("    ├── bg_type: ", glass_bg_type)
-	print("    ├── blur_edge: ", glass_blur_edge)
-	print("    ├── blur_radius: ", glass_blur_radius)
-	print("    ├── tint: (", glass_tint_r, ", ", glass_tint_g, ", ", glass_tint_b, ")")
-	print("    ├── tint_alpha: ", glass_tint_alpha)
-	print("    ├── item_width: ", glass_item_width)
-	print("    ├── item_height: ", glass_item_height)
-	print("    └── item_radius: ", glass_item_radius)
-	print("[svg]")
-	print("    ├── half_w_ratio: ", svg_half_w_ratio)
-	print("    ├── top_offset_ratio: ", svg_top_offset_ratio)
-	print("    ├── bottom_offset_ratio: ", svg_bottom_offset_ratio)
-	print("    ├── fallback_size_x: ", svg_fallback_size_x)
-	print("    └── fallback_size_y: ", svg_fallback_size_y)
-	print()
-
-
-## 获取当前材质的显示名称
-## 【返回值】 String - 材质预设对应的友好显示名称
-## 【当前实现】
-##   由于当前仅有一个预设 "slime_1"，直接返回对应名称。
-##   将来若有多预设支持，应改为从 MaterialManager 查询。
-func get_material_name() -> String:
-	return "1号史莱姆(普通)"
+	var dir_path = user_config_path.get_base_dir()
+	if not DirAccess.dir_exists_absolute(dir_path):
+		DirAccess.make_dir_recursive_absolute(dir_path)
+	var err = _user_config.save(user_config_path)
+	if err == OK:
+		print("[Config] Saved user config to: ", user_config_path)
+	else:
+		push_error("[Config] Failed to save user config: ", err)

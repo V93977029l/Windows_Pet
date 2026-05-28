@@ -1,7 +1,6 @@
 extends Window
 
 var pet_node: Node2D = null
-var config = null
 var _is_updating_ui: bool = false
 var _pending_setup: bool = false
 
@@ -21,7 +20,6 @@ var _pending_setup: bool = false
 func set_pet_node(pet: Node2D):
 	pet_node = pet
 	if pet_node:
-		config = pet_node.config
 		_pending_setup = true
 
 
@@ -73,20 +71,16 @@ func setup_material_combo():
 
 
 func load_config():
-	if not config:
-		print("⚠️ [设置] 配置对象为空")
-		return
-
 	_is_updating_ui = true
 
-	scale_slider.value = clamp(config.pet_scale, 0.2, 4.0)
-	scale_input.text = format_float(config.pet_scale)
+	scale_slider.value = clamp(ConfigManager.cfg_get("pet", "pet_scale", 1.0), 0.2, 4.0)
+	scale_input.text = format_float(ConfigManager.cfg_get("pet", "pet_scale", 1.0))
 
 	_select_current_material()
 
 	breathing_check.button_pressed = true
 	motion_check.button_pressed = true
-	always_on_top_check.button_pressed = config.window_always_on_top
+	always_on_top_check.button_pressed = ConfigManager.cfg_get("window", "window_always_on_top", true)
 	autostart_check.button_pressed = _check_autostart_status()
 
 	_is_updating_ui = false
@@ -94,7 +88,7 @@ func load_config():
 
 func _select_current_material():
 	var presets = pet_node.get_all_presets()
-	var current_material_id: String = config.slime_1_material
+	var current_material_id: String = ConfigManager.cfg_get("pet", "slime_1_material", "slime_1")
 
 	for i in range(presets.size()):
 		var preset = presets[i]
@@ -118,31 +112,32 @@ func _on_scale_slider_changed(value: float):
 	scale_input.text = format_float(rounded)
 	_is_updating_ui = false
 
-	config.pet_scale = rounded
+	ConfigManager.cfg_set("pet", "pet_scale", rounded)
 
 
 func _on_scale_input_changed(text: String):
 	if _is_updating_ui:
 		return
 
+	var current_scale = ConfigManager.cfg_get("pet", "pet_scale", 1.0)
 	if not text.is_valid_float():
-		scale_input.text = format_float(config.pet_scale)
+		scale_input.text = format_float(current_scale)
 		return
 
 	var value = text.to_float()
 	if value < 0.2 or value > 4.0:
-		scale_input.text = format_float(config.pet_scale)
+		scale_input.text = format_float(current_scale)
 		return
 
 	_is_updating_ui = true
 	scale_slider.value = value
 	_is_updating_ui = false
 
-	config.pet_scale = value
+	ConfigManager.cfg_set("pet", "pet_scale", value)
 
 
 func _on_apply_scale():
-	var value = config.pet_scale
+	var value = ConfigManager.cfg_get("pet", "pet_scale", 1.0)
 	apply_scale(value)
 	apply_high_res_scale(value)
 	print("✅ [设置] 缩放已应用: ", value)
@@ -158,7 +153,7 @@ func _on_material_changed(index: int):
 		var preset = presets[index]
 
 		pet_node.apply_preset(preset)
-		config.slime_1_material = preset.id
+		ConfigManager.cfg_set("pet", "slime_1_material", preset.id)
 
 		pet_node.on_material_changed(preset.id)
 
@@ -183,7 +178,7 @@ func _on_always_on_top_changed(enabled: bool):
 	if _is_updating_ui:
 		return
 
-	config.window_always_on_top = enabled
+	ConfigManager.cfg_set("window", "window_always_on_top", enabled)
 	apply_always_on_top(enabled)
 
 
@@ -192,13 +187,13 @@ func _on_autostart_changed(enabled: bool):
 		return
 
 	if not _set_autostart(enabled):
-		config.autostart_enabled = not enabled
+		ConfigManager.cfg_set("window", "autostart_enabled", not enabled)
 		_is_updating_ui = true
 		autostart_check.button_pressed = not enabled
 		_is_updating_ui = false
 		return
 
-	config.autostart_enabled = enabled
+	ConfigManager.cfg_set("window", "autostart_enabled", enabled)
 	print("✅ [设置] 开机自启动已", "启用" if enabled else "禁用")
 
 
@@ -301,29 +296,26 @@ func apply_always_on_top(enabled: bool):
 
 
 func _on_save():
-	if not config:
-		print("⚠️ [设置] 无法保存配置：config 为空")
-		return
-
+	ConfigManager.save_config()
 	pet_node.save_config()
 	print("✅ [设置] 配置已保存")
 
 
 func _on_reset():
-	config.pet_scale = 1.0
-	config.slime_1_material = "slime_1"
-	config.window_always_on_top = true
-	config.autostart_enabled = false
+	ConfigManager.cfg_set("pet", "pet_scale", 1.0)
+	ConfigManager.cfg_set("pet", "slime_1_material", "slime_1")
+	ConfigManager.cfg_set("window", "window_always_on_top", true)
+	ConfigManager.cfg_set("window", "autostart_enabled", false)
 
 	load_config()
 
 	_set_autostart(false)
 
-	apply_scale(config.pet_scale)
+	apply_scale(ConfigManager.cfg_get("pet", "pet_scale", 1.0))
 	if pet_node:
 		pet_node.set_breathing_enabled(true)
 		pet_node.set_motion_effect_enabled(true)
-	apply_always_on_top(config.window_always_on_top)
+	apply_always_on_top(ConfigManager.cfg_get("window", "window_always_on_top", true))
 
 	print("✅ [设置] 已恢复默认配置")
 

@@ -64,3 +64,8 @@ quality/anti_aliasing/quality=1
 quality/anti_aliasing/fxaa/quality=2
 quality/anti_aliasing/fxaa/edge_threshold_min=0.05
 quality/anti_aliasing/fxaa/edge_threshold_max=0.5
+
+[autoload]
+
+ConfigManager="*res://core/autoload/config_manager.gd"
+DataManager="*res://core/autoload/data_manager.gd"

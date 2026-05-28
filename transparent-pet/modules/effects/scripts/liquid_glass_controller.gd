@@ -3,7 +3,6 @@ extends PetEffectsAPI
 
 var parent_node: Node2D = null
 var target_sprite: Sprite2D = null
-var config = null
 
 var liquid_glass_renderer: Node2D = null
 var glass_item: GlassItem = null
@@ -11,10 +10,9 @@ var glass_item: GlassItem = null
 const LIQUID_GLASS_SCENE: String = "res://prototypes/liquid_glass/scenes/liquid_glass_renderer.tscn"
 
 
-func init(p_node: Node2D, p_sprite: Sprite2D, p_config):
+func init(p_node: Node2D, p_sprite: Sprite2D):
 	parent_node = p_node
 	target_sprite = p_sprite
-	config = p_config
 	print("✅ [液态玻璃控制器] 初始化完成")
 
 
@@ -76,13 +74,18 @@ func _setup_liquid_glass():
 	if not target_sprite:
 		return
 
-	liquid_glass_renderer.bg_type = config.glass_bg_type
-	liquid_glass_renderer.blur_edge = config.glass_blur_edge
-	liquid_glass_renderer.blur_radius = config.glass_blur_radius
+	liquid_glass_renderer.bg_type = ConfigManager.cfg_get("liquid_glass", "glass_bg_type", 3)
+	liquid_glass_renderer.blur_edge = ConfigManager.cfg_get("liquid_glass", "glass_blur_edge", true)
+	liquid_glass_renderer.blur_radius = ConfigManager.cfg_get("liquid_glass", "glass_blur_radius", 2.0)
 
-	var glass_color = Color(config.glass_tint_r, config.glass_tint_g, config.glass_tint_b, 1.0)
+	var glass_color = Color(
+		ConfigManager.cfg_get("liquid_glass", "glass_tint_r", 0.3),
+		ConfigManager.cfg_get("liquid_glass", "glass_tint_g", 0.6),
+		ConfigManager.cfg_get("liquid_glass", "glass_tint_b", 0.9),
+		1.0
+	)
 	liquid_glass_renderer.tint = glass_color
-	liquid_glass_renderer.tint_alpha = config.glass_tint_alpha
+	liquid_glass_renderer.tint_alpha = ConfigManager.cfg_get("liquid_glass", "glass_tint_alpha", 0.35)
 
 	var item_manager = liquid_glass_renderer.get_item_manager()
 	item_manager.clear_all()
@@ -93,10 +96,10 @@ func _setup_liquid_glass():
 	var slime_item = GlassItem.new()
 	slime_item.shape_type = GlassItem.ShapeType.SLIME
 	slime_item.position = pos
-	slime_item.width = config.glass_item_width
-	slime_item.height = config.glass_item_height
-	slime_item.radius = config.glass_item_radius
-	slime_item.scale = config.pet_scale
+	slime_item.width = ConfigManager.cfg_get("liquid_glass", "glass_item_width", 200.0)
+	slime_item.height = ConfigManager.cfg_get("liquid_glass", "glass_item_height", 132.0)
+	slime_item.radius = ConfigManager.cfg_get("liquid_glass", "glass_item_radius", 65.0)
+	slime_item.scale = ConfigManager.cfg_get("pet", "pet_scale", 1.0)
 	slime_item.enabled = true
 
 	item_manager.add_item(slime_item)

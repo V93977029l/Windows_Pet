@@ -2,6 +2,11 @@
 .godot/
 imported/
 
+# 用户配置文件 - 不提交到仓库
+transparent-pet/config/*_user.cfg
+transparent-pet/config/pet_config_user.cfg
+
+
 # GDExtension build artifacts
 *.o
 *.obj
