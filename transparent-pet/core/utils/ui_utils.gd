@@ -23,13 +23,6 @@ class UIUpdateGuard:
 	func unlock() -> void:
 		_is_locked = false
 
-	## 安全执行回调（自动加锁/解锁，已锁定则跳过）
-	func guarded_update(callable: Callable) -> void:
-		if not try_lock():
-			return
-		callable.call()
-		unlock()
-
 	## 检查当前是否处于锁定状态
 	func is_guarded() -> bool:
 		return _is_locked

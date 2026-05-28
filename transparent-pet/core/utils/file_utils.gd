@@ -12,17 +12,6 @@ static func read_text_file(path: String) -> String:
 	file.close()
 	return text
 
-## 安全读取二进制文件内容（文件不存在或读取失败时返回空数组）
-static func read_buffer_file(path: String) -> PackedByteArray:
-	if not FileAccess.file_exists(path):
-		return PackedByteArray()
-	var file := FileAccess.open(path, FileAccess.READ)
-	if not file:
-		return PackedByteArray()
-	var data := file.get_buffer(file.get_length())
-	file.close()
-	return data
-
 ## 原子化写入文本文件（先写 .tmp 临时文件再重命名，防止写入中断导致文件损坏）
 static func atomic_write_text(path: String, text: String) -> bool:
 	var dir_path := path.get_base_dir()

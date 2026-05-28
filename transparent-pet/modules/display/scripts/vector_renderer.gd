@@ -27,6 +27,7 @@
 
 class_name VectorRenderer
 const BASE_SIZE: Vector2 = Vector2(200, 132)
+const PetConsts = preload("res://modules/pet/scripts/pet_constants.gd")
 
 ## 目标精灵节点引用——纹理将被设置到这个精灵上
 var sprite: Sprite2D = null
@@ -106,7 +107,7 @@ func update_scale(new_scale: float):
 ## 【参数】
 ##   new_scale: float - 目标缩放倍率（如 2.0 表示200%）
 ## 【核心逻辑】
-##   1. 保护性检查：缩放倍率不能小于0.1（防止极端缩小导致的空纹理）
+##   1. 保护性检查：缩放倍率不能小于最低阈值（防止极端缩小导致的空纹理）
 ##   2. 检查精灵和SVG内容是否有效
 ##   3. 创建空 Image 对象
 ##   4. 调用 image.load_svg_from_string() 从SVG文本渲染位图
@@ -120,12 +121,12 @@ func update_scale(new_scale: float):
 ##   此方法的 SVG 解析和光栅化操作有一定性能开销，不适合每帧调用。
 ##   适合在用户完成缩放操作后调用（如滑块释放时）。
 ## 【边界情况】
-##   - new_scale < 0.1 → 自动修正为 0.1
+##   - new_scale 低于 HIGH_RES_SCALE_MIN → 自动修正
 ##   - sprite 为 null 或 svg_content 为空 → 打印错误并返回
 ##   - load_svg_from_string() 失败 → 打印错误码并返回
 func apply_high_res_scale(new_scale: float):
-	if new_scale < 0.1:
-		new_scale = 0.1
+	if new_scale < PetConsts.HIGH_RES_SCALE_MIN:
+		new_scale = PetConsts.HIGH_RES_SCALE_MIN
 
 	if not sprite or svg_content.is_empty():
 		print("❌ [矢量渲染] 无法渲染：精灵或SVG内容为空")

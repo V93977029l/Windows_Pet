@@ -42,12 +42,6 @@ signal exit_requested
 ## 这是与操作系统交互的核心对象，所有的托盘操作都通过它完成
 var system_tray = null
 
-## 是否已经尝试过初始化系统托盘
-## 用于防止重复初始化尝试（虽然当前未使用此标志做防护，
-## 但保留了扩展空间）
-var initialization_attempted = false
-
-
 ## 初始化托盘管理器（公共入口）
 ## 【参数】
 ##   _pet: Node2D - 桌宠主节点引用（当前未使用，预留扩展）
@@ -94,7 +88,7 @@ func init_system_tray():
 			print("❌ [托盘] GDExtension 文件加载失败: " + gdext_path)
 			printerr("❌ [托盘] 系统托盘无法使用")
 	
-	initialization_attempted = true
+	print("✅ [托盘] 托盘初始化完成")
 
 
 ## 创建原生系统托盘（内部方法）
@@ -120,7 +114,7 @@ func _create_tray():
 		print("❌ [托盘] SystemTray 实例化失败")
 		return
 	
-	system_tray.set_window_title("TransparentPet")
+	system_tray.set_window_title(ProjectConstants.APP_NAME)
 	system_tray.create("桌宠")
 	
 	var ico_path = _get_icon_path("res://core/services/app_icon.ico")

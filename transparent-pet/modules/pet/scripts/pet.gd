@@ -10,8 +10,6 @@ var effects_controller: PetEffectsAPI = null
 var ui_controller = null
 var tray_manager: Node = null
 
-var glass_item: GlassItem = null
-
 var draggable_list: Array = []
 
 const SVG_PATH: String = ProjectConstants.SVG_PATH

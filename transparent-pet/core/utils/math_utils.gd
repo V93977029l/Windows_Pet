@@ -15,10 +15,6 @@ static func push_sliding_window(arr: Array, value: Variant, max_size: int) -> vo
 	while arr.size() > max_size:
 		arr.pop_front()
 
-## 逐分量计算 Vector2 的符号（x 和 y 各自取 sign）
-static func sign_vector2(v: Vector2) -> Vector2:
-	return Vector2(sign(v.x), sign(v.y))
-
 ## 计算一维归一化高斯模糊核权重
 ## @param radius: 核半径（最终核宽度 = 2*radius + 1）
 ## @param sigma: 标准差，默认 -1 表示自动使用 radius/3

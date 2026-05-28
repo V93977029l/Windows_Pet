@@ -394,26 +394,9 @@ func _ready():
 	update_viewport_sizes()
 	update_blur_weights()
 
-	# 不初始化默认物品，避免残影，由外部代码（如 pet.gd）负责添加物品
-	# init_default_items()
 	update_items_uniforms()
 
 	get_viewport().size_changed.connect(_on_viewport_resize)
-
-# ============================================================================
-# 方法：init_default_items()
-# ============================================================================
-# 参数：无
-# 返回值：无
-#
-# 核心逻辑：
-#     计算物理像素视口尺寸，调用 item_manager 创建默认物品布局。
-#     DPR 用于确保物品尺寸在不同像素密度的显示器上视觉一致。
-# ============================================================================
-func init_default_items():
-	var dpr: float = get_tree().root.content_scale_factor
-	var viewport_size = Vector2(get_viewport().size.x * dpr, get_viewport().size.y * dpr)
-	item_manager.init_default_items(viewport_size)
 
 # ============================================================================
 # 方法：update_viewport_sizes()
@@ -482,20 +465,7 @@ func _on_viewport_resize():
 #     例如 radius=10: 二维卷积需 21×21=441 次采样，分离卷积仅需 21+21=42 次。
 # ============================================================================
 func compute_gaussian_kernel(radius: float) -> PackedFloat32Array:
-	var sigma: float = radius / 3.0
-	var weights: PackedFloat32Array = PackedFloat32Array()
-	var total_weight: float = 0.0
-
-	for i in range(int(radius * 2) + 1):
-		var x: float = float(i) - radius
-		var weight: float = exp(-x * x / (2.0 * sigma * sigma))
-		weights.append(weight)
-		total_weight += weight
-
-	for i in range(weights.size()):
-		weights[i] /= total_weight
-
-	return weights
+	return MathUtils.gaussian_kernel(radius)
 
 # ============================================================================
 # 方法：update_blur_weights()

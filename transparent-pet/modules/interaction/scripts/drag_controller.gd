@@ -29,12 +29,9 @@ var svg_fallback: Vector2 = Vector2(200, 132)
 
 const VELOCITY_BUFFER_SIZE: int = PetConsts.VELOCITY_BUFFER_SIZE_DEFAULT
 var velocity_buffer: Array[Vector2] = []
-var pos_buffer: Array[Vector2] = []
 
 var last_mouse_pos: Vector2 = Vector2.ZERO
 var last_frame_time: float = 0.0
-var drag_start_pos: Vector2 = Vector2.ZERO
-var drag_start_time: float = 0.0
 
 
 func init(node: Node2D):
@@ -81,12 +78,9 @@ func handle_area_input_event(event: InputEvent, target_sprite: Sprite2D = null):
 			drag_target = target_sprite
 			is_throwing = false
 			throw_velocity = Vector2.ZERO
-			drag_start_pos = mouse_global
-			drag_start_time = Time.get_ticks_msec()
 			last_mouse_pos = mouse_global
 			last_frame_time = Time.get_ticks_msec()
 			velocity_buffer.clear()
-			pos_buffer.clear()
 			print("[拖动] 左键按下，开始拖动，目标:", target_sprite.name, "偏移:", click_offset)
 		else:
 			is_dragging = false

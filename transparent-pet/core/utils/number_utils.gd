@@ -7,7 +7,3 @@ class_name NumberUtils
 static func format_float(value: float, decimals: int = 2) -> String:
 	var factor := pow(10.0, float(decimals))
 	return str(round(value * factor) / factor)
-
-## 将值限制在 [min_val, max_val] 范围内
-static func clamp_value(value: float, min_val: float, max_val: float) -> float:
-	return clamp(value, min_val, max_val)

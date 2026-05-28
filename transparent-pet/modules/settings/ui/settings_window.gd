@@ -226,8 +226,8 @@ func _set_autostart(enabled: bool) -> bool:
 		return false
 
 	var exe_path = _get_exe_path()
-	var reg_key = "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Run"
-	var app_name = "TransparentPet"
+	var reg_key = ProjectConstants.REG_KEY
+	var app_name = ProjectConstants.APP_NAME
 
 	var ps_content: String
 	if enabled:
@@ -253,8 +253,8 @@ func _check_autostart_status() -> bool:
 		return false
 
 	var exe_path = _get_exe_path()
-	var reg_key = "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Run"
-	var app_name = "TransparentPet"
+	var reg_key = ProjectConstants.REG_KEY
+	var app_name = ProjectConstants.APP_NAME
 
 	var ps_content = 'Get-ItemProperty -Path "%s" -Name "%s" -ErrorAction SilentlyContinue | Select-Object -ExpandProperty "%s"' % [reg_key, app_name, app_name]
 
