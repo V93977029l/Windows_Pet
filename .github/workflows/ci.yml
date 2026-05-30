@@ -1,0 +1,134 @@
+name: Godot CI - Build & Test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  GODOT_VERSION: "4.6.3"
+  GODOT_BIN: godot.exe
+  GDUNIT4_VERSION: "v6.1.3"
+  PROJECT_PATH: transparent-pet
+
+jobs:
+  build-and-test:
+    name: Build & Test (Windows)
+    runs-on: windows-latest
+
+    steps:
+      # ============================================================
+      # Step 1: 检出代码（含 Git 子模块）
+      # ============================================================
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      # ============================================================
+      # Step 2: 配置 Python 环境
+      # ============================================================
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Python Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install scons
+
+      # ============================================================
+      # Step 3: 下载并安装 Godot Engine
+      # ============================================================
+      - name: Setup Godot Engine
+        run: |
+          $GodotUrl = "https://github.com/godotengine/godot/releases/download/${{ env.GODOT_VERSION }}-stable/Godot_v${{ env.GODOT_VERSION }}-stable_win64.exe.zip"
+          $GodotZip = "godot.zip"
+          Write-Host "Downloading Godot ${{ env.GODOT_VERSION }}..."
+          Invoke-WebRequest -Uri $GodotUrl -OutFile $GodotZip
+          Write-Host "Extracting Godot..."
+          Expand-Archive -Path $GodotZip -DestinationPath .
+          Rename-Item -Path "Godot_v${{ env.GODOT_VERSION }}-stable_win64.exe" -NewName "${{ env.GODOT_BIN }}"
+          Write-Host "Godot version check:"
+          ./godot.exe --version
+        working-directory: ${{ runner.temp }}
+
+      - name: Add Godot to PATH
+        run: echo "${{ runner.temp }}" | Out-File -Append -FilePath $env:GITHUB_PATH
+
+      # ============================================================
+      # Step 4: 编译 GDExtension 原生扩展
+      # ============================================================
+      - name: Build GDExtensions
+        run: |
+          Write-Host "Building GDExtensions..."
+          python build.py --target=template_debug --platform=windows
+        working-directory: gdextension
+
+      # ============================================================
+      # Step 5: 安装 GdUnit4 测试框架
+      # ============================================================
+      - name: Install GdUnit4
+        run: |
+          $GdUnitUrl = "https://github.com/godot-gdunit-labs/gdUnit4/archive/refs/tags/${{ env.GDUNIT4_VERSION }}.zip"
+          $GdUnitZip = "gdunit4.zip"
+          $ExtractDir = "${{ runner.temp }}\gdunit4_extract"
+          $AddonsDir = "${{ github.workspace }}\${{ env.PROJECT_PATH }}\addons"
+
+          Write-Host "Downloading GdUnit4 ${{ env.GDUNIT4_VERSION }}..."
+          Invoke-WebRequest -Uri $GdUnitUrl -OutFile $GdUnitZip
+
+          Write-Host "Extracting GdUnit4..."
+          if (Test-Path $ExtractDir) { Remove-Item -Recurse -Force $ExtractDir }
+          Expand-Archive -Path $GdUnitZip -DestinationPath $ExtractDir -Force
+
+          Write-Host "Copying gdUnit4 to addons/..."
+          $SourcePath = Get-ChildItem -Path $ExtractDir -Directory | Select-Object -First 1 | ForEach-Object { "$($_.FullName)\addons\gdUnit4" }
+          Copy-Item -Recurse -Path $SourcePath -Destination "$AddonsDir\gdUnit4" -Force
+
+          Write-Host "GdUnit4 installed at: $AddonsDir\gdUnit4"
+
+      # ============================================================
+      # Step 6: 运行单元测试
+      # ============================================================
+      - name: Run GdUnit4 Tests
+        run: |
+          Write-Host "Running GdUnit4 tests..."
+          godot --headless --path "${{ env.PROJECT_PATH }}" -s res://addons/gdUnit4/bin/GdUnitCmdTool.gd -a res://tests/ -c --ignoreHeadlessMode -rd test-reports
+        continue-on-error: true
+
+      # ============================================================
+      # Step 7: 上传测试报告
+      # ============================================================
+      - name: Upload Test Reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: gdunit-test-reports
+          path: test-reports
+          retention-days: 30
+
+      # ============================================================
+      # Step 8: 导出项目（验证可构建性）
+      # ============================================================
+      - name: Export Project (Windows)
+        run: |
+          Write-Host "Exporting project..."
+          New-Item -ItemType Directory -Force -Path build/windows
+          godot --headless --path "${{ env.PROJECT_PATH }}" --export-release "Windows Desktop" "${{ github.workspace }}\build\windows\TransparentPet.exe"
+        working-directory: ${{ github.workspace }}
+
+      # ============================================================
+      # Step 9: 上传构建产物
+      # ============================================================
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: windows-build
+          path: build/windows
+          retention-days: 30
