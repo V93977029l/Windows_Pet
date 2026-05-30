@@ -260,4 +260,3 @@ modules/
    - AI Agent可能会在修改`.tscn`文件时犯错，例如删除了一个必要的子节点，或更改了节点类型。
    - 我们可以在流水线中加入一个步骤，使用Godot的无头模式（headless mode）运行一个自定义的验证脚本。
    - 这个脚本可以加载AI修改过的场景，并断言其结构是否符合预期。例如，检查`player.tscn`是否仍然拥有一个`CollisionShape2D`子节点，并且其根节点类型是否为`CharacterBody2D`。
-

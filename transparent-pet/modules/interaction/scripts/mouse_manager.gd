@@ -104,58 +104,58 @@ func set_slime_2_sprite(p_slime_2_sprite: Sprite2D):
 func _is_mouse_over_node(node: Node2D) -> bool:
 	if not node:
 		return false
-	
+
 	var mouse_pos = parent_node.get_global_mouse_position()
-	
+
 	if node is Sprite2D:
 		var sprite = node as Sprite2D
 		if not sprite.texture:
 			return false
-		
+
 		# 计算精灵的全局包围矩形（以精灵中心为锚点）
 		var sprite_rect = sprite.get_rect()
 		var sprite_global_rect = Rect2(sprite.global_position - sprite_rect.size / 2, sprite_rect.size)
-		
+
 		# 快速剔除：鼠标不在包围盒内则直接返回false
 		if not sprite_global_rect.has_point(mouse_pos):
 			return false
-		
+
 		# 像素级检测：将鼠标坐标转换为纹理像素坐标，读取alpha值
 		var local_pos = sprite.to_local(mouse_pos)
 		var texture_size = sprite.texture.get_size() * sprite.scale
 		var pixel_pos = Vector2i(int(local_pos.x + texture_size.x / 2), int(local_pos.y + texture_size.y / 2))
-		
+
 		# 像素坐标越界检查
 		if pixel_pos.x < 0 or pixel_pos.x >= texture_size.x or pixel_pos.y < 0 or pixel_pos.y >= texture_size.y:
 			return false
-		
+
 		var image = sprite.texture.get_image()
 		if not image:
 			return false
-		
+
 		# 读取像素alpha值：alpha > 0 表示该像素可见
 		var color = image.get_pixel(pixel_pos.x, pixel_pos.y)
 		return color.a > 0
-		
+
 	elif node is Polygon2D:
 		var polygon = node as Polygon2D
 		var local_pos = polygon.to_local(mouse_pos)
-		
+
 		# 计算多边形的轴对齐包围盒（AABB）
 		var min_x = INF
 		var max_x = -INF
 		var min_y = INF
 		var max_y = -INF
-		
+
 		for point in polygon.polygon:
 			min_x = min(min_x, point.x)
 			max_x = max(max_x, point.x)
 			min_y = min(min_y, point.y)
 			max_y = max(max_y, point.y)
-		
+
 		var poly_rect = Rect2(Vector2(min_x, min_y), Vector2(max_x - min_x, max_y - min_y))
 		return poly_rect.has_point(local_pos)
-	
+
 	return false
 
 
@@ -188,12 +188,12 @@ func is_mouse_over_any() -> bool:
 func update_mouse_passthrough():
 	if passthrough_manager:
 		var is_over = is_mouse_over_any()
-		
+
 		if is_over != last_is_over_sprite:
 			if is_over:
 				print("📋 [桌宠鼠标] 鼠标进入 - 禁用穿透")
 			else:
 				print("📋 [桌宠鼠标] 鼠标离开 - 启用穿透")
 			last_is_over_sprite = is_over
-			
+
 			passthrough_manager.update_mouse_passthrough(is_over)

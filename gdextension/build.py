@@ -14,16 +14,12 @@ def run_command(cmd, cwd=None, verbose=True):
         print(f"执行命令: {' '.join(cmd)}")
     try:
         process = subprocess.Popen(
-            cmd,
-            cwd=cwd,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            text=True
+            cmd, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True
         )
 
         for line in process.stdout:
             if verbose:
-                print(line, end='')
+                print(line, end="")
 
         process.wait()
 
@@ -105,7 +101,7 @@ def copy_dir_contents(src_dir, dst_dir, file_pattern=None):
                     print(f"无法清理 {f} (文件可能被占用): {e}")
         if cleaned:
             print("已清理备份文件，需要重新编译以使 Godot 加载最新 DLL")
-        
+
         copied = False
 
         for filename in os.listdir(src_dir):
@@ -134,7 +130,7 @@ def copy_dir_contents(src_dir, dst_dir, file_pattern=None):
 
 def verify_godot_cpp(godot_cpp_dir):
     print("\n===== 验证 godot-cpp =====")
-    
+
     checks = [
         ("godot-cpp目录", godot_cpp_dir, os.path.isdir),
         ("SConstruct", os.path.join(godot_cpp_dir, "SConstruct"), os.path.isfile),
@@ -153,89 +149,101 @@ def verify_godot_cpp(godot_cpp_dir):
     if not all_ok:
         print("\n错误: godot-cpp 不完整，请确保已正确克隆 godot-cpp 仓库")
         print("建议: git clone https://github.com/godotengine/godot-cpp.git")
-    
+
     return all_ok
 
 
-def build_godot_cpp(godot_cpp_dir, platform, target, clean=False, force=False, jobs=None):
+def build_godot_cpp(
+    godot_cpp_dir, platform, target, clean=False, force=False, jobs=None
+):
     print(f"\n===== 编译 godot-cpp [{platform}, {target}] =====")
-    
+
     if jobs is None:
         jobs = os.cpu_count() or 4
-    
+
     lib_name = f"libgodot-cpp.{platform}.{target}.x86_64.a"
     target_lib = os.path.join(godot_cpp_dir, "bin", lib_name)
     if not os.path.exists(target_lib):
         lib_name = f"libgodot-cpp.{platform}.{target}.x86_64.lib"
         target_lib = os.path.join(godot_cpp_dir, "bin", lib_name)
-    
-    if not force and not clean and not need_rebuild([os.path.join(godot_cpp_dir, "src")], target_lib):
-        print(f"godot-cpp 缓存有效，跳过编译")
+
+    if (
+        not force
+        and not clean
+        and not need_rebuild([os.path.join(godot_cpp_dir, "src")], target_lib)
+    ):
+        print("godot-cpp 缓存有效，跳过编译")
         return True
-    
+
     if clean:
         print("清理 godot-cpp 构建缓存...")
         if not run_command(["scons", "-c"], cwd=godot_cpp_dir, verbose=False):
             print("警告: 清理缓存失败")
-    
+
     cmd = [
         "scons",
         f"platform={platform}",
         f"target={target}",
         f"-j{jobs}",
         "arch=x86_64",
-        "generate_bindings=yes"
+        "generate_bindings=yes",
     ]
-    
+
     print(f"编译命令: {' '.join(cmd)}")
     print("编译中... (这可能需要几分钟，请耐心等待)")
     if not run_command(cmd, cwd=godot_cpp_dir, verbose=True):
         print("godot-cpp 编译失败")
         return False
-    
+
     if os.path.exists(target_lib):
-        print(f"✓ godot-cpp 编译成功")
+        print("✓ godot-cpp 编译成功")
         return True
     else:
         print(f"错误: 编译产物不存在 - {target_lib}")
         return False
 
 
-def build_extension(ext_dir, platform, target, godot_cpp_dir, clean=False, force=False, jobs=None):
+def build_extension(
+    ext_dir, platform, target, godot_cpp_dir, clean=False, force=False, jobs=None
+):
     print(f"\n===== 编译扩展 [{os.path.basename(ext_dir)}] =====")
-    
+
     if jobs is None:
         jobs = os.cpu_count() or 4
-    
+
     ext_name = os.path.basename(ext_dir).replace("_extension", "")
     dll_name = f"lib{ext_name}.{platform}.{target}.x86_64.dll"
     target_dll = os.path.join(ext_dir, "bin", dll_name)
-    
-    if not force and not clean and not need_rebuild([os.path.join(ext_dir, "src")], target_dll):
-        print(f"扩展缓存有效，跳过编译")
+
+    if (
+        not force
+        and not clean
+        and not need_rebuild([os.path.join(ext_dir, "src")], target_dll)
+    ):
+        print("扩展缓存有效，跳过编译")
         return True
-    
+
     if clean:
         print("清理扩展构建缓存...")
         if not run_command(["scons", "-c"], cwd=ext_dir, verbose=False):
             print("警告: 清理缓存失败")
-    
+
     cmd = [
         "scons",
         f"platform={platform}",
         f"target={target}",
         f"-j{jobs}",
-        "arch=x86_64"
+        "arch=x86_64",
     ]
-    
+
     print(f"编译命令: {' '.join(cmd)}")
     print("编译中...")
     if not run_command(cmd, cwd=ext_dir, verbose=True):
-        print(f"扩展编译失败")
+        print("扩展编译失败")
         return False
-    
+
     if os.path.exists(target_dll):
-        print(f"✓ 扩展编译成功")
+        print("✓ 扩展编译成功")
         return True
     else:
         print(f"错误: 编译产物不存在 - {target_dll}")
@@ -244,42 +252,42 @@ def build_extension(ext_dir, platform, target, godot_cpp_dir, clean=False, force
 
 def deploy_extension(ext_dir, godot_project_path):
     print("\n===== 部署扩展到 Godot 项目 =====")
-    
+
     ext_name = os.path.basename(ext_dir).replace("_extension", "")
     plugin_dir = os.path.join(godot_project_path, "addons", ext_name)
     plugin_bin_dir = os.path.join(plugin_dir, "bin")
-    
+
     os.makedirs(plugin_bin_dir, exist_ok=True)
-    
+
     gdextension_src = os.path.join(ext_dir, f"{ext_name}.gdextension")
     gdextension_dst = os.path.join(plugin_dir, f"{ext_name}.gdextension")
     copy_with_check(gdextension_src, gdextension_dst, f"{ext_name}.gdextension")
-    
+
     ext_bin_dir = os.path.join(ext_dir, "bin")
     if os.path.exists(ext_bin_dir):
         copy_dir_contents(ext_bin_dir, plugin_bin_dir, ".dll")
     else:
         print(f"警告: 扩展二进制目录不存在 - {ext_bin_dir}")
         return False
-    
+
     print(f"✓ 扩展已部署到: {plugin_dir}")
     return True
 
 
 def verify_deployment(godot_project_path, plugin_name):
     print("\n===== 验证部署 =====")
-    
+
     plugin_dir = os.path.join(godot_project_path, "addons", plugin_name)
     plugin_bin_dir = os.path.join(plugin_dir, "bin")
-    
+
     gdextension_file = os.path.join(plugin_dir, f"{plugin_name}.gdextension")
-    
+
     checks = [
         ("插件目录", plugin_dir, os.path.isdir),
         ("插件bin目录", plugin_bin_dir, os.path.isdir),
         ("gdextension文件", gdextension_file, os.path.isfile),
     ]
-    
+
     all_ok = True
     for name, path, check in checks:
         exists = check(path)
@@ -287,45 +295,61 @@ def verify_deployment(godot_project_path, plugin_name):
         print(f"  {status} {name}: {path}")
         if not exists:
             all_ok = False
-    
-    dll_files = [f for f in os.listdir(plugin_bin_dir) if f.endswith(".dll")] if os.path.exists(plugin_bin_dir) else []
+
+    dll_files = (
+        [f for f in os.listdir(plugin_bin_dir) if f.endswith(".dll")]
+        if os.path.exists(plugin_bin_dir)
+        else []
+    )
     if dll_files:
-        print(f"\n已部署的 DLL 文件:")
+        print("\n已部署的 DLL 文件:")
         for dll in dll_files:
             print(f"  ✓ {dll}")
     else:
-        print(f"\n警告: 未找到 DLL 文件")
+        print("\n警告: 未找到 DLL 文件")
         all_ok = False
-    
+
     if all_ok:
         print("\n所有验证通过！")
     else:
         print("\n警告: 部分验证失败！")
-    
+
     return all_ok
 
 
 def main():
     parser = argparse.ArgumentParser(description="Godot GDExtension 一键编译脚本")
     parser.add_argument("--clean", action="store_true", help="清理构建缓存后重新编译")
-    parser.add_argument("--force", action="store_true", help="强制重新编译，忽略增量检查")
+    parser.add_argument(
+        "--force", action="store_true", help="强制重新编译，忽略增量检查"
+    )
     parser.add_argument("--verify", action="store_true", help="仅验证路径，不编译")
-    parser.add_argument("--target", default="template_debug", choices=["template_debug", "template_release"],
-                        help="编译目标类型")
-    parser.add_argument("--platform", default="windows", choices=["windows", "linux", "macos"],
-                        help="目标平台")
+    parser.add_argument(
+        "--target",
+        default="template_debug",
+        choices=["template_debug", "template_release"],
+        help="编译目标类型",
+    )
+    parser.add_argument(
+        "--platform",
+        default="windows",
+        choices=["windows", "linux", "macos"],
+        help="目标平台",
+    )
     parser.add_argument("-j", "--jobs", type=int, default=None, help="并行编译的线程数")
-    parser.add_argument("--skip-godot-cpp", action="store_true", help="跳过 godot-cpp 编译")
+    parser.add_argument(
+        "--skip-godot-cpp", action="store_true", help="跳过 godot-cpp 编译"
+    )
     args = parser.parse_args()
 
     print("========================================")
     print("  Godot GDExtension 一键编译脚本")
     print("========================================")
-    
+
     current_dir = Path(__file__).resolve().parent
     godot_project_path = current_dir / ".." / "transparent-pet"
     godot_cpp_dir = current_dir / ".." / "external" / "godot-cpp"
-    
+
     print(f"\n当前目录: {current_dir}")
     print(f"Godot项目路径: {godot_project_path}")
     print(f"godot-cpp路径: {godot_cpp_dir}")
@@ -333,49 +357,59 @@ def main():
     print(f"目标平台: {args.platform}")
     if args.jobs:
         print(f"并行线程: {args.jobs}")
-    
+
     if args.verify:
         verify_godot_cpp(godot_cpp_dir)
         verify_deployment(godot_project_path, "mouse_passthrough")
         return 0
-    
+
     if not args.skip_godot_cpp:
         if not verify_godot_cpp(godot_cpp_dir):
             print("错误: godot-cpp 验证失败")
             return 1
-        
-        if not build_godot_cpp(godot_cpp_dir, args.platform, args.target, args.clean, args.force, args.jobs):
+
+        if not build_godot_cpp(
+            godot_cpp_dir, args.platform, args.target, args.clean, args.force, args.jobs
+        ):
             print("错误: godot-cpp 编译失败")
             return 1
     else:
         print("跳过 godot-cpp 编译")
-    
+
     extensions = ["mouse_passthrough_extension", "system_tray_extension"]
     build_ok = True
-    
+
     for ext_name in extensions:
         ext_dir = current_dir / ext_name
         if not os.path.exists(ext_dir):
             print(f"警告: 扩展目录不存在 - {ext_dir}")
             build_ok = False
             continue
-        
-        if not build_extension(ext_dir, args.platform, args.target, godot_cpp_dir, args.clean, args.force, args.jobs):
+
+        if not build_extension(
+            ext_dir,
+            args.platform,
+            args.target,
+            godot_cpp_dir,
+            args.clean,
+            args.force,
+            args.jobs,
+        ):
             print(f"错误: {ext_name} 编译失败")
             build_ok = False
             continue
-        
+
         if not deploy_extension(ext_dir, godot_project_path):
             print(f"错误: {ext_name} 部署失败")
             build_ok = False
             continue
-        
+
         verify_deployment(godot_project_path, ext_name.replace("_extension", ""))
-    
+
     if not build_ok:
         print("\n警告: 部分扩展编译或部署失败")
         return 1
-    
+
     print("\n========================================")
     print("  编译完成！")
     print("========================================")
@@ -389,7 +423,7 @@ def main():
     print("  python build.py --force      # 强制重新编译")
     print("  python build.py --target=template_release  # 编译 release 版本")
     print("  python build.py --skip-godot-cpp  # 只编译扩展")
-    
+
     return 0
 
 

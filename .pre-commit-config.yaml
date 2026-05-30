@@ -1,0 +1,67 @@
+default_language_version:
+  python: python3
+
+exclude: |
+  (?x)^(
+    external/|
+    transparent-pet/addons/|
+    transparent-pet/.godot/|
+    transparent-pet/imported/|
+    gdextension/godot-cpp/test/|
+    .obsidian/|
+    .vscode/|
+    .trae/
+  )/
+
+repos:
+  # C++ 格式化
+  - repo: https://github.com/pre-commit/mirrors-clang-format
+    rev: v21.1.8
+    hooks:
+      - id: clang-format
+        files: ^gdextension/.*\.(c|h|cpp|hpp|cc|hh|cxx|hxx)$
+        args: ["--assume-filename", ".clang-format"]
+
+  # Prettier - JSON/YAML 格式化
+  - repo: https://github.com/rbubley/mirrors-prettier
+    rev: v3.7.4
+    hooks:
+      - id: prettier
+        files: ^((\.github/ISSUE_TEMPLATE|transparent-pet|gdextension|docs)/.*|\.pre-commit-config\.yaml)$
+        types_or:
+          - yaml
+          - json
+          - markdown
+
+  # Python 格式化
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.14.10
+    hooks:
+      - id: ruff-format
+        files: \.py$
+        exclude: |
+          (?x)^(
+            .*SConstruct$|
+            gdextension/build\.py$
+          )
+      - id: ruff
+        args: [--fix]
+        files: \.py$
+        exclude: |
+          (?x)^(
+            .*SConstruct$|
+            gdextension/build\.py$
+          )
+
+  # 通用文件检查
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-json
+      - id: check-merge-conflict
+      - id: check-case-conflict
+      - id: mixed-line-ending
+        args: ["--fix=lf"]

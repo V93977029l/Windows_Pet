@@ -21,8 +21,8 @@
  */
 
 #include "system_tray.h"
-#include <godot_cpp/core/class_db.hpp>
 #include <godot_cpp/classes/engine.hpp>
+#include <godot_cpp/core/class_db.hpp>
 
 using namespace godot;
 
@@ -34,7 +34,8 @@ using namespace godot;
  *   选择 SCENE 级别的原因：SystemTray 是一个 Object 类，需要在
  *   场景系统就绪后注册，以确保 GDScript 绑定正常工作。
  */
-void initialize_system_tray_module(ModuleInitializationLevel p_level) {
+void initialize_system_tray_module(ModuleInitializationLevel p_level)
+{
     if (p_level == MODULE_INITIALIZATION_LEVEL_SCENE) {
         ClassDB::register_class<SystemTray>();
     }
@@ -49,7 +50,8 @@ void initialize_system_tray_module(ModuleInitializationLevel p_level) {
  *   - 清理实例映射表
  *   因此此回调不需要执行额外操作。
  */
-void uninitialize_system_tray_module(ModuleInitializationLevel p_level) {
+void uninitialize_system_tray_module(ModuleInitializationLevel p_level)
+{
     if (p_level == MODULE_INITIALIZATION_LEVEL_SCENE) {
         // Cleanup handled in destructor
     }
@@ -64,8 +66,13 @@ void uninitialize_system_tray_module(ModuleInitializationLevel p_level) {
  *
  *   参数和流程与 liquid_glass_extension_init() 完全相同。
  */
-extern "C" {
-    GDExtensionBool GDE_EXPORT system_tray_library_init(GDExtensionInterfaceGetProcAddress p_get_proc_address, const GDExtensionClassLibraryPtr p_library, GDExtensionInitialization *r_initialization) {
+extern "C"
+{
+    GDExtensionBool GDE_EXPORT system_tray_library_init(
+        GDExtensionInterfaceGetProcAddress p_get_proc_address,
+        const GDExtensionClassLibraryPtr p_library,
+        GDExtensionInitialization* r_initialization)
+    {
         godot::GDExtensionBinding::InitObject init_obj(p_get_proc_address, p_library, r_initialization);
 
         init_obj.register_initializer(initialize_system_tray_module);

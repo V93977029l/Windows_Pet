@@ -202,7 +202,7 @@ func apply_preset(preset):
 	if not target_sprite:
 		print("[MaterialManager] Error: Target sprite not set")
 		return
-	
+
 	if preset != null and typeof(preset) == TYPE_OBJECT and "id" in preset:
 		_apply_preset_object(preset)
 	elif typeof(preset) == TYPE_DICTIONARY:
@@ -236,10 +236,10 @@ func _get_shader_for_preset(_preset_id: String) -> Resource:
 ##   干净——不会残留上一预设的参数设置。
 func _apply_preset_object(preset):
 	current_preset = preset
-	
+
 	current_material = ShaderMaterial.new()
 	current_material.shader = _get_shader_for_preset(preset.id)
-	
+
 	target_sprite.material = current_material
 	print("[MaterialManager] Applied preset: ", preset.name)
 
@@ -259,12 +259,12 @@ func apply_preset_dict(preset_data: Dictionary):
 	if not target_sprite:
 		print("[MaterialManager] Error: Target sprite not set")
 		return
-	
+
 	current_material = ShaderMaterial.new()
-	
+
 	var preset_id = preset_data.get("id", "slime_1")
 	current_material.shader = _get_shader_for_preset(preset_id)
-	
+
 	target_sprite.material = current_material
 	print("[MaterialManager] Applied preset dict: ", preset_id)
 

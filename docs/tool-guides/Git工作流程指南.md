@@ -167,6 +167,7 @@ cd ../..
 ```
 
 **Type类型：**
+
 - `feat` - 新功能
 - `fix` - 修复bug
 - `refactor` - 重构代码（不改变功能）
@@ -177,6 +178,7 @@ cd ../..
 - `submodule` - 子模块更新
 
 **示例：**
+
 ```
 feat: 添加系统托盘图标功能
 fix: 修复窗口拖拽时的闪烁问题
@@ -247,83 +249,93 @@ cd ../..
 
 ### 基础操作
 
-| 命令 | 说明 |
-|------|------|
-| `git status` | 查看当前状态 |
-| `git add .` | 添加所有修改 |
-| `git add <file>` | 添加指定文件 |
-| `git commit -m "<message>"` | 提交修改 |
-| `git push origin <branch>` | 推送到远程 |
-| `git pull origin <branch>` | 拉取远程更新 |
-| `git checkout <branch>` | 切换分支 |
-| `git merge <branch>` | 合并分支 |
-| `git log --oneline` | 查看简洁提交历史 |
-| `git log --graph` | 查看图形化提交历史 |
+| 命令                        | 说明               |
+| --------------------------- | ------------------ |
+| `git status`                | 查看当前状态       |
+| `git add .`                 | 添加所有修改       |
+| `git add <file>`            | 添加指定文件       |
+| `git commit -m "<message>"` | 提交修改           |
+| `git push origin <branch>`  | 推送到远程         |
+| `git pull origin <branch>`  | 拉取远程更新       |
+| `git checkout <branch>`     | 切换分支           |
+| `git merge <branch>`        | 合并分支           |
+| `git log --oneline`         | 查看简洁提交历史   |
+| `git log --graph`           | 查看图形化提交历史 |
 
 ### 分支操作
 
-| 命令 | 说明 |
-|------|------|
-| `git branch` | 查看本地分支 |
-| `git branch -a` | 查看所有分支（含远程） |
-| `git branch <name>` | 创建新分支 |
-| `git branch -d <name>` | 删除本地分支 |
-| `git checkout -b <name>` | 创建并切换到新分支 |
+| 命令                     | 说明                   |
+| ------------------------ | ---------------------- |
+| `git branch`             | 查看本地分支           |
+| `git branch -a`          | 查看所有分支（含远程） |
+| `git branch <name>`      | 创建新分支             |
+| `git branch -d <name>`   | 删除本地分支           |
+| `git checkout -b <name>` | 创建并切换到新分支     |
 
 ### 撤销操作
 
-| 命令 | 说明 |
-|------|------|
-| `git restore <file>` | 撤销工作区修改 |
-| `git restore --staged <file>` | 取消暂存 |
-| `git reset HEAD~1` | 撤销最近一次提交（保留修改） |
-| `git reset --hard HEAD~1` | 撤销最近一次提交（丢弃修改） |
-| `git stash` | 临时保存修改 |
-| `git stash pop` | 恢复临时保存的修改 |
+| 命令                          | 说明                         |
+| ----------------------------- | ---------------------------- |
+| `git restore <file>`          | 撤销工作区修改               |
+| `git restore --staged <file>` | 取消暂存                     |
+| `git reset HEAD~1`            | 撤销最近一次提交（保留修改） |
+| `git reset --hard HEAD~1`     | 撤销最近一次提交（丢弃修改） |
+| `git stash`                   | 临时保存修改                 |
+| `git stash pop`               | 恢复临时保存的修改           |
 
 ### 子模块操作
 
-| 命令 | 说明 |
-|------|------|
-| `git submodule status` | 查看子模块状态 |
-| `git submodule init` | 初始化子模块 |
-| `git submodule update` | 更新子模块到指定版本 |
+| 命令                            | 说明                 |
+| ------------------------------- | -------------------- |
+| `git submodule status`          | 查看子模块状态       |
+| `git submodule init`            | 初始化子模块         |
+| `git submodule update`          | 更新子模块到指定版本 |
 | `git submodule update --remote` | 更新子模块到远程最新 |
-| `git pull --recurse-submodules` | 拉取主项目和子模块 |
+| `git pull --recurse-submodules` | 拉取主项目和子模块   |
 
 ## 常见问题
 
 ### Q: 我刚把代码合并到main了，接下来怎么办？
+
 **A:** 按照上面"合并后该做什么"的步骤，切换回你的开发分支，从main拉取最新代码，然后开始下一个功能的开发。
 
 ### Q: 别人在main上提交了代码，我怎么同步？
+
 **A:** 在你的开发分支上执行 `git pull --recurse-submodules origin main` 即可。
 
 ### Q: 遇到冲突怎么办？
-**A:** 
+
+**A:**
+
 1. Git会标记冲突文件
 2. 打开文件，搜索 `<<<<<<<`、`=======`、`>>>>>>>` 标记
 3. 手动编辑保留需要的代码
 4. 执行 `git add .` 和 `git commit` 完成解决
 
 ### Q: 我可以在自己的分支上强制推送吗？
+
 **A:** 可以，你的分支你做主。但不要强制推送到main分支。
 
 ### Q: 子模块显示有修改怎么办？
-**A:** 
+
+**A:**
+
 1. 进入子模块目录查看状态：`cd external/godot-cpp && git status`
 2. 如果是意外修改，撤销：`git checkout .`
 3. 如果是需要的修改，在子模块内提交，然后在主项目 `git add` 子模块目录
 
 ### Q: 如何查看谁修改了某行代码？
+
 **A:** 使用 `git blame <file>` 查看每行代码的最后修改者。
 
 ### Q: 如何临时保存当前工作去切换分支？
+
 **A:** 使用 `git stash` 保存，切换分支，回来后用 `git stash pop` 恢复。
 
 ## 工作流检查清单
 
 ### 合并到main前检查
+
 - [ ] 代码已经过本地测试通过
 - [ ] 从main拉取了最新代码
 - [ ] 解决了所有冲突
@@ -331,6 +343,7 @@ cd ../..
 - [ ] 提交信息规范
 
 ### 合并后检查
+
 - [ ] 切换回自己的开发分支
 - [ ] 从main同步了最新代码
 - [ ] 子模块已更新
