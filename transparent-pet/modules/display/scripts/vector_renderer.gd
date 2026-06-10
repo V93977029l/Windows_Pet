@@ -59,9 +59,9 @@ var svg_content: String = ""
 func init(target_sprite: Sprite2D, svg_file_path: String):
 	sprite = target_sprite
 	svg_path = svg_file_path
-	
+
 	load_svg_content()
-	
+
 	var texture = load(svg_path)
 	if texture and texture is Texture2D:
 		sprite.texture = texture
@@ -131,10 +131,10 @@ func apply_high_res_scale(new_scale: float):
 	if not sprite or svg_content.is_empty():
 		print("❌ [矢量渲染] 无法渲染：精灵或SVG内容为空")
 		return
-	
+
 	var image = Image.new()
 	var result = image.load_svg_from_string(svg_content, new_scale * 2)
-	
+
 	if result == OK:
 		var new_texture = ImageTexture.create_from_image(image)
 		sprite.texture = new_texture

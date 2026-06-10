@@ -54,19 +54,21 @@
 #ifndef SYSTEM_TRAY_H
 #define SYSTEM_TRAY_H
 
-#include <godot_cpp/godot.hpp>
 #include <godot_cpp/core/object.hpp>
+#include <godot_cpp/godot.hpp>
 #include <godot_cpp/variant/callable.hpp>
 
 #ifdef _WIN32
-#include <windows.h>
 #include <shellapi.h>
 #include <unordered_map>
+#include <windows.h>
 #endif
 
-namespace godot {
+namespace godot
+{
 
-class SystemTray : public Object {
+class SystemTray : public Object
+{
     GDCLASS(SystemTray, Object);
 
 private:

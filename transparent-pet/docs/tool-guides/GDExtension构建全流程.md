@@ -6,22 +6,22 @@
 
 ### 1. 核心目录
 
-| 目录路径 | 说明 | 重要性 |
-| ------ | ---- | --- |
-| `gdextension/` | GDExtension 相关代码的根目录 | 核心 |
-| `external/godot-cpp/` | Godot C++ 绑定库 (Git Submodule) | 核心 |
-| `gdextension/mouse_passthrough_extension/` | 鼠标穿透插件的实现 | 核心 |
-| `gdextension/system_tray_extension/` | 系统托盘插件的实现 | 核心 |
-| `gdextension/liquid_glass_extension/` | 液态玻璃特效插件的实现 | 核心 |
-| `transparent-pet/addons/` | Godot 项目中的插件目录 | 核心 |
+| 目录路径                                   | 说明                             | 重要性 |
+| ------------------------------------------ | -------------------------------- | ------ |
+| `gdextension/`                             | GDExtension 相关代码的根目录     | 核心   |
+| `external/godot-cpp/`                      | Godot C++ 绑定库 (Git Submodule) | 核心   |
+| `gdextension/mouse_passthrough_extension/` | 鼠标穿透插件的实现               | 核心   |
+| `gdextension/system_tray_extension/`       | 系统托盘插件的实现               | 核心   |
+| `gdextension/liquid_glass_extension/`      | 液态玻璃特效插件的实现           | 核心   |
+| `transparent-pet/addons/`                  | Godot 项目中的插件目录           | 核心   |
 
 ### 2. 重要文件
 
-| 文件路径 | 说明 | 重要性 |
-| ------ | ---- | --- |
-| `.gitmodules` | Git Submodule 配置 | 核心 |
-| `gdextension/build.py` | 一键构建和部署脚本 | 重要 |
-| `gdextension/*/SConstruct` | 各插件的构建配置文件 | 核心 |
+| 文件路径                   | 说明                 | 重要性 |
+| -------------------------- | -------------------- | ------ |
+| `.gitmodules`              | Git Submodule 配置   | 核心   |
+| `gdextension/build.py`     | 一键构建和部署脚本   | 重要   |
+| `gdextension/*/SConstruct` | 各插件的构建配置文件 | 核心   |
 
 ## 二、构建环境准备
 
@@ -55,6 +55,7 @@ cd game
 ```
 
 如果已经克隆了项目但没有初始化子模块：
+
 ```bash
 git submodule init
 git submodule update
@@ -75,6 +76,7 @@ python build.py
 ```
 
 这个脚本会自动：
+
 1. 验证 godot-cpp 完整性
 2. 编译 godot-cpp（如果需要）
 3. 编译所有 GDExtension 插件
@@ -85,18 +87,21 @@ python build.py
 如果需要单独构建某个插件：
 
 #### 构建鼠标穿透插件
+
 ```bash
 cd gdextension/mouse_passthrough_extension
 scons
 ```
 
 #### 构建系统托盘插件
+
 ```bash
 cd gdextension/system_tray_extension
 scons
 ```
 
 #### 构建液态玻璃插件
+
 ```bash
 cd gdextension/liquid_glass_extension
 scons
@@ -152,6 +157,7 @@ windows.template_release.x86_64 = "res://addons/mouse_passthrough/bin/libmouse_p
 **原因**：Visual Studio 未正确安装或未添加到环境变量
 
 **解决方案**：
+
 - 重新安装 Visual Studio 2022+
 - 确保安装了「使用 C++ 的桌面开发」工作负载
 - 重启终端或电脑使环境变量生效
@@ -161,6 +167,7 @@ windows.template_release.x86_64 = "res://addons/mouse_passthrough/bin/libmouse_p
 **原因**：godot-cpp 子模块未正确初始化
 
 **解决方案**：
+
 - 确保已运行 `git submodule init && git submodule update`
 - 检查 `external/godot-cpp/` 目录是否有文件
 
@@ -169,19 +176,20 @@ windows.template_release.x86_64 = "res://addons/mouse_passthrough/bin/libmouse_p
 **原因**：DLL 文件未正确复制到 Godot 项目目录
 
 **解决方案**：
+
 - 运行 `gdextension/build.py` 脚本进行自动部署
 - 或手动复制到 `transparent-pet/addons/*/bin/` 目录
 
 ## 七、构建命令速查表
 
-| 命令 | 说明 | 适用场景 |
-| ---- | --- | ----- |
-| `cd gdextension; python build.py` | 一键构建和部署所有插件 | 日常开发 |
-| `cd gdextension/mouse_passthrough_extension; scons` | 构建鼠标穿透插件 | 单独开发 |
-| `cd gdextension/system_tray_extension; scons` | 构建系统托盘插件 | 单独开发 |
-| `cd gdextension/liquid_glass_extension; scons` | 构建液态玻璃插件 | 单独开发 |
-| `scons -c` | 清理构建产物 | 重新构建时 |
-| `git submodule update --remote` | 更新子模块到最新版本 | 升级依赖 |
+| 命令                                                | 说明                   | 适用场景   |
+| --------------------------------------------------- | ---------------------- | ---------- |
+| `cd gdextension; python build.py`                   | 一键构建和部署所有插件 | 日常开发   |
+| `cd gdextension/mouse_passthrough_extension; scons` | 构建鼠标穿透插件       | 单独开发   |
+| `cd gdextension/system_tray_extension; scons`       | 构建系统托盘插件       | 单独开发   |
+| `cd gdextension/liquid_glass_extension; scons`      | 构建液态玻璃插件       | 单独开发   |
+| `scons -c`                                          | 清理构建产物           | 重新构建时 |
+| `git submodule update --remote`                     | 更新子模块到最新版本   | 升级依赖   |
 
 ## 八、总结
 
@@ -189,6 +197,6 @@ GDExtension 是 Godot 4 引入的一种扩展机制，允许使用 C++ 编写高
 
 推荐使用 `gdextension/build.py` 一键构建脚本，简单高效！
 
-***
+---
 
 **注意**：本文档适用于本项目的特定结构，其他项目可能需要根据实际情况进行调整。

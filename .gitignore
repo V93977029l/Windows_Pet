@@ -58,3 +58,7 @@ gdextension/godot-cpp/bin/*
 !gdextension/godot-cpp/bin/*.a
 
 export/
+
+# Test reports
+test-reports/
+reports/

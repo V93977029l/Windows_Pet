@@ -33,10 +33,11 @@
 #ifndef MOUSE_PASSTHROUGH_H
 #define MOUSE_PASSTHROUGH_H
 
-#include <godot_cpp/godot.hpp>
 #include <godot_cpp/core/object.hpp>
+#include <godot_cpp/godot.hpp>
 
-namespace godot {
+namespace godot
+{
 
 /*
  * MousePassthrough 类 - 鼠标穿透控制
@@ -47,7 +48,8 @@ namespace godot {
  * 2. 根据像素是否不透明动态切换穿透状态
  * 3. 隐藏窗口任务栏图标
  */
-class MousePassthrough : public Object {
+class MousePassthrough : public Object
+{
     GDCLASS(MousePassthrough, Object);
 
 private:
@@ -58,21 +60,21 @@ private:
      *   默认值为 true：符合桌面宠物默认可穿透的预期行为
      */
     bool mouse_passthrough_enabled = true;
-    
+
     /*
      * hide_taskbar - 是否已请求隐藏任务栏图标（默认 false）
      *   用于在 update_mouse_passthrough() 和 reset_mouse_passthrough() 中
      *   保持 WS_EX_TOOLWINDOW 样式设置
      */
     bool hide_taskbar = false;
-    
+
     /*
      * window_handle - 窗口句柄（HWND，默认 0）
      *   使用 uint64_t 类型以适应 64 位指针，同时兼容 GDScript
      *   0 表示未设置，此时会回退到通过窗口标题查找
      */
     uint64_t window_handle = 0;
-    
+
     /*
      * window_title - 窗口标题（备用查找方式）
      *   当 window_handle 为 0 时，通过此标题查找窗口
@@ -100,7 +102,7 @@ public:
      *   确保窗口恢复到可接收鼠标事件的状态
      */
     void set_mouse_passthrough(bool enabled);
-    
+
     /*
      * get_mouse_passthrough() - 获取当前鼠标穿透状态
      *   返回：true = 穿透已启用，false = 已禁用
@@ -114,7 +116,7 @@ public:
      *   优先使用此方法设置 HWND，比通过窗口标题查找更可靠。
      */
     void set_window_handle(uint64_t window_handle);
-    
+
     /*
      * set_window_title() - 设置窗口标题（备用查找方式）
      *   window_title: Godot 窗口的标题文本
@@ -123,7 +125,7 @@ public:
      *   支持查找带 "(DEBUG)" 后缀的调试模式标题。
      */
     void set_window_title(const godot::String& window_title);
-    
+
     /*
      * update_mouse_passthrough() - 更新鼠标穿透状态
      *   has_opaque_pixel: 当前鼠标位置是否有不透明像素
@@ -136,7 +138,7 @@ public:
      *   检测鼠标悬停区域的像素是否不透明，决定是否允许鼠标通过。
      */
     void update_mouse_passthrough(bool has_opaque_pixel);
-    
+
     /*
      * reset_mouse_passthrough() - 重置鼠标穿透状态
      *

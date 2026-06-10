@@ -42,14 +42,14 @@
  */
 
 #include "system_tray.h"
-#include <godot_cpp/godot.hpp>
 #include <godot_cpp/core/class_db.hpp>
 #include <godot_cpp/core/print_string.hpp>
+#include <godot_cpp/godot.hpp>
 #include <string>
 
 #ifdef _WIN32
-#include <windows.h>
 #include <shellapi.h>
+#include <windows.h>
 
 /*
  * WM_TRAYICON - 自定义托盘消息 ID
@@ -69,7 +69,7 @@
  * TRAY_ID_MENU_EXIT - 右键菜单"退出"项的 ID
  *   值 1002，与 SETTINGS 相邻便于管理
  */
-#define TRAY_ID_MENU_EXIT     1002
+#define TRAY_ID_MENU_EXIT 1002
 
 /*
  * godot_string_to_wide() - Godot String 转 Windows 宽字符串
@@ -81,7 +81,8 @@
  *   2. 逐字符复制到 std::wstring
  *   3. 遇到空字符 (\0) 停止
  */
-static std::wstring godot_string_to_wide(const godot::String& str) {
+static std::wstring godot_string_to_wide(const godot::String& str)
+{
     const char16_t* utf16_data = str.utf16().get_data();
     std::wstring result;
     while (*utf16_data) {
@@ -92,7 +93,8 @@ static std::wstring godot_string_to_wide(const godot::String& str) {
 }
 #endif
 
-namespace godot {
+namespace godot
+{
 
 #ifdef _WIN32
 // 静态实例映射表定义 - 用于从 HWND 查找 SystemTray 实例
@@ -103,7 +105,8 @@ std::unordered_map<HWND, SystemTray*> SystemTray::s_instances;
  * 构造函数
  *   仅输出日志，实际初始化在 create() 和 show() 中进行
  */
-SystemTray::SystemTray() {
+SystemTray::SystemTray()
+{
     godot::print_line(godot::String::utf8("[系统托盘] 构造函数"));
 }
 
@@ -112,7 +115,8 @@ SystemTray::SystemTray() {
  *   自动调用 remove() 清理托盘图标和消息窗口
  *   确保即使 GDScript 忘记调用 remove()，资源也能正确释放
  */
-SystemTray::~SystemTray() {
+SystemTray::~SystemTray()
+{
     godot::print_line(godot::String::utf8("[系统托盘] 析构函数"));
     remove();
 }
@@ -121,7 +125,8 @@ SystemTray::~SystemTray() {
  * _bind_methods() - Godot 方法绑定
  *   将所有公开方法暴露给 GDScript
  */
-void SystemTray::_bind_methods() {
+void SystemTray::_bind_methods()
+{
     ClassDB::bind_method(D_METHOD("create", "tooltip"), &SystemTray::create);
     ClassDB::bind_method(D_METHOD("set_icon", "icon_path"), &SystemTray::set_icon);
     ClassDB::bind_method(D_METHOD("set_tooltip", "tooltip"), &SystemTray::set_tooltip);
@@ -156,7 +161,8 @@ void SystemTray::_bind_methods() {
  * RegisterWindowMessageW("TaskbarCreated") 注册一个全局唯一的消息 ID
  * 用于接收系统资源管理器重启的通知
  */
-void SystemTray::create(const String& tooltip) {
+void SystemTray::create(const String& tooltip)
+{
 #ifdef _WIN32
     tooltip_text = tooltip;
 
@@ -197,7 +203,8 @@ void SystemTray::create(const String& tooltip) {
  * 3. 更新 nid.hIcon 和 nid.uFlags
  * 4. 如果已显示，立即通过 NIM_MODIFY 更新
  */
-void SystemTray::set_icon(const String& icon_path) {
+void SystemTray::set_icon(const String& icon_path)
+{
 #ifdef _WIN32
     if (icon_path.is_empty()) {
         godot::print_line(godot::String::utf8("[系统托盘] 图标路径为空"));
@@ -205,10 +212,13 @@ void SystemTray::set_icon(const String& icon_path) {
     }
 
     std::wstring wide_path = godot_string_to_wide(icon_path);
-    HICON hIcon = (HICON)LoadImageW(nullptr, wide_path.c_str(), IMAGE_ICON, 0, 0, LR_LOADFROMFILE | LR_DEFAULTSIZE | LR_SHARED);
+    HICON hIcon =
+        (HICON)LoadImageW(nullptr, wide_path.c_str(), IMAGE_ICON, 0, 0, LR_LOADFROMFILE | LR_DEFAULTSIZE | LR_SHARED);
 
     if (hIcon) {
-        if (current_hicon) DestroyIcon(current_hicon);
+        if (current_hicon) {
+            DestroyIcon(current_hicon);
+        }
         current_hicon = hIcon;
         nid.hIcon = hIcon;
         nid.uFlags |= NIF_ICON;
@@ -217,7 +227,8 @@ void SystemTray::set_icon(const String& icon_path) {
         if (is_visible) {
             Shell_NotifyIconW(NIM_MODIFY, &nid);
         }
-    } else {
+    }
+    else {
         godot::print_line(godot::String::utf8("[系统托盘] 加载图标失败: ") + icon_path);
     }
 #endif
@@ -233,7 +244,8 @@ void SystemTray::set_icon(const String& icon_path) {
  *
  * szTip 的长度限制为 128 个宽字符，这是 Windows Shell API 的硬性限制。
  */
-void SystemTray::set_tooltip(const String& tooltip) {
+void SystemTray::set_tooltip(const String& tooltip)
+{
 #ifdef _WIN32
     tooltip_text = tooltip;
     std::wstring wtip = godot_string_to_wide(tooltip);
@@ -291,7 +303,8 @@ void SystemTray::set_tooltip(const String& tooltip) {
  *   将配置好的 NOTIFYICONDATA 提交给系统
  *   成功后设置 is_visible = true
  */
-void SystemTray::show() {
+void SystemTray::show()
+{
 #ifdef _WIN32
     if (is_visible) {
         godot::print_line(godot::String::utf8("[系统托盘] 托盘图标已显示"));
@@ -324,7 +337,8 @@ void SystemTray::show() {
     if (atom == 0) {
         DWORD err = GetLastError();
         if (err != ERROR_CLASS_ALREADY_EXISTS) {
-            godot::print_line(godot::String::utf8("[系统托盘] 错误: 注册窗口类失败, err=") + godot::String::num_int64(err));
+            godot::print_line(
+                godot::String::utf8("[系统托盘] 错误: 注册窗口类失败, err=") + godot::String::num_int64(err));
         }
     }
 
@@ -333,12 +347,14 @@ void SystemTray::show() {
         L"TransparentPetTrayClass",
         L"TransparentPetTray",
         0,
-        0, 0, 0, 0,
+        0,
+        0,
+        0,
+        0,
         HWND_MESSAGE,
         nullptr,
         GetModuleHandleW(nullptr),
-        this
-    );
+        this);
 
     if (tray_hwnd == nullptr) {
         godot::print_line(godot::String::utf8("[系统托盘] 错误: 创建消息窗口失败"));
@@ -346,7 +362,9 @@ void SystemTray::show() {
     }
 
     s_instances[tray_hwnd] = this;
-    godot::print_line(godot::String::utf8("[系统托盘] 消息窗口已创建, HWND=") + godot::String::num_uint64((uint64_t)tray_hwnd) + godot::String::utf8(", 已注册到实例表"));
+    godot::print_line(
+        godot::String::utf8("[系统托盘] 消息窗口已创建, HWND=") + godot::String::num_uint64((uint64_t)tray_hwnd) +
+        godot::String::utf8(", 已注册到实例表"));
 
     nid.hWnd = tray_hwnd;
 
@@ -354,7 +372,8 @@ void SystemTray::show() {
     if (result) {
         is_visible = true;
         godot::print_line(godot::String::utf8("[系统托盘] 显示托盘图标 ✅"));
-    } else {
+    }
+    else {
         godot::print_line(godot::String::utf8("[系统托盘] 显示托盘图标失败 ❌"));
     }
 #endif
@@ -365,9 +384,12 @@ void SystemTray::show() {
  *   调用 Shell_NotifyIconW(NIM_DELETE) 移除图标
  *   不销毁消息窗口，之后可以再次 show() 恢复
  */
-void SystemTray::hide() {
+void SystemTray::hide()
+{
 #ifdef _WIN32
-    if (!is_visible) return;
+    if (!is_visible) {
+        return;
+    }
 
     BOOL result = Shell_NotifyIconW(NIM_DELETE, &nid);
     if (result) {
@@ -389,7 +411,8 @@ void SystemTray::hide() {
  * 2. 从 s_instances 映射表中移除条目
  * 3. 调用 DestroyWindow 销毁消息窗口
  */
-void SystemTray::remove() {
+void SystemTray::remove()
+{
 #ifdef _WIN32
     if (is_visible) {
         Shell_NotifyIconW(NIM_DELETE, &nid);
@@ -405,17 +428,20 @@ void SystemTray::remove() {
 #endif
 }
 
-void SystemTray::set_left_click_callback(const Callable& callback) {
+void SystemTray::set_left_click_callback(const Callable& callback)
+{
     left_click_callback = callback;
     godot::print_line(godot::String::utf8("[系统托盘] 设置左键回调"));
 }
 
-void SystemTray::set_right_click_callback(const Callable& callback) {
+void SystemTray::set_right_click_callback(const Callable& callback)
+{
     right_click_callback = callback;
     godot::print_line(godot::String::utf8("[系统托盘] 设置右键回调"));
 }
 
-void SystemTray::set_window_title(const String& title) {
+void SystemTray::set_window_title(const String& title)
+{
     window_title = title;
     godot::print_line(godot::String::utf8("[系统托盘] 设置窗口标题: ") + title);
 }
@@ -438,7 +464,8 @@ void SystemTray::set_window_title(const String& title) {
  *
  * 组合使用这些标志的效果：仅更新窗口样式而不改变其外观状态。
  */
-void SystemTray::hide_taskbar_icon() {
+void SystemTray::hide_taskbar_icon()
+{
     hide_taskbar = true;
 #ifdef _WIN32
     if (hwnd == nullptr) {
@@ -456,7 +483,8 @@ void SystemTray::hide_taskbar_icon() {
 }
 
 #ifdef _WIN32
-void SystemTray::set_hwnd(uint64_t p_hwnd) {
+void SystemTray::set_hwnd(uint64_t p_hwnd)
+{
     hwnd = (HWND)p_hwnd;
     godot::print_line(godot::String::utf8("[系统托盘] 设置主窗口 HWND: ") + godot::String::num_uint64(p_hwnd));
 }
@@ -479,7 +507,8 @@ void SystemTray::set_hwnd(uint64_t p_hwnd) {
  *
  * 注意：WM_COMMAND 中的 wParam 低位字（LOWORD）是菜单项 ID。
  */
-LRESULT CALLBACK SystemTray::tray_wnd_proc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+LRESULT CALLBACK SystemTray::tray_wnd_proc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
     auto it = s_instances.find(hWnd);
     SystemTray* self = (it != s_instances.end()) ? it->second : nullptr;
 
@@ -535,7 +564,8 @@ LRESULT CALLBACK SystemTray::tray_wnd_proc(HWND hWnd, UINT msg, WPARAM wParam, L
  *   NOTIFYICONDATA 中指定的 hWnd 发送 uCallbackMessage 消息。
  *   wParam 是图标的 uID，lParam 是具体的事件类型。
  */
-void SystemTray::on_tray_message(UINT msg, WPARAM wParam, LPARAM lParam) {
+void SystemTray::on_tray_message(UINT msg, WPARAM wParam, LPARAM lParam)
+{
     if (msg == taskbar_restart_msg && is_visible) {
         godot::print_line(godot::String::utf8("[系统托盘] TaskbarCreated: 重新添加图标"));
         Shell_NotifyIconW(NIM_ADD, &nid);
@@ -544,7 +574,14 @@ void SystemTray::on_tray_message(UINT msg, WPARAM wParam, LPARAM lParam) {
             ex_style |= WS_EX_TOOLWINDOW;
             ex_style &= ~WS_EX_APPWINDOW;
             SetWindowLongW(hwnd, GWL_EXSTYLE, ex_style);
-            SetWindowPos(hwnd, nullptr, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED | SWP_NOACTIVATE);
+            SetWindowPos(
+                hwnd,
+                nullptr,
+                0,
+                0,
+                0,
+                0,
+                SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED | SWP_NOACTIVATE);
             godot::print_line(godot::String::utf8("[系统托盘] TaskbarCreated: 重新隐藏任务栏图标"));
         }
         return;
@@ -554,19 +591,19 @@ void SystemTray::on_tray_message(UINT msg, WPARAM wParam, LPARAM lParam) {
         UINT event = (UINT)lParam;
 
         switch (event) {
-            case WM_RBUTTONUP:
-            case WM_RBUTTONDOWN:
-                godot::print_line(godot::String::utf8("[系统托盘] 右键点击 → 显示菜单"));
-                show_context_menu();
-                break;
-            case WM_LBUTTONDOWN:
-                godot::print_line(godot::String::utf8("[系统托盘] 左键点击"));
-                if (left_click_callback.is_valid()) {
-                    left_click_callback.call();
-                }
-                break;
-            default:
-                break;
+        case WM_RBUTTONUP:
+        case WM_RBUTTONDOWN:
+            godot::print_line(godot::String::utf8("[系统托盘] 右键点击 → 显示菜单"));
+            show_context_menu();
+            break;
+        case WM_LBUTTONDOWN:
+            godot::print_line(godot::String::utf8("[系统托盘] 左键点击"));
+            if (left_click_callback.is_valid()) {
+                left_click_callback.call();
+            }
+            break;
+        default:
+            break;
         }
     }
 }
@@ -609,7 +646,8 @@ void SystemTray::on_tray_message(UINT msg, WPARAM wParam, LPARAM lParam) {
  *    销毁菜单及其资源
  *    注意：必须在菜单关闭后才能销毁
  */
-void SystemTray::show_context_menu() {
+void SystemTray::show_context_menu()
+{
     HMENU hMenu = CreatePopupMenu();
     if (!hMenu) {
         godot::print_line(godot::String::utf8("[系统托盘] CreatePopupMenu 失败"));

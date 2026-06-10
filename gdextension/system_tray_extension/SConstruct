@@ -10,7 +10,9 @@ sys.path.insert(0, os.path.join(os.getcwd(), "..", ".."))
 env = SConscript("../../external/godot-cpp/SConstruct")
 
 # Enable cache
-scons_cache_path = os.environ.get("SCONS_CACHE", os.path.join(os.path.expanduser("~"), ".scons_cache"))
+scons_cache_path = os.environ.get(
+    "SCONS_CACHE", os.path.join(os.path.expanduser("~"), ".scons_cache")
+)
 if not os.path.exists(scons_cache_path):
     os.makedirs(scons_cache_path)
 CacheDir(scons_cache_path)
@@ -27,7 +29,7 @@ env.Append(LIBPATH=["../../external/godot-cpp/bin"])
 library = env.SharedLibrary(
     "bin/libsystem_tray{}{}".format(env["suffix"], env["SHLIBSUFFIX"]),
     source=sources,
-    LIBS=["user32", "shell32", "libgodot-cpp" + env["suffix"] + env["LIBSUFFIX"]]
+    LIBS=["user32", "shell32", "libgodot-cpp" + env["suffix"] + env["LIBSUFFIX"]],
 )
 
 # Set build target

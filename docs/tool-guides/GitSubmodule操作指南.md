@@ -8,9 +8,9 @@
 
 ### 当前子模块列表
 
-| 子模块路径 | 远程仓库 | 锁定分支 | 用途 |
-| --------- | ------ | ------ | ---- |
-| `external/godot-cpp` | https://github.com/godotengine/godot-cpp.git | master | Godot C++ 绑定库 |
+| 子模块路径                     | 远程仓库                                            | 锁定分支 | 用途                 |
+| ------------------------------ | --------------------------------------------------- | -------- | -------------------- |
+| `external/godot-cpp`           | https://github.com/godotengine/godot-cpp.git        | master   | Godot C++ 绑定库     |
 | `external/liquid-glass-studio` | https://github.com/iyinchao/liquid-glass-studio.git | （默认） | 液态玻璃特效参考项目 |
 
 ### .gitmodules 配置说明
@@ -214,16 +214,16 @@ git add external/godot-cpp
 
 ## 命令速查表
 
-| 命令 | 说明 |
-| --- | --- |
-| `git submodule init` | 初始化子模块配置 |
-| `git submodule update` | 更新子模块到主项目记录的版本 |
-| `git submodule update --remote` | 更新子模块到远程最新版本 |
-| `git submodule status` | 查看子模块状态 |
-| `git clone --recurse-submodules` | 克隆项目时同步子模块 |
-| `git pull --recurse-submodules` | 拉取时同步子模块 |
-| `git submodule deinit <path>` | 取消注册子模块 |
-| `git rm <submodule-path>` | 删除子模块 |
+| 命令                             | 说明                         |
+| -------------------------------- | ---------------------------- |
+| `git submodule init`             | 初始化子模块配置             |
+| `git submodule update`           | 更新子模块到主项目记录的版本 |
+| `git submodule update --remote`  | 更新子模块到远程最新版本     |
+| `git submodule status`           | 查看子模块状态               |
+| `git clone --recurse-submodules` | 克隆项目时同步子模块         |
+| `git pull --recurse-submodules`  | 拉取时同步子模块             |
+| `git submodule deinit <path>`    | 取消注册子模块               |
+| `git rm <submodule-path>`        | 删除子模块                   |
 
 ## 总结
 

@@ -68,7 +68,7 @@ func init(_pet: Node2D):
 ##   - 一切正常 → 调用 _create_tray() 创建原生托盘
 func init_system_tray():
 	print("🔧 [托盘] 开始初始化系统托盘...")
-	
+
 	if ClassDB.class_exists("SystemTray"):
 		print("📋 [托盘] SystemTray 类存在，直接实例化")
 		_create_tray()
@@ -87,7 +87,7 @@ func init_system_tray():
 		else:
 			print("❌ [托盘] GDExtension 文件加载失败: " + gdext_path)
 			printerr("❌ [托盘] 系统托盘无法使用")
-	
+
 	print("✅ [托盘] 托盘初始化完成")
 
 
@@ -113,22 +113,22 @@ func _create_tray():
 	if not system_tray:
 		print("❌ [托盘] SystemTray 实例化失败")
 		return
-	
+
 	system_tray.set_window_title(ProjectConstants.APP_NAME)
 	system_tray.create("桌宠")
-	
+
 	var ico_path = _get_icon_path("res://core/services/app_icon.ico")
 	if not ico_path.is_empty():
 		system_tray.set_icon(ico_path)
 	else:
 		print("⚠️ [托盘] 图标文件不可用，使用默认图标")
-	
+
 	system_tray.set_left_click_callback(Callable(self, "_on_tray_left_click"))
 	system_tray.set_right_click_callback(Callable(self, "_on_tray_menu_exit"))
-	
+
 	system_tray.show()
 	system_tray.hide_taskbar_icon()
-	
+
 	print("✅ [托盘] 原生系统托盘已创建")
 
 

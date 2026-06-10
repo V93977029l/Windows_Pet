@@ -1,23 +1,30 @@
 #include "mouse_passthrough.h"
-#include <godot_cpp/core/class_db.hpp>
 #include <godot_cpp/classes/engine.hpp>
+#include <godot_cpp/core/class_db.hpp>
 
 using namespace godot;
 
-void initialize_mouse_passthrough_module(ModuleInitializationLevel p_level) {
+void initialize_mouse_passthrough_module(ModuleInitializationLevel p_level)
+{
     if (p_level == MODULE_INITIALIZATION_LEVEL_SCENE) {
         ClassDB::register_class<MousePassthrough>();
     }
 }
 
-void uninitialize_mouse_passthrough_module(ModuleInitializationLevel p_level) {
+void uninitialize_mouse_passthrough_module(ModuleInitializationLevel p_level)
+{
     if (p_level == MODULE_INITIALIZATION_LEVEL_SCENE) {
         // No cleanup needed
     }
 }
 
-extern "C" {
-    GDExtensionBool GDE_EXPORT mouse_passthrough_library_init(GDExtensionInterfaceGetProcAddress p_get_proc_address, const GDExtensionClassLibraryPtr p_library, GDExtensionInitialization *r_initialization) {
+extern "C"
+{
+    GDExtensionBool GDE_EXPORT mouse_passthrough_library_init(
+        GDExtensionInterfaceGetProcAddress p_get_proc_address,
+        const GDExtensionClassLibraryPtr p_library,
+        GDExtensionInitialization* r_initialization)
+    {
         godot::GDExtensionBinding::InitObject init_obj(p_get_proc_address, p_library, r_initialization);
 
         init_obj.register_initializer(initialize_mouse_passthrough_module);
