@@ -67,29 +67,29 @@ jobs:
       - name: Build GDExtensions
         env:
           PYTHONIOENCODING: utf-8
-          SCONS_CACHE: "${{ github.workspace }}\\.scons_cache"
+          SCONS_CACHE: ${{ github.workspace }}\\.scons_cache
         run: |
           Write-Host "Building GDExtensions..."
 
           # 编译 godot-cpp 库
           Write-Host "[1/3] Building godot-cpp..."
-          scons -C external/godot-cpp platform=windows target=template_debug -j$env:NUMBER_OF_PROCESSORS arch=x86_64 generate_bindings=yes
+          scons -C external/godot-cpp platform=windows target=template_debug arch=x86_64 generate_bindings=yes
           if ($LASTEXITCODE -ne 0) { Write-Host "ERROR: godot-cpp build failed!"; exit 1 }
 
           # 编译鼠标穿透扩展
           Write-Host "[2/3] Building mouse_passthrough..."
-          scons -C gdextension/mouse_passthrough_extension platform=windows target=template_debug -j$env:NUMBER_OF_PROCESSORS arch=x86_64
+          scons -C gdextension/mouse_passthrough_extension platform=windows target=template_debug arch=x86_64
           if ($LASTEXITCODE -ne 0) { Write-Host "ERROR: mouse_passthrough build failed!"; exit 1 }
 
           # 编译系统托盘扩展
           Write-Host "[3/3] Building system_tray..."
-          scons -C gdextension/system_tray_extension platform=windows target=template_debug -j$env:NUMBER_OF_PROCESSORS arch=x86_64
+          scons -C gdextension/system_tray_extension platform=windows target=template_debug arch=x86_64
           if ($LASTEXITCODE -ne 0) { Write-Host "ERROR: system_tray build failed!"; exit 1 }
 
           # 部署到插件目录
           Write-Host "Deploying extensions..."
           python gdextension/build.py --target=template_debug --platform=windows --skip-godot-cpp
-        working-directory: "${{ github.workspace }}"
+        working-directory: ${{ github.workspace }}
 
       # ============================================================
       # Step 5: 安装 GdUnit4 测试框架
