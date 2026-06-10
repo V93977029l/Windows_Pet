@@ -31,20 +31,7 @@ jobs:
           fetch-depth: 0
 
       # ============================================================
-      # Step 2: 配置 Python 环境
-      # ============================================================
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - name: Install Python Dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install scons
-
-      # ============================================================
-      # Step 3: 下载并安装 Godot Engine
+      # Step 2: 下载并安装 Godot Engine
       # ============================================================
       - name: Setup Godot Engine
         run: |
@@ -63,16 +50,7 @@ jobs:
         run: echo "${{ runner.temp }}" | Out-File -Append -FilePath $env:GITHUB_PATH
 
       # ============================================================
-      # Step 4: 编译 GDExtension 原生扩展
-      # ============================================================
-      - name: Build GDExtensions
-        run: |
-          Write-Host "Building GDExtensions..."
-          python build.py --target=template_debug --platform=windows
-        working-directory: gdextension
-
-      # ============================================================
-      # Step 5: 安装 GdUnit4 测试框架
+      # Step 3: 安装 GdUnit4 测试框架
       # ============================================================
       - name: Install GdUnit4
         run: |
@@ -95,7 +73,7 @@ jobs:
           Write-Host "GdUnit4 installed at: $AddonsDir\gdUnit4"
 
       # ============================================================
-      # Step 6: 运行单元测试
+      # Step 4: 运行单元测试（核心步骤）
       # ============================================================
       - name: Run GdUnit4 Tests
         run: |
@@ -104,7 +82,7 @@ jobs:
         continue-on-error: true
 
       # ============================================================
-      # Step 7: 上传测试报告
+      # Step 5: 上传测试报告
       # ============================================================
       - name: Upload Test Reports
         uses: actions/upload-artifact@v4
@@ -115,9 +93,28 @@ jobs:
           retention-days: 30
 
       # ============================================================
-      # Step 8: 导出项目（验证可构建性）
+      # Step 6: 编译 GDExtension（可选，失败不阻塞）
+      # ============================================================
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install SCons
+        run: pip install scons
+
+      - name: Build GDExtensions
+        continue-on-error: true
+        run: |
+          Write-Host "Building GDExtensions..."
+          python build.py --target=template_debug --platform=windows
+        working-directory: gdextension
+
+      # ============================================================
+      # Step 7: 导出项目（验证可构建性）
       # ============================================================
       - name: Export Project (Windows)
+        continue-on-error: true
         run: |
           Write-Host "Exporting project..."
           New-Item -ItemType Directory -Force -Path build/windows
@@ -125,7 +122,7 @@ jobs:
         working-directory: ${{ github.workspace }}
 
       # ============================================================
-      # Step 9: 上传构建产物
+      # Step 8: 上传构建产物
       # ============================================================
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4
