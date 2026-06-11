@@ -16,102 +16,139 @@ env:
   PYTHONUTF8: "1"
 
 jobs:
-  build-and-test:
-    name: Build & Test (Windows)
+  # ============================================================
+  # Job 1: 快速测试（PR 和 push 都运行）
+  # ============================================================
+  test:
+    name: Run Tests
     runs-on: windows-2025
 
     steps:
-      # ============================================================
-      # Step 1: 检出代码（含 Git 子模块）
-      # ============================================================
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
           submodules: recursive
           fetch-depth: 0
 
-      # ============================================================
-      # Step 2: 下载并安装 Godot Engine
-      # ============================================================
-      - name: Setup Godot Engine
+      # ── 缓存 Godot 引擎 ──
+      - name: Cache Godot Engine
+        id: cache-godot
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/godot.exe
+          key: godot-${{ env.GODOT_VERSION }}-${{ runner.os }}
+
+      - name: Download Godot Engine
+        if: steps.cache-godot.outputs.cache-hit != 'true'
         run: |
           $GodotUrl = "https://github.com/godotengine/godot/releases/download/${{ env.GODOT_VERSION }}-stable/Godot_v${{ env.GODOT_VERSION }}-stable_win64.exe.zip"
-          $GodotZip = "godot.zip"
+          $GodotZip = "${{ runner.temp }}\godot.zip"
           Write-Host "Downloading Godot ${{ env.GODOT_VERSION }}..."
           Invoke-WebRequest -Uri $GodotUrl -OutFile $GodotZip
-          Write-Host "Extracting Godot..."
-          Expand-Archive -Path $GodotZip -DestinationPath .
-          Rename-Item -Path "Godot_v${{ env.GODOT_VERSION }}-stable_win64.exe" -NewName "${{ env.GODOT_BIN }}"
-          Write-Host "Godot version check:"
-          ./godot.exe --version
-        working-directory: ${{ runner.temp }}
+          Expand-Archive -Path $GodotZip -DestinationPath ${{ runner.temp }}
+          Rename-Item -Path "${{ runner.temp }}\Godot_v${{ env.GODOT_VERSION }}-stable_win64.exe" -NewName "${{ runner.temp }}\godot.exe"
 
       - name: Add Godot to PATH
         run: echo "${{ runner.temp }}" | Out-File -Append -FilePath $env:GITHUB_PATH
 
-      # ============================================================
-      # Step 2.5: 下载并安装 Godot 导出模板
-      # ============================================================
-      - name: Setup Godot Export Templates
-        run: |
-          $ExportUrl = "https://github.com/godotengine/godot/releases/download/${{ env.GODOT_VERSION }}-stable/Godot_v${{ env.GODOT_VERSION }}-stable_export_templates.tpz"
-          $ExportZip = "export_templates.tpz"
-          $TemplateDir = "$env:APPDATA\Godot\export_templates\${{ env.GODOT_VERSION }}.stable"
+      # ── 缓存 GdUnit4 ──
+      - name: Cache GdUnit4
+        id: cache-gdunit
+        uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/${{ env.PROJECT_PATH }}/addons/gdUnit4
+          key: gdunit4-${{ env.GDUNIT4_VERSION }}
 
-          Write-Host "Downloading Godot export templates..."
-          Invoke-WebRequest -Uri $ExportUrl -OutFile $ExportZip
-
-          Write-Host "Extracting export templates to: $TemplateDir"
-          New-Item -ItemType Directory -Force -Path $TemplateDir | Out-Null
-          Expand-Archive -Path $ExportZip -DestinationPath $TemplateDir -Force
-
-          Write-Host "Export templates installed successfully."
-
-      # ============================================================
-      # Step 3: 安装 GdUnit4 测试框架
-      # ============================================================
       - name: Install GdUnit4
+        if: steps.cache-gdunit.outputs.cache-hit != 'true'
         run: |
           $GdUnitUrl = "https://github.com/godot-gdunit-labs/gdUnit4/archive/refs/tags/${{ env.GDUNIT4_VERSION }}.zip"
-          $GdUnitZip = "gdunit4.zip"
+          $GdUnitZip = "${{ runner.temp }}\gdunit4.zip"
           $ExtractDir = "${{ runner.temp }}\gdunit4_extract"
           $AddonsDir = "${{ github.workspace }}\${{ env.PROJECT_PATH }}\addons"
 
-          Write-Host "Downloading GdUnit4 ${{ env.GDUNIT4_VERSION }}..."
           Invoke-WebRequest -Uri $GdUnitUrl -OutFile $GdUnitZip
-
-          Write-Host "Extracting GdUnit4..."
           if (Test-Path $ExtractDir) { Remove-Item -Recurse -Force $ExtractDir }
           Expand-Archive -Path $GdUnitZip -DestinationPath $ExtractDir -Force
 
-          Write-Host "Copying gdUnit4 to addons/..."
           $SourcePath = Get-ChildItem -Path $ExtractDir -Directory | Select-Object -First 1 | ForEach-Object { "$($_.FullName)\addons\gdUnit4" }
           Copy-Item -Recurse -Path $SourcePath -Destination "$AddonsDir\gdUnit4" -Force
 
-          Write-Host "GdUnit4 installed at: $AddonsDir\gdUnit4"
-
-      # ============================================================
-      # Step 4: 运行单元测试（核心步骤）
-      # ============================================================
       - name: Run GdUnit4 Tests
         run: |
-          Write-Host "Running GdUnit4 tests..."
           godot --headless --path "${{ env.PROJECT_PATH }}" -s res://addons/gdUnit4/bin/GdUnitCmdTool.gd -a res://tests/ -c --ignoreHeadlessMode -rd test-reports
 
-      # ============================================================
-      # Step 5: 上传测试报告
-      # ============================================================
       - name: Upload Test Reports
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: gdunit-test-reports
+          name: test-reports
           path: test-reports
           retention-days: 30
 
-      # ============================================================
-      # Step 6: 编译 GDExtension（可选，失败不阻塞）
-      # ============================================================
+  # ============================================================
+  # Job 2: 构建+导出（仅 main 分支 push）
+  # ============================================================
+  build-export:
+    name: Build & Export
+    needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: windows-2025
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      # ── 缓存 Godot 引擎 ──
+      - name: Cache Godot Engine
+        id: cache-godot
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/godot.exe
+          key: godot-${{ env.GODOT_VERSION }}-${{ runner.os }}
+
+      - name: Download Godot Engine
+        if: steps.cache-godot.outputs.cache-hit != 'true'
+        run: |
+          $GodotUrl = "https://github.com/godotengine/godot/releases/download/${{ env.GODOT_VERSION }}-stable/Godot_v${{ env.GODOT_VERSION }}-stable_win64.exe.zip"
+          $GodotZip = "${{ runner.temp }}\godot.zip"
+          Invoke-WebRequest -Uri $GodotUrl -OutFile $GodotZip
+          Expand-Archive -Path $GodotZip -DestinationPath ${{ runner.temp }}
+          Rename-Item -Path "${{ runner.temp }}\Godot_v${{ env.GODOT_VERSION }}-stable_win64.exe" -NewName "${{ runner.temp }}\godot.exe"
+
+      - name: Add Godot to PATH
+        run: echo "${{ runner.temp }}" | Out-File -Append -FilePath $env:GITHUB_PATH
+
+      # ── 缓存导出模板 ──
+      - name: Cache Export Templates
+        id: cache-templates
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.APPDATA }}\Godot\export_templates\${{ env.GODOT_VERSION }}.stable
+          key: godot-templates-${{ env.GODOT_VERSION }}
+
+      - name: Download Export Templates
+        if: steps.cache-templates.outputs.cache-hit != 'true'
+        run: |
+          $ExportUrl = "https://github.com/godotengine/godot/releases/download/${{ env.GODOT_VERSION }}-stable/Godot_v${{ env.GODOT_VERSION }}-stable_export_templates.tpz"
+          $ExportZip = "${{ runner.temp }}\export_templates.tpz"
+          $TemplateDir = "$env:APPDATA\Godot\export_templates\${{ env.GODOT_VERSION }}.stable"
+
+          Invoke-WebRequest -Uri $ExportUrl -OutFile $ExportZip
+          New-Item -ItemType Directory -Force -Path $TemplateDir | Out-Null
+          Expand-Archive -Path $ExportZip -DestinationPath $TemplateDir -Force
+
+      # ── 缓存 GDExtension 编译 ──
+      - name: Cache GDExtension Build
+        id: cache-gdex
+        uses: actions/cache@v4
+        with:
+          path: gdextension/**/bin
+          key: gdextension-${{ hashFiles('gdextension/**/src/**', 'gdextension/**/SConstruct') }}
+
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
@@ -123,23 +160,15 @@ jobs:
       - name: Build GDExtensions
         continue-on-error: true
         run: |
-          Write-Host "Building GDExtensions..."
           python build.py --target=template_debug --platform=windows
         working-directory: gdextension
 
-      # ============================================================
-      # Step 7: 导出项目（验证可构建性）
-      # ============================================================
+      # ── 导出项目 ──
       - name: Export Project (Windows)
         run: |
-          Write-Host "Exporting project..."
           New-Item -ItemType Directory -Force -Path build/windows
           godot --headless --path "${{ env.PROJECT_PATH }}" --export-release "Windows Desktop" "${{ github.workspace }}\build\windows\TransparentPet.exe"
-        working-directory: ${{ github.workspace }}
 
-      # ============================================================
-      # Step 8: 上传构建产物
-      # ============================================================
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4
         if: always()

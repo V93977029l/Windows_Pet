@@ -263,54 +263,45 @@ modules/
 
 ---
 
-### **附录：跨对话记忆机制（两阶Issue体系）**
+## Git 分支与工作流规范
 
-> AI无法预判哪些问题会反复出现——只有人在被反复折磨后才会发现。因此采用**先记后筛**的两阶机制，避免手动逐个挑拣的负担。
+### 分支角色
 
-**文件位置（按需创建，不预置）：**
+| 分支 | 用途 | 寿命 |
+|------|------|------|
+| `main` | 稳定发布分支，CI 自动测试+构建 | 永久 |
+| `dev/xxx` | 各开发者的个人集成分支（如 `dev/fan`） | 永久 |
+| `agent/xxx` | AI 执行任务的功能分支 | **合并后删除** |
 
-`res://` 根目录固定有一对全局记录文件。各一级文件夹（`core/`、`modules/`、`addons/`、`assets/` 等）的相关记录文件只在需要时创建：
+### AI 工作流（每次任务的标准流程）
 
----
+1. **确定当前开发分支** — 先看用户当前在哪个 `dev/xxx` 分支上，所有操作围绕此分支展开
+2. **创建功能分支** — `git checkout -b agent/xxx <当前dev分支>`
+3. **编写代码+测试** — 修改 Godot 项目 → `godot --headless` 跑测试 → 通过后原子化提交
+4. **推送功能分支** — `git push -u origin agent/xxx`
+5. **合并回 dev 分支** — `git checkout <当前dev分支> && git merge agent/xxx && git push`
+6. **自动清理 agent 分支** — AI 全权管理所有 `agent/*` 分支的生命周期，合并后立即删除（本地+远程）：
+   ```
+   git branch -d agent/xxx
+   git push origin --delete agent/xxx
+   ```
+7. **回到 dev 分支** — 继续下一个任务
 
-**一阶 — `working_log.md`（流水账，免判断）：**
+### 合并到 main
 
-不判断是否"值得记"。任何以下情况，直接在文件末尾追加一行：
-
-- 同一个修改目标，AI尝试了3次以上才找到正确方案
-- 同一类行为约束，每次对话都要用提示词重新描述一遍
-- 排查过程曲折、耗费多轮的Bug修复
-- 你认为"下次对话AI大概率还会犯"的任何事情
-
-无需记录日期，格式随意，一行也行：
-
-```markdown
-- 修复宠物拖拽偏移：试了4次才想起来要先转全局坐标再算偏移，不要直接用event.position
-- AI又一次把AnimationPlayer名字写成"AnimationPlayer"而非"animation_player"
+当 dev 分支积累了一批经过测试的改动，由开发者发起或 AI 执行：
+```
+git checkout main
+git pull origin main
+git merge <当前dev分支> --no-edit
+git push origin main
+git checkout <当前dev分支>
 ```
 
-**读写规则：**
-- **记录时**（人类主动追加）：读取 `working_log.md`，在末尾追加条目后写回。
-- **工作前**（AI准备执行任务）：**不读** `working_log.md`。流水账是未筛选的噪音，不应影响当前判断。
+### AI 的提交规范
 
-当你对AI说类似"我已经跟你说了好几次了……"的时候，说明这条记录也早该被写进log。
-
----
-
-**二阶 — `issues.md`（稳定Issue，3次触发升级）：**
-
-当 `working_log.md` 中**同一问题被记录3次以上**，在**同目录下**的 `issues.md` 中追加一条记录（单文件，不拆目录）。
-
-升级后从 `working_log.md` 中删除对应条目。
-
-格式保持极简：
-
-```
-## 信号连接泄漏
-
-**症状：** 宠物切换场景后信号回调仍被触发
-**根因：** 忘了在 _exit_tree() 中断开信号连接
-**修复：** 在 _exit_tree() 中调用 disconnect()
-```
-
-**使用方式：** 处理某模块时，先扫一眼**该模块目录及所有上级目录**的 `issues.md`（就近目录优先）。如果当前问题与某条症状吻合，直接使用已有修复方案。
+- 每次提交是原子化的最小功能单元
+- 提交信息用中文，格式：`类型(模块): 描述`
+  - 类型: `fix` / `feat` / `refactor` / `test` / `docs` / `chore`
+  - 示例: `fix(ci): 测试失败阻塞构建` `test(core): 添加 config_manager 单元测试`
+- **每次修改 Godot 项目文件后必须用 `godot --headless` 验证编译通过再提交**
