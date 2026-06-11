@@ -1,5 +1,5 @@
-extends Node
 class_name PetUIApi
+extends Node
 
 @warning_ignore("unused_signal")
 signal settings_opened()

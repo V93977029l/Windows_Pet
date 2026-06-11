@@ -1,5 +1,5 @@
-extends Node
 class_name PetEffectsAPI
+extends Node
 
 @warning_ignore("unused_signal")
 signal effect_activated(effect_id: String)

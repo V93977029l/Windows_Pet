@@ -1,5 +1,5 @@
-extends Node
 class_name PetInteractionAPI
+extends Node
 
 @warning_ignore("unused_signal")
 signal drag_started(target_sprite: Sprite2D)
