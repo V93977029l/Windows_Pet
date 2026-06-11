@@ -79,6 +79,14 @@ jobs:
         run: |
           godot --headless --path "${{ env.PROJECT_PATH }}" -s res://addons/gdUnit4/bin/GdUnitCmdTool.gd -a res://tests/ -c --ignoreHeadlessMode -rd test-reports
 
+      - name: Publish Test Results
+        uses: dorny/test-reporter@v1
+        if: always()
+        with:
+          name: GdUnit4 Tests
+          path: ${{ env.PROJECT_PATH }}/test-reports/*.xml
+          reporter: java-junit
+
       - name: Upload Test Reports
         uses: actions/upload-artifact@v4
         if: always()
