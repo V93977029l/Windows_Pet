@@ -112,14 +112,6 @@ jobs:
           $feedback | ConvertTo-Json -Depth 4 | Out-File -FilePath "$reportDir/ai-feedback.json" -Encoding UTF8
           Write-Host "AI feedback report generated: $reportDir/ai-feedback.json"
 
-      - name: Publish Test Results
-        uses: dorny/test-reporter@v1
-        if: always()
-        with:
-          name: GdUnit4 Tests
-          path: ${{ env.PROJECT_PATH }}/test-reports/**/*.xml
-          reporter: java-junit
-
       - name: Upload Test Reports
         uses: actions/upload-artifact@v4
         if: always()
