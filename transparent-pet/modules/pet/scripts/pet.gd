@@ -86,6 +86,9 @@ func _ready():
 	tray_manager.settings_requested.connect(_on_tray_settings_requested)
 	tray_manager.exit_requested.connect(_on_tray_exit_requested)
 
+	# ── 4.5 订阅 UI 事件（EventBus 解耦）──
+	_subscribe_ui_events()
+
 	# ── 5. 液态玻璃预设激活 ──
 	if ConfigManager.cfg_get("pet", "slime_1_material", "slime_1") == "slime_2":
 		effects_controller.activate_effect("liquid_glass")
@@ -297,3 +300,65 @@ func open_settings_window():
 		var pet_pos = slime_sprite.global_position
 		var settings_pos = pet_pos + ProjectConstants.SETTINGS_WINDOW_OFFSET
 		settings_window.position = Vector2i(int(settings_pos.x), int(settings_pos.y))
+
+
+# ── EventBus 订阅 ──
+
+func _subscribe_ui_events():
+	EventBus.subscribe("pet_scale_apply", _on_event_scale_apply)
+	EventBus.subscribe("pet_material_changed", _on_event_material_changed)
+	EventBus.subscribe("pet_breathing_toggled", _on_event_breathing_toggled)
+	EventBus.subscribe("pet_motion_effect_toggled", _on_event_motion_effect_toggled)
+	EventBus.subscribe("window_always_on_top_changed", _on_event_always_on_top)
+	EventBus.subscribe("settings_save_requested", _on_event_settings_save)
+	EventBus.subscribe("settings_reset_requested", _on_event_settings_reset)
+	EventBus.subscribe("throw_params_changed", _on_event_throw_params)
+	print("✅ [EventBus] UI 事件订阅完成")
+
+
+func _on_event_scale_apply(payload: Dictionary):
+	var scale: float = payload.get("scale", 1.0)
+	update_pet_scale(scale)
+	apply_high_res_scale(scale)
+
+
+func _on_event_material_changed(payload: Dictionary):
+	var preset = payload.get("preset")
+	var preset_id: String = payload.get("preset_id", "")
+	if preset:
+		apply_preset(preset)
+	on_material_changed(preset_id)
+
+
+func _on_event_breathing_toggled(payload: Dictionary):
+	set_breathing_enabled(payload.get("enabled", true))
+
+
+func _on_event_motion_effect_toggled(payload: Dictionary):
+	set_motion_effect_enabled(payload.get("enabled", true))
+
+
+func _on_event_always_on_top(payload: Dictionary):
+	set_always_on_top(payload.get("enabled", true))
+
+
+func _on_event_settings_save(_payload = null):
+	save_config()
+
+
+func _on_event_settings_reset(_payload = null):
+	update_pet_scale(ConfigManager.cfg_get("pet", "pet_scale", PetConsts.PET_SCALE_DEFAULT))
+	apply_high_res_scale(ConfigManager.cfg_get("pet", "pet_scale", PetConsts.PET_SCALE_DEFAULT))
+	set_breathing_enabled(true)
+	set_motion_effect_enabled(true)
+	set_always_on_top(ConfigManager.cfg_get("window", "window_always_on_top", PetConsts.WINDOW_ALWAYS_ON_TOP_DEFAULT))
+
+
+func _on_event_throw_params(payload: Dictionary):
+	update_throw_params(
+		payload.get("gravity", PetConsts.THROW_GRAVITY_DEFAULT),
+		payload.get("min_speed", PetConsts.THROW_MIN_SPEED_DEFAULT),
+		payload.get("max_speed", PetConsts.THROW_MAX_SPEED_DEFAULT),
+		payload.get("multiplier", PetConsts.THROW_MULTIPLIER_DEFAULT),
+		payload.get("enabled", PetConsts.THROW_ENABLED_DEFAULT)
+	)

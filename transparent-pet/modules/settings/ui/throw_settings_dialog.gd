@@ -71,14 +71,13 @@ func _await_apply():
 	ConfigManager.cfg_set("throw", "throw_max_speed", max_speed_slider.value)
 	ConfigManager.cfg_set("throw", "throw_multiplier", multiplier_slider.value)
 
-	if pet_node and pet_node.has_method("update_throw_params"):
-		pet_node.update_throw_params(
-			gravity_slider.value,
-			min_speed_slider.value,
-			max_speed_slider.value,
-			multiplier_slider.value,
-			enable_check.button_pressed
-		)
+	EventBus.publish("throw_params_changed", {
+		"gravity": gravity_slider.value,
+		"min_speed": min_speed_slider.value,
+		"max_speed": max_speed_slider.value,
+		"multiplier": multiplier_slider.value,
+		"enabled": enable_check.button_pressed
+	})
 
 
 func _on_enable_changed(enabled: bool):

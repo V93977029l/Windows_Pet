@@ -136,8 +136,7 @@ func _on_scale_input_changed(text: String):
 
 func _on_apply_scale():
 	var value = ConfigManager.cfg_get("pet", "pet_scale", 1.0)
-	apply_scale(value)
-	apply_high_res_scale(value)
+	EventBus.publish("pet_scale_apply", {"scale": value})
 	print("✅ [设置] 缩放已应用: ", value)
 
 
@@ -149,35 +148,28 @@ func _on_material_changed(index: int):
 
 	if index < presets.size():
 		var preset = presets[index]
-
-		pet_node.apply_preset(preset)
 		ConfigManager.cfg_set("pet", "slime_1_material", preset.id)
-
-		pet_node.on_material_changed(preset.id)
-
+		EventBus.publish("pet_material_changed", {"preset": preset, "preset_id": preset.id})
 		print("✅ [设置] 材质已切换为: ", preset.name)
 
 
 func _on_breathing_changed(enabled: bool):
 	if _update_guard.is_guarded():
 		return
-	if pet_node:
-		pet_node.set_breathing_enabled(enabled)
+	EventBus.publish("pet_breathing_toggled", {"enabled": enabled})
 
 
 func _on_motion_changed(enabled: bool):
 	if _update_guard.is_guarded():
 		return
-	if pet_node:
-		pet_node.set_motion_effect_enabled(enabled)
+	EventBus.publish("pet_motion_effect_toggled", {"enabled": enabled})
 
 
 func _on_always_on_top_changed(enabled: bool):
 	if _update_guard.is_guarded():
 		return
-
 	ConfigManager.cfg_set("window", "window_always_on_top", enabled)
-	apply_always_on_top(enabled)
+	EventBus.publish("window_always_on_top_changed", {"enabled": enabled})
 
 
 func _on_autostart_changed(enabled: bool):
@@ -269,33 +261,13 @@ func _check_autostart_status() -> bool:
 	return false
 
 
-func apply_scale(value: float):
-	if not pet_node:
-		print("⚠️ [设置] 无法应用缩放：pet_node 为空")
-		return
-
-	pet_node.update_pet_scale(value)
-
-
-func apply_high_res_scale(value: float):
-	if not pet_node:
-		print("⚠️ [设置] 无法应用高分辨率缩放：pet_node 为空")
-		return
-
-	pet_node.apply_high_res_scale(value)
-
-
-func apply_always_on_top(enabled: bool):
-	if not pet_node:
-		print("⚠️ [设置] 无法设置窗口置顶：pet_node 为空")
-		return
-
-	pet_node.set_always_on_top(enabled)
+func _on_close():
+	queue_free()
 
 
 func _on_save():
 	ConfigManager.save_config()
-	pet_node.save_config()
+	EventBus.publish("settings_save_requested")
 	print("✅ [设置] 配置已保存")
 
 
@@ -304,22 +276,10 @@ func _on_reset():
 	ConfigManager.cfg_set("pet", "slime_1_material", "slime_1")
 	ConfigManager.cfg_set("window", "window_always_on_top", PetConsts.WINDOW_ALWAYS_ON_TOP_DEFAULT)
 	ConfigManager.cfg_set("window", "autostart_enabled", PetConsts.WINDOW_AUTOSTART_DEFAULT)
-
 	load_config()
-
 	_set_autostart(false)
-
-	apply_scale(ConfigManager.cfg_get("pet", "pet_scale", PetConsts.PET_SCALE_DEFAULT))
-	if pet_node:
-		pet_node.set_breathing_enabled(true)
-		pet_node.set_motion_effect_enabled(true)
-	apply_always_on_top(ConfigManager.cfg_get("window", "window_always_on_top", PetConsts.WINDOW_ALWAYS_ON_TOP_DEFAULT))
-
+	EventBus.publish("settings_reset_requested")
 	print("✅ [设置] 已恢复默认配置")
-
-
-func _on_close():
-	queue_free()
 
 
 func _on_throw_settings():
