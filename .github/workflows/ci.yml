@@ -75,7 +75,12 @@ jobs:
           $SourcePath = Get-ChildItem -Path $ExtractDir -Directory | Select-Object -First 1 | ForEach-Object { "$($_.FullName)\addons\gdUnit4" }
           Copy-Item -Recurse -Path $SourcePath -Destination "$AddonsDir\gdUnit4" -Force
 
-      - name: Run GdUnit4 Tests (with Coverage)
+      - name: Run GdUnit4 Tests
+        run: |
+          godot --headless --path "${{ env.PROJECT_PATH }}" -s res://addons/gdUnit4/bin/GdUnitCmdTool.gd -a res://tests/ -c --ignoreHeadlessMode -rd test-reports -rc 2
+
+      - name: Run Coverage
+        continue-on-error: true
         run: |
           godot --headless --path "${{ env.PROJECT_PATH }}" -s res://tools/coverage_runner.gd -a res://tests/ -c --ignoreHeadlessMode -rd test-reports -rc 2
 
