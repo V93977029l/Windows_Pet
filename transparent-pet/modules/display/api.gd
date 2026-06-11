@@ -1,5 +1,5 @@
-extends Node
 class_name PetDisplayAPI
+extends Node
 
 @warning_ignore("unused_signal")
 signal scale_changed(new_scale: float)

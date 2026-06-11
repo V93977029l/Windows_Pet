@@ -50,6 +50,24 @@ jobs:
         run: echo "${{ runner.temp }}" | Out-File -Append -FilePath $env:GITHUB_PATH
 
       # ============================================================
+      # Step 2.5: 下载并安装 Godot 导出模板
+      # ============================================================
+      - name: Setup Godot Export Templates
+        run: |
+          $ExportUrl = "https://github.com/godotengine/godot/releases/download/${{ env.GODOT_VERSION }}-stable/Godot_v${{ env.GODOT_VERSION }}-stable_export_templates.tpz"
+          $ExportZip = "export_templates.tpz"
+          $TemplateDir = "$env:APPDATA\Godot\export_templates\${{ env.GODOT_VERSION }}.stable"
+
+          Write-Host "Downloading Godot export templates..."
+          Invoke-WebRequest -Uri $ExportUrl -OutFile $ExportZip
+
+          Write-Host "Extracting export templates to: $TemplateDir"
+          New-Item -ItemType Directory -Force -Path $TemplateDir | Out-Null
+          Expand-Archive -Path $ExportZip -DestinationPath $TemplateDir -Force
+
+          Write-Host "Export templates installed successfully."
+
+      # ============================================================
       # Step 3: 安装 GdUnit4 测试框架
       # ============================================================
       - name: Install GdUnit4
@@ -79,7 +97,6 @@ jobs:
         run: |
           Write-Host "Running GdUnit4 tests..."
           godot --headless --path "${{ env.PROJECT_PATH }}" -s res://addons/gdUnit4/bin/GdUnitCmdTool.gd -a res://tests/ -c --ignoreHeadlessMode -rd test-reports
-        continue-on-error: true
 
       # ============================================================
       # Step 5: 上传测试报告
@@ -114,7 +131,6 @@ jobs:
       # Step 7: 导出项目（验证可构建性）
       # ============================================================
       - name: Export Project (Windows)
-        continue-on-error: true
         run: |
           Write-Host "Exporting project..."
           New-Item -ItemType Directory -Force -Path build/windows
