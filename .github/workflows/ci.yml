@@ -79,6 +79,34 @@ jobs:
         run: |
           godot --headless --path "${{ env.PROJECT_PATH }}" -s res://addons/gdUnit4/bin/GdUnitCmdTool.gd -a res://tests/ -c --ignoreHeadlessMode -rd test-reports
 
+      - name: Generate AI Feedback Report
+        if: failure()
+        run: |
+          $reportDir = "${{ env.PROJECT_PATH }}/test-reports"
+          $feedback = @{
+            source = "CI Test Failure"
+            timestamp = (Get-Date -Format "o")
+            project = "transparent-pet"
+            failures = @()
+          }
+
+          Get-ChildItem -Path $reportDir -Filter "*.xml" -ErrorAction SilentlyContinue | ForEach-Object {
+            [xml]$xml = Get-Content $_.FullName
+            $xml.testsuite.testcase | Where-Object { $_.failure -or $_.error } | ForEach-Object {
+              $failure = @{
+                suite = $xml.testsuite.name
+                test = $_.name
+                classname = $_.classname
+                type = if ($_.failure) { "failure" } else { "error" }
+                message = if ($_.failure) { $_.failure.message } else { $_.error.message }
+              }
+              $feedback.failures += $failure
+            }
+          }
+
+          $feedback | ConvertTo-Json -Depth 4 | Out-File -FilePath "$reportDir/ai-feedback.json" -Encoding UTF8
+          Write-Host "AI feedback report generated: $reportDir/ai-feedback.json"
+
       - name: Publish Test Results
         uses: dorny/test-reporter@v1
         if: always()
