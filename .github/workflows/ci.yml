@@ -7,6 +7,9 @@ on:
     branches: [main]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 env:
   GODOT_VERSION: "4.6.3"
   GODOT_BIN: godot.exe
@@ -206,8 +209,17 @@ jobs:
       # ── 导出项目 ──
       - name: Export Project (Windows)
         run: |
-          New-Item -ItemType Directory -Force -Path build/windows
-          godot --headless --path "${{ env.PROJECT_PATH }}" --export-release "Windows Desktop" "${{ github.workspace }}\build\windows\TransparentPet.exe"
+          $OutDir = "${{ github.workspace }}\build\windows"
+          New-Item -ItemType Directory -Force -Path $OutDir | Out-Null
+          $OutFile = "$OutDir\TransparentPet.exe"
+          Write-Host "Exporting to: $OutFile"
+          godot --headless --path "${{ env.PROJECT_PATH }}" --export-release "Windows Desktop" "$OutFile"
+          if (Test-Path $OutFile) {
+            Write-Host "Export successful: $OutFile ($((Get-Item $OutFile).Length) bytes)"
+          } else {
+            Write-Error "Export failed: file not found at $OutFile"
+            exit 1
+          }
 
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4
