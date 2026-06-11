@@ -66,9 +66,6 @@ func handle_area_input_event(event: InputEvent, target_sprite: Sprite2D = null):
 	if not parent_node:
 		return
 
-	if not target_sprite:
-		target_sprite = parent_node.get_node("Slime")
-
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
 		if event.pressed:
 			var mouse_global: Vector2 = parent_node.get_global_mouse_position()
