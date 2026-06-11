@@ -180,9 +180,20 @@ jobs:
           $ExportUrl = "https://github.com/godotengine/godot/releases/download/${{ env.GODOT_VERSION }}-stable/Godot_v${{ env.GODOT_VERSION }}-stable_export_templates.tpz"
           $ExportZip = "${{ runner.temp }}\export_templates.tpz"
 
+          Write-Host "Downloading export templates..."
           Invoke-WebRequest -Uri $ExportUrl -OutFile $ExportZip
+
           New-Item -ItemType Directory -Force -Path $env:TEMPLATE_DIR | Out-Null
           Expand-Archive -Path $ExportZip -DestinationPath $env:TEMPLATE_DIR -Force
+
+          # .tpz 解压后有个 templates/ 子目录，Godot 需要模板文件直接在版本目录下
+          if (Test-Path "$env:TEMPLATE_DIR\templates") {
+            Write-Host "Moving templates from subdirectory..."
+            Get-ChildItem -Path "$env:TEMPLATE_DIR\templates" | Move-Item -Destination $env:TEMPLATE_DIR -Force
+            Remove-Item "$env:TEMPLATE_DIR\templates" -Force
+          }
+          Write-Host "Templates installed to: $env:TEMPLATE_DIR"
+          Get-ChildItem $env:TEMPLATE_DIR | ForEach-Object { Write-Host "  $($_.Name)" }
 
       # ── 缓存 GDExtension 编译 ──
       - name: Cache GDExtension Build
@@ -206,6 +217,10 @@ jobs:
           python build.py --target=template_debug --platform=windows
         working-directory: gdextension
 
+      - name: Check GDExtension Build
+        if: steps.cache-gdex.outputs.cache-hit == 'true'
+        run: Write-Host "Using cached GDExtension DLLs"
+
       # ── 导出项目 ──
       - name: Export Project (Windows)
         run: |
@@ -213,7 +228,21 @@ jobs:
           New-Item -ItemType Directory -Force -Path $OutDir | Out-Null
           $OutFile = "$OutDir\TransparentPet.exe"
           Write-Host "Exporting to: $OutFile"
-          godot --headless --path "${{ env.PROJECT_PATH }}" --export-release "Windows Desktop" "$OutFile"
+          Write-Host "Template dir: $env:TEMPLATE_DIR"
+          if (Test-Path "$env:TEMPLATE_DIR\windows_release_x86_64.exe") {
+            Write-Host "Release template: found"
+          } else {
+            Write-Error "Release template missing! Listing template dir:"
+            Get-ChildItem $env:TEMPLATE_DIR -Recurse | ForEach-Object { Write-Host "  $($_.FullName)" }
+            exit 1
+          }
+
+          $Output = & godot --headless --path "${{ env.PROJECT_PATH }}" --export-release "Windows Desktop" "$OutFile" 2>&1
+          $ExitCode = $LASTEXITCODE
+          Write-Host "Godot output:"
+          Write-Host $Output
+          Write-Host "Exit code: $ExitCode"
+
           if (Test-Path $OutFile) {
             Write-Host "Export successful: $OutFile ($((Get-Item $OutFile).Length) bytes)"
           } else {
