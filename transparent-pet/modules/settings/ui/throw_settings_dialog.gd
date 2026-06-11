@@ -1,10 +1,8 @@
-extends Window
+extends BasePetWindow
 
 const PetConsts = preload("res://modules/pet/scripts/pet_constants.gd")
 
-var pet_node: Node2D = null
 var _update_guard: UIUtils.UIUpdateGuard = UIUtils.UIUpdateGuard.new()
-var _pending_setup: bool = false
 
 @onready var enable_check: CheckButton = $Background/VBox/Enable/HBox/Check
 @onready var gravity_slider: HSlider = $Background/VBox/Gravity/HBox/Slider
@@ -19,20 +17,9 @@ var _pending_setup: bool = false
 @onready var reset_btn: Button = $Background/VBox/Buttons/Reset
 
 
-func set_pet_node(pet: Node2D):
-	pet_node = pet
-	if pet_node:
-		_pending_setup = true
-
-
-func _ready():
+func _setup_ui():
 	title = "抛射参数设置"
-	transparent = false
-	always_on_top = true
-
-	if _pending_setup:
-		load_config()
-		_pending_setup = false
+	load_config()
 
 	enable_check.toggled.connect(_on_enable_changed)
 	gravity_slider.value_changed.connect(_on_gravity_slider_changed)
@@ -45,7 +32,6 @@ func _ready():
 	multiplier_input.text_changed.connect(_on_multiplier_input_changed)
 	save_btn.pressed.connect(_on_save)
 	reset_btn.pressed.connect(_on_reset)
-	close_requested.connect(_on_close)
 
 
 func load_config():
@@ -201,7 +187,3 @@ func _on_reset():
 	load_config()
 	_await_apply()
 	print("✅ [抛射设置] 已恢复默认")
-
-
-func _on_close():
-	queue_free()

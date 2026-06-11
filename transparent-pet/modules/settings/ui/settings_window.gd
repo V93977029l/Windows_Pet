@@ -1,10 +1,8 @@
-extends Window
+extends BasePetWindow
 
 const PetConsts = preload("res://modules/pet/scripts/pet_constants.gd")
 
-var pet_node: Node2D = null
 var _update_guard: UIUtils.UIUpdateGuard = UIUtils.UIUpdateGuard.new()
-var _pending_setup: bool = false
 
 @onready var scale_slider: HSlider = $Background/MainHBox/CenterVBox/Scale/HBox2/Slider2
 @onready var scale_input: LineEdit = $Background/MainHBox/CenterVBox/Scale/HBox2/Input2
@@ -19,26 +17,11 @@ var _pending_setup: bool = false
 @onready var throw_btn: Button = $Background/MainHBox/CenterVBox/ThrowBtn
 
 
-func set_pet_node(pet: Node2D):
-	pet_node = pet
-	if pet_node:
-		_pending_setup = true
-
-
-func _ready():
+func _setup_ui():
 	title = "桌宠设置 [调试用]"
-	transparent = false
-	always_on_top = true
-
-	if _pending_setup:
-		setup_material_combo()
-		setup_connections()
-		load_config()
-		_pending_setup = false
-
-	visible = true
-	await get_tree().process_frame
-	grab_focus()
+	setup_material_combo()
+	setup_connections()
+	load_config()
 
 
 func setup_connections():
@@ -53,7 +36,6 @@ func setup_connections():
 	save_button.pressed.connect(_on_save)
 	reset_button.pressed.connect(_on_reset)
 	throw_btn.pressed.connect(_on_throw_settings)
-	close_requested.connect(_on_close)
 
 
 func setup_material_combo():
@@ -259,10 +241,6 @@ func _check_autostart_status() -> bool:
 			return true
 
 	return false
-
-
-func _on_close():
-	queue_free()
 
 
 func _on_save():
