@@ -172,7 +172,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ${{ env.TEMPLATE_DIR }}
-          key: godot-templates-${{ env.GODOT_VERSION }}
+          key: godot-templates-${{ env.GODOT_VERSION }}-v2
 
       - name: Download Export Templates
         if: steps.cache-templates.outputs.cache-hit != 'true'
