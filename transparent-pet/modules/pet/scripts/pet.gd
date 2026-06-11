@@ -317,9 +317,9 @@ func _subscribe_ui_events():
 
 
 func _on_event_scale_apply(payload: Dictionary):
-	var scale: float = payload.get("scale", 1.0)
-	update_pet_scale(scale)
-	apply_high_res_scale(scale)
+	var new_scale: float = payload.get("scale", 1.0)
+	update_pet_scale(new_scale)
+	apply_high_res_scale(new_scale)
 
 
 func _on_event_material_changed(payload: Dictionary):
