@@ -75,9 +75,9 @@ jobs:
           $SourcePath = Get-ChildItem -Path $ExtractDir -Directory | Select-Object -First 1 | ForEach-Object { "$($_.FullName)\addons\gdUnit4" }
           Copy-Item -Recurse -Path $SourcePath -Destination "$AddonsDir\gdUnit4" -Force
 
-      - name: Run GdUnit4 Tests
+      - name: Run GdUnit4 Tests (with Coverage)
         run: |
-          godot --headless --path "${{ env.PROJECT_PATH }}" -s res://addons/gdUnit4/bin/GdUnitCmdTool.gd -a res://tests/ -c --ignoreHeadlessMode -rd test-reports
+          godot --headless --path "${{ env.PROJECT_PATH }}" -s res://tools/coverage_runner.gd -a res://tests/ -c --ignoreHeadlessMode
 
       - name: Generate AI Feedback Report
         if: failure()
