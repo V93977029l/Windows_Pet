@@ -77,7 +77,7 @@ jobs:
 
       - name: Run GdUnit4 Tests (with Coverage)
         run: |
-          godot --headless --path "${{ env.PROJECT_PATH }}" -s res://tools/coverage_runner.gd -a res://tests/ -c --ignoreHeadlessMode
+          godot --headless --path "${{ env.PROJECT_PATH }}" -s res://tools/coverage_runner.gd -a res://tests/ -c --ignoreHeadlessMode -rc 2
 
       - name: Generate AI Feedback Report
         if: failure()
