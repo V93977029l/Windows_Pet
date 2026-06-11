@@ -183,3 +183,20 @@ jobs:
           name: windows-build
           path: build/windows
           retention-days: 30
+
+      # ── 自动发布到 GitHub Releases ──
+      - name: Create GitHub Release
+        if: success()
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v0.1.0-build${{ github.run_number }}
+          name: 桌宠 v0.1.0 (Build ${{ github.run_number }})
+          body: |
+            📦 自动构建产物
+
+            - 提交: ${{ github.event.head_commit.message }}
+            - SHA: ${{ github.sha }}
+          files: build/windows/TransparentPet.exe
+          draft: false
+          prerelease: false
+          make_latest: true
