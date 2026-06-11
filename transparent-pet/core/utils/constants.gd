@@ -13,7 +13,7 @@ class_name ProjectConstants
 ## 史莱姆宠物SVG资源路径
 const SVG_PATH: String = "res://modules/pet/assets/pet_sprite.svg"
 ## 液态玻璃渲染器场景路径
-const LIQUID_GLASS_SCENE: String = "res://prototypes/liquid_glass/scenes/liquid_glass_renderer.tscn"
+const LIQUID_GLASS_SCENE: String = "res://modules/effects/scenes/liquid_glass_renderer.tscn"
 ## 设置窗口场景路径
 const SETTINGS_WINDOW_SCENE: String = "res://modules/settings/ui/settings_window.tscn"
 ## 抛射参数设置弹窗场景路径
