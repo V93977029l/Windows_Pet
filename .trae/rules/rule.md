@@ -305,3 +305,9 @@ git checkout <当前dev分支>
   - 类型: `fix` / `feat` / `refactor` / `test` / `docs` / `chore`
   - 示例: `fix(ci): 测试失败阻塞构建` `test(core): 添加 config_manager 单元测试`
 - **每次修改 Godot 项目文件后必须用 `godot --headless` 验证编译通过再提交**
+
+### 待办项维护
+
+- 架构/工程改进待办项统一记录在 `docs/架构改进待办项.md`
+- **每完成一项改进，必须从该文档中删除对应条目**，保持文档反映真实剩余工作
+- 新增改进项时追加到文档末尾对应优先级分区

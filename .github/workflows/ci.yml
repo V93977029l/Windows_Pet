@@ -14,6 +14,7 @@ env:
   PROJECT_PATH: transparent-pet
   PYTHONIOENCODING: utf-8
   PYTHONUTF8: "1"
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
 
 jobs:
   # ============================================================
@@ -74,16 +75,52 @@ jobs:
           $SourcePath = Get-ChildItem -Path $ExtractDir -Directory | Select-Object -First 1 | ForEach-Object { "$($_.FullName)\addons\gdUnit4" }
           Copy-Item -Recurse -Path $SourcePath -Destination "$AddonsDir\gdUnit4" -Force
 
-      - name: Run GdUnit4 Tests
+      - name: Run GdUnit4 Tests (with Coverage)
         run: |
-          godot --headless --path "${{ env.PROJECT_PATH }}" -s res://addons/gdUnit4/bin/GdUnitCmdTool.gd -a res://tests/ -c --ignoreHeadlessMode -rd test-reports
+          godot --headless --path "${{ env.PROJECT_PATH }}" -s res://tools/coverage_runner.gd -a res://tests/ -c --ignoreHeadlessMode -rc 2
+
+      - name: Generate AI Feedback Report
+        if: failure()
+        run: |
+          $reportDir = "${{ env.PROJECT_PATH }}/test-reports"
+          $feedback = @{
+            source = "CI Test Failure"
+            timestamp = (Get-Date -Format "o")
+            project = "transparent-pet"
+            failures = @()
+          }
+
+          Get-ChildItem -Path $reportDir -Filter "*.xml" -ErrorAction SilentlyContinue | ForEach-Object {
+            [xml]$xml = Get-Content $_.FullName
+            $xml.testsuite.testcase | Where-Object { $_.failure -or $_.error } | ForEach-Object {
+              $failure = @{
+                suite = $xml.testsuite.name
+                test = $_.name
+                classname = $_.classname
+                type = if ($_.failure) { "failure" } else { "error" }
+                message = if ($_.failure) { $_.failure.message } else { $_.error.message }
+              }
+              $feedback.failures += $failure
+            }
+          }
+
+          $feedback | ConvertTo-Json -Depth 4 | Out-File -FilePath "$reportDir/ai-feedback.json" -Encoding UTF8
+          Write-Host "AI feedback report generated: $reportDir/ai-feedback.json"
+
+      - name: Publish Test Results
+        uses: dorny/test-reporter@v1
+        if: always()
+        with:
+          name: GdUnit4 Tests
+          path: ${{ env.PROJECT_PATH }}/test-reports/*.xml
+          reporter: java-junit
 
       - name: Upload Test Reports
         uses: actions/upload-artifact@v4
         if: always()
         with:
           name: test-reports
-          path: test-reports
+          path: ${{ env.PROJECT_PATH }}/test-reports
           retention-days: 30
 
   # ============================================================
@@ -122,12 +159,19 @@ jobs:
       - name: Add Godot to PATH
         run: echo "${{ runner.temp }}" | Out-File -Append -FilePath $env:GITHUB_PATH
 
+      # ── 设置导出模板目录（需要 APPDATA 系统变量）──
+      - name: Set Export Template Dir
+        run: |
+          $dir = "$env:APPDATA\Godot\export_templates\${{ env.GODOT_VERSION }}.stable"
+          echo "TEMPLATE_DIR=$dir" >> $env:GITHUB_ENV
+          Write-Host "Template dir: $dir"
+
       # ── 缓存导出模板 ──
       - name: Cache Export Templates
         id: cache-templates
         uses: actions/cache@v4
         with:
-          path: ${{ env.APPDATA }}\Godot\export_templates\${{ env.GODOT_VERSION }}.stable
+          path: ${{ env.TEMPLATE_DIR }}
           key: godot-templates-${{ env.GODOT_VERSION }}
 
       - name: Download Export Templates
@@ -135,11 +179,10 @@ jobs:
         run: |
           $ExportUrl = "https://github.com/godotengine/godot/releases/download/${{ env.GODOT_VERSION }}-stable/Godot_v${{ env.GODOT_VERSION }}-stable_export_templates.tpz"
           $ExportZip = "${{ runner.temp }}\export_templates.tpz"
-          $TemplateDir = "$env:APPDATA\Godot\export_templates\${{ env.GODOT_VERSION }}.stable"
 
           Invoke-WebRequest -Uri $ExportUrl -OutFile $ExportZip
-          New-Item -ItemType Directory -Force -Path $TemplateDir | Out-Null
-          Expand-Archive -Path $ExportZip -DestinationPath $TemplateDir -Force
+          New-Item -ItemType Directory -Force -Path $env:TEMPLATE_DIR | Out-Null
+          Expand-Archive -Path $ExportZip -DestinationPath $env:TEMPLATE_DIR -Force
 
       # ── 缓存 GDExtension 编译 ──
       - name: Cache GDExtension Build
@@ -176,3 +219,20 @@ jobs:
           name: windows-build
           path: build/windows
           retention-days: 30
+
+      # ── 自动发布到 GitHub Releases ──
+      - name: Create GitHub Release
+        if: success()
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v0.1.0-build${{ github.run_number }}
+          name: 桌宠 v0.1.0 (Build ${{ github.run_number }})
+          body: |
+            📦 自动构建产物
+
+            - 提交: ${{ github.event.head_commit.message }}
+            - SHA: ${{ github.sha }}
+          files: build/windows/TransparentPet.exe
+          draft: false
+          prerelease: false
+          make_latest: true

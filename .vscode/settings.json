@@ -4,6 +4,7 @@
 		"**/*.uid": true,
 		".obsidian": true,
 		"**/.godot": true,
-		"**/*.o": true
+		"**/*.o": true,
+		".ruff_cache": true
 	}
 }
