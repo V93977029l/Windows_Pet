@@ -14,6 +14,7 @@ env:
   PROJECT_PATH: transparent-pet
   PYTHONIOENCODING: utf-8
   PYTHONUTF8: "1"
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
 
 jobs:
   # ============================================================
@@ -83,7 +84,7 @@ jobs:
         if: always()
         with:
           name: test-reports
-          path: test-reports
+          path: ${{ env.PROJECT_PATH }}/test-reports
           retention-days: 30
 
   # ============================================================
@@ -122,12 +123,19 @@ jobs:
       - name: Add Godot to PATH
         run: echo "${{ runner.temp }}" | Out-File -Append -FilePath $env:GITHUB_PATH
 
+      # ── 设置导出模板目录（需要 APPDATA 系统变量）──
+      - name: Set Export Template Dir
+        run: |
+          $dir = "$env:APPDATA\Godot\export_templates\${{ env.GODOT_VERSION }}.stable"
+          echo "TEMPLATE_DIR=$dir" >> $env:GITHUB_ENV
+          Write-Host "Template dir: $dir"
+
       # ── 缓存导出模板 ──
       - name: Cache Export Templates
         id: cache-templates
         uses: actions/cache@v4
         with:
-          path: ${{ env.APPDATA }}\Godot\export_templates\${{ env.GODOT_VERSION }}.stable
+          path: ${{ env.TEMPLATE_DIR }}
           key: godot-templates-${{ env.GODOT_VERSION }}
 
       - name: Download Export Templates
@@ -135,11 +143,10 @@ jobs:
         run: |
           $ExportUrl = "https://github.com/godotengine/godot/releases/download/${{ env.GODOT_VERSION }}-stable/Godot_v${{ env.GODOT_VERSION }}-stable_export_templates.tpz"
           $ExportZip = "${{ runner.temp }}\export_templates.tpz"
-          $TemplateDir = "$env:APPDATA\Godot\export_templates\${{ env.GODOT_VERSION }}.stable"
 
           Invoke-WebRequest -Uri $ExportUrl -OutFile $ExportZip
-          New-Item -ItemType Directory -Force -Path $TemplateDir | Out-Null
-          Expand-Archive -Path $ExportZip -DestinationPath $TemplateDir -Force
+          New-Item -ItemType Directory -Force -Path $env:TEMPLATE_DIR | Out-Null
+          Expand-Archive -Path $ExportZip -DestinationPath $env:TEMPLATE_DIR -Force
 
       # ── 缓存 GDExtension 编译 ──
       - name: Cache GDExtension Build
