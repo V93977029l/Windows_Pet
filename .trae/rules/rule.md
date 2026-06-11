@@ -260,3 +260,48 @@ modules/
    - AI Agent可能会在修改`.tscn`文件时犯错，例如删除了一个必要的子节点，或更改了节点类型。
    - 我们可以在流水线中加入一个步骤，使用Godot的无头模式（headless mode）运行一个自定义的验证脚本。
    - 这个脚本可以加载AI修改过的场景，并断言其结构是否符合预期。例如，检查`player.tscn`是否仍然拥有一个`CollisionShape2D`子节点，并且其根节点类型是否为`CharacterBody2D`。
+
+---
+
+## Git 分支与工作流规范
+
+### 分支角色
+
+| 分支 | 用途 | 寿命 |
+|------|------|------|
+| `main` | 稳定发布分支，CI 自动测试+构建 | 永久 |
+| `dev/xxx` | 各开发者的个人集成分支（如 `dev/fan`） | 永久 |
+| `agent/xxx` | AI 执行任务的功能分支 | **合并后删除** |
+
+### AI 工作流（每次任务的标准流程）
+
+1. **确定当前开发分支** — 先看用户当前在哪个 `dev/xxx` 分支上，所有操作围绕此分支展开
+2. **创建功能分支** — `git checkout -b agent/xxx <当前dev分支>`
+3. **编写代码+测试** — 修改 Godot 项目 → `godot --headless` 跑测试 → 通过后原子化提交
+4. **推送功能分支** — `git push -u origin agent/xxx`
+5. **合并回 dev 分支** — `git checkout <当前dev分支> && git merge agent/xxx && git push`
+6. **自动清理 agent 分支** — AI 全权管理所有 `agent/*` 分支的生命周期，合并后立即删除（本地+远程）：
+   ```
+   git branch -d agent/xxx
+   git push origin --delete agent/xxx
+   ```
+7. **回到 dev 分支** — 继续下一个任务
+
+### 合并到 main
+
+当 dev 分支积累了一批经过测试的改动，由开发者发起或 AI 执行：
+```
+git checkout main
+git pull origin main
+git merge <当前dev分支> --no-edit
+git push origin main
+git checkout <当前dev分支>
+```
+
+### AI 的提交规范
+
+- 每次提交是原子化的最小功能单元
+- 提交信息用中文，格式：`类型(模块): 描述`
+  - 类型: `fix` / `feat` / `refactor` / `test` / `docs` / `chore`
+  - 示例: `fix(ci): 测试失败阻塞构建` `test(core): 添加 config_manager 单元测试`
+- **每次修改 Godot 项目文件后必须用 `godot --headless` 验证编译通过再提交**
