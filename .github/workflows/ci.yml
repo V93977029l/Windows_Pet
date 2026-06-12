@@ -201,7 +201,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: gdextension/**/bin
-          key: gdextension-${{ hashFiles('gdextension/**/src/**', 'gdextension/**/SConstruct') }}
+          key: gdextension-release-${{ hashFiles('gdextension/**/src/**', 'gdextension/**/SConstruct') }}
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -212,9 +212,8 @@ jobs:
         run: pip install scons
 
       - name: Build GDExtensions
-        continue-on-error: true
         run: |
-          python build.py --target=template_debug --platform=windows
+          python build.py --target=template_release --platform=windows
         working-directory: gdextension
 
       - name: Check GDExtension Build
