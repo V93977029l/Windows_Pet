@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "ci-monitor": {
+      "command": "python",
+      "args": ["tools/ci_monitor/server.py"],
+      "cwd": "f:/VSCode/game",
+      "env": {
+        "GITHUB_TOKEN": ""
+      }
+    }
+  }
+}

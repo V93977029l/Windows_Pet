@@ -239,30 +239,27 @@ jobs:
           Write-Host "Templates installed to: $env:TEMPLATE_DIR"
           Get-ChildItem $env:TEMPLATE_DIR | ForEach-Object { Write-Host "  $($_.Name)" }
 
-      # ── 缓存 GDExtension 编译 ──
-      - name: Cache GDExtension Build
-        id: cache-gdex
-        uses: actions/cache@v4
-        with:
-          path: gdextension/**/bin
-          key: gdextension-release-${{ hashFiles('gdextension/**/src/**', 'gdextension/**/SConstruct') }}
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - name: Install SCons
-        run: pip install scons
-
-      - name: Build GDExtensions
+      # ── 验证预编译 GDExtension DLL（已提交到仓库，无需 CI 编译）──
+      - name: Verify GDExtension DLLs
         run: |
-          python build.py --target=template_release --platform=windows
-        working-directory: gdextension
-
-      - name: Check GDExtension Build
-        if: steps.cache-gdex.outputs.cache-hit == 'true'
-        run: Write-Host "Using cached GDExtension DLLs"
+          $Dlls = @(
+            "${{ env.PROJECT_PATH }}/addons/mouse_passthrough/bin/libmouse_passthrough.windows.template_release.x86_64.dll",
+            "${{ env.PROJECT_PATH }}/addons/system_tray/bin/libsystem_tray.windows.template_release.x86_64.dll"
+          )
+          $Missing = @()
+          foreach ($dll in $Dlls) {
+            if (Test-Path $dll) {
+              Write-Host "  ✓ $dll ($((Get-Item $dll).Length) bytes)"
+            } else {
+              Write-Host "  ✗ MISSING: $dll"
+              $Missing += $dll
+            }
+          }
+          if ($Missing.Count -gt 0) {
+            Write-Error "GDExtension DLLs missing! Run: python gdextension/build.py --target=template_release --platform=windows"
+            exit 1
+          }
+          Write-Host "All GDExtension DLLs verified"
 
       # ── 导出项目 ──
       - name: Export Project (Windows)
