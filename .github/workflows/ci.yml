@@ -324,84 +324,26 @@ jobs:
       - name: Export Project (Windows)
         run: |
           $GodotPath = "${{ runner.temp }}\godot.exe"
-          $OutDir = "${{ github.workspace }}\build\windows"
-          New-Item -ItemType Directory -Force -Path $OutDir | Out-Null
-          $OutFile = "$OutDir\TransparentPet.exe"
-
-          # 关键修复：export_presets.cfg 中 export_path = "../export/..."
+          $ProjectDir = "${{ github.workspace }}\${{ env.PROJECT_PATH }}"
+          $OutputFile = "${{ github.workspace }}\build\windows\TransparentPet.exe"
           $PresetExportDir = "${{ github.workspace }}\${{ env.PROJECT_PATH }}\..\export"
-          New-Item -ItemType Directory -Force -Path $PresetExportDir | Out-Null
-          Write-Host "Preset export directory ensured: $PresetExportDir"
 
-          Write-Host "Exporting to: $OutFile"
-          Write-Host "Template dir: $env:TEMPLATE_DIR"
-          if (Test-Path "$env:TEMPLATE_DIR\windows_release_x86_64.exe") {
-            Write-Host "Release template: found"
-          } else {
-            Write-Error "Release template missing! Listing template dir:"
-            Get-ChildItem $env:TEMPLATE_DIR -Recurse | ForEach-Object { Write-Host "  $($_.FullName)" }
-            exit 1
-          }
-
-          # =====================================================
-          # 关键修复：通过 .bat 批处理文件执行 Godot 导出
-          #
-          # 为什么之前一直失败？
-          # 1. Godot.exe 是 Windows GUI 子系统程序（不是 console）
-          # 2. PowerShell & 操作符对 GUI 程序不捕获 stdout/stderr，也不设置 $LASTEXITCODE
-          # 3. Start-Process -ArgumentList 在构建命令行时把 "Windows Desktop" 拆成两个参数
-          # 4. cmd.exe /c 嵌套引号导致解析错误
-          #
-          # 解决方案（本地测试已验证：
-          # - 把完整的 Godot 命令（带引号的参数）写入 .bat 文件
-          # - 用 & $batchFile 执行（PowerShell 自动委托给 cmd.exe）
-          # - cmd.exe 正确解析 .bat 文件中的引号，"Windows Desktop" 作为单个参数传递
-          # - cmd.exe 是 console 程序，PowerShell 正确捕获 stdout/stderr 和 $LASTEXITCODE
-          # =====================================================
-          $ProjectPath = "${{ github.workspace }}\${{ env.PROJECT_PATH }}"
-          $ExportLog = "$OutDir\godot_export.log"
-          $BatchFile = "$OutDir\run_godot.bat"
-
-          # 构建批处理文件内容（用 ASCII 编码避免 BOM 问题）
-          # 关键：`" 在 PowerShell 中变成 "，所以写进 .bat 的正是带双引号的完整命令行
-          $BatchLine = '"' + $GodotPath + '" --headless --path "' + $ProjectPath + '" --export-release "Windows Desktop" "' + $OutFile + '"'
-          $BatchContent = @(
-            "@echo off",
-            "echo Batch command line:",
-            "echo   $BatchLine",
-            "echo.",
-            $BatchLine,
-            "exit /b %ERRORLEVEL%"
-          )
-          [System.IO.File]::WriteAllLines($BatchFile, $BatchContent)
-
-          Write-Host "=== Batch file: $BatchFile"
-          Write-Host "Content:"
-          Get-Content $BatchFile | ForEach-Object { Write-Host "  $_" }
-          Write-Host ""
-          Write-Host "=== Executing batch file (PowerShell delegates to cmd.exe)
+          Write-Host "Running: tools\ci_export.ps1"
+          Write-Host "  GodotPath:      $GodotPath"
+          Write-Host "  ProjectDir:     $ProjectDir"
+          Write-Host "  OutputFile:     $OutputFile"
+          Write-Host "  PresetExportDir: $PresetExportDir"
           Write-Host ""
 
-          # 执行 .bat 文件（PowerShell 自动调用 cmd.exe，正确捕获输出和退出码）
-          & $BatchFile 2>&1 | Tee-Object -FilePath $ExportLog
+          powershell -ExecutionPolicy Bypass -NoProfile -File tools\ci_export.ps1 `
+            -GodotPath $GodotPath `
+            -ProjectDir $ProjectDir `
+            -OutputFile $OutputFile `
+            -PresetExportDir $PresetExportDir
+
           $ExitCode = $LASTEXITCODE
-
-          Write-Host ""
-          Write-Host "Exit code: $ExitCode"
-          Write-Host ""
-          Write-Host "=== Full log: $ExportLog"
-          Write-Host ""
-          if (Test-Path $OutFile) {
-            Write-Host "Export file size: $((Get-Item $OutFile).Length) bytes"
-          }
-
-          if (Test-Path $OutFile) {
-            Write-Host ""
-            Write-Host "Export successful: $OutFile ($((Get-Item $OutFile).Length) bytes)"
-          } else {
-            Write-Error "Export failed: file not found at $OutFile"
-            exit 1
-          }
+          Write-Host "Script exit code: $ExitCode"
+          if ($ExitCode -ne 0) { exit $ExitCode }
 
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4
