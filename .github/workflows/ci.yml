@@ -41,12 +41,12 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       # ── 缓存 Godot 引擎 ──
       - name: Cache Godot Engine
         id: cache-godot
-        uses: actions/cache@v5
+        uses: actions/cache@v7
         with:
           path: ${{ runner.temp }}/godot.exe
           key: godot-${{ env.GODOT_VERSION }}-${{ runner.os }}
@@ -97,7 +97,7 @@ jobs:
       # ── 缓存 GdUnit4 ──
       - name: Cache GdUnit4
         id: cache-gdunit
-        uses: actions/cache@v5
+        uses: actions/cache@v7
         with:
           path: ${{ github.workspace }}/${{ env.PROJECT_PATH }}/addons/gdUnit4
           key: gdunit4-${{ env.GDUNIT4_VERSION }}
@@ -119,19 +119,28 @@ jobs:
 
       - name: Run GdUnit4 Tests
         run: |
-          $ReportDir = "${{ env.PROJECT_PATH }}/test-reports"
+          $ReportDir = Join-Path (Get-Location) "${{ env.PROJECT_PATH }}\test-reports"
+          $ProjectAbsDir = Join-Path (Get-Location) "${{ env.PROJECT_PATH }}"
           New-Item -ItemType Directory -Force -Path $ReportDir | Out-Null
-          Write-Host "Test report dir: (workspace)/$ReportDir"
-          Write-Host "Listing tests directory:"
+          Write-Host "Project dir  : $ProjectAbsDir"
+          Write-Host "Report dir   : $ReportDir"
+          Write-Host "Tests found  :"
           Get-ChildItem -Recurse -Path "${{ env.PROJECT_PATH }}/tests" -Filter "*.gd" -ErrorAction SilentlyContinue | ForEach-Object { Write-Host "  $($_.FullName)" }
           Write-Host ""
-          Write-Host "=== Running GdUnit4 ==="
-          godot --headless --path "${{ env.PROJECT_PATH }}" -s res://addons/gdUnit4/bin/GdUnitCmdTool.gd -a res://tests/ -c --ignoreHeadlessMode -rd $ReportDir -rc 2
+          Write-Host "=== Running GdUnit4 (via cmd.exe) ==="
+          $BatchFile = Join-Path ([System.IO.Path]::GetTempPath()) "run_gdunit4.cmd"
+          @"
+          @echo off
+          godot --headless --path "$($ProjectAbsDir)" -s res://addons/gdUnit4/bin/GdUnitCmdTool.gd -a res://tests/ -c --ignoreHeadlessMode -rd "$($ReportDir)" -rc 2
+          echo GdUnit4_exit_code=%errorlevel%
+          "@ | Set-Content -Path $BatchFile -Encoding ASCII
+          Write-Host "Executing: $BatchFile"
+          & cmd /c "`"$BatchFile`""
           $ExitCode = $LASTEXITCODE
           Write-Host ""
           Write-Host "GdUnit4 exit code: $ExitCode"
           Write-Host "Files in report dir:"
-          Get-ChildItem -Recurse -Path $ReportDir -ErrorAction SilentlyContinue | ForEach-Object { Write-Host "  $($_.FullName)" }
+          Get-ChildItem -Recurse -Path $ReportDir -ErrorAction SilentlyContinue | ForEach-Object { Write-Host "  $($_.FullName) ($($_.Length) bytes)" }
           if ($ExitCode -ne 0) {
             Write-Host "GdUnit4 reported non-zero exit; step failed"
             exit $ExitCode
@@ -140,10 +149,20 @@ jobs:
       - name: Run Coverage
         continue-on-error: true
         run: |
-          $ReportDir = "${{ env.PROJECT_PATH }}/test-reports"
+          $ReportDir = Join-Path (Get-Location) "${{ env.PROJECT_PATH }}\test-reports"
+          $ProjectAbsDir = Join-Path (Get-Location) "${{ env.PROJECT_PATH }}"
           New-Item -ItemType Directory -Force -Path $ReportDir | Out-Null
-          godot --headless --path "${{ env.PROJECT_PATH }}" -s res://tools/coverage_runner.gd -a res://tests/ -c --ignoreHeadlessMode -rd $ReportDir -rc 2
-          Write-Host "Coverage exit code: $LASTEXITCODE"
+          Write-Host "=== Running Coverage runner (via cmd.exe) ==="
+          $BatchFile = Join-Path ([System.IO.Path]::GetTempPath()) "run_coverage.cmd"
+          @"
+          @echo off
+          godot --headless --path "$($ProjectAbsDir)" -s res://tools/coverage_runner.gd -a res://tests/ -c --ignoreHeadlessMode -rd "$($ReportDir)" -rc 2
+          echo Coverage_exit_code=%errorlevel%
+          "@ | Set-Content -Path $BatchFile -Encoding ASCII
+          & cmd /c "`"$BatchFile`""
+          $ExitCode = $LASTEXITCODE
+          Write-Host ""
+          Write-Host "Coverage exit code: $ExitCode"
           Write-Host "Report dir contents:"
           Get-ChildItem -Recurse -Path $ReportDir -ErrorAction SilentlyContinue | ForEach-Object { Write-Host "  $($_.Name) ($($_.Length) bytes)" }
 
@@ -198,13 +217,13 @@ jobs:
       # ── 向量知识库：CI 失败时自动存储 + 检索相似历史错误 ──
       - name: Setup Python
         if: failure()
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v8
         with:
           python-version: "3.11"
 
       - name: Cache HuggingFace Models
         if: failure()
-        uses: actions/cache@v5
+        uses: actions/cache@v7
         with:
           path: ~/.cache/huggingface
           key: hf-models-paraphrase-multilingual-MiniLM-L12-v2
@@ -253,7 +272,7 @@ jobs:
           }
 
       - name: Upload Test Reports
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         if: always()
         with:
           name: test-reports
@@ -271,12 +290,12 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       # ── 缓存 Godot 引擎 ──
       - name: Cache Godot Engine
         id: cache-godot
-        uses: actions/cache@v5
+        uses: actions/cache@v7
         with:
           path: ${{ runner.temp }}/godot.exe
           key: godot-${{ env.GODOT_VERSION }}-${{ runner.os }}
@@ -332,7 +351,7 @@ jobs:
       # ── 缓存导出模板 ──
       - name: Cache Export Templates
         id: cache-templates
-        uses: actions/cache@v5
+        uses: actions/cache@v7
         with:
           path: ${{ env.TEMPLATE_DIR }}
           key: godot-templates-${{ env.GODOT_VERSION }}-v2
@@ -406,7 +425,7 @@ jobs:
           if ($ExitCode -ne 0) { exit $ExitCode }
 
       - name: Upload Build Artifacts
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         if: always()
         with:
           name: windows-build
@@ -416,7 +435,7 @@ jobs:
       # ── 自动发布到 GitHub Releases ──
       - name: Create GitHub Release
         if: success()
-        uses: softprops/action-gh-release@v3
+        uses: softprops/action-gh-release@v4
         with:
           tag_name: v0.1.0-build${{ github.run_number }}
           name: 桌宠 v0.1.0 (Build ${{ github.run_number }})
