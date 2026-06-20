@@ -343,56 +343,29 @@ jobs:
             exit 1
           }
 
-          # 诊断步骤 1：测试 Godot 能否访问项目
-          Write-Host ""
-          Write-Host "=== Test 1: Godot project access ==="
-          $TestOutput = cmd /c "`"$GodotPath`" --headless --path `"${{ github.workspace }}\${{ env.PROJECT_PATH }}`" --version 2>&1"
-          Write-Host "Godot project version: $TestOutput"
-          Write-Host "Exit code: $LASTEXITCODE"
-
-          # 诊断步骤 2：测试 Godot 能否启动项目中的 GDExtension
-          Write-Host ""
-          Write-Host "=== Test 2: Godot startup with project (short timeout) ==="
-          $StartupLog = "$OutDir\godot_startup.log"
-          $StartupProcess = Start-Process -FilePath $GodotPath `
-            -ArgumentList @("--headless", "--path", "${{ github.workspace }}\${{ env.PROJECT_PATH }}", "--quit") `
-            -RedirectStandardOutput $StartupLog `
-            -RedirectStandardError "$OutDir\godot_startup.err" `
-            -NoNewWindow -PassThru
-          if ($StartupProcess.WaitForExit(30000)) {
-            Write-Host "Startup completed (exit code: $($StartupProcess.ExitCode))"
-          } else {
-            Write-Host "Startup timed out after 30s, killing process"
-            $StartupProcess.Kill()
-          }
-          if (Test-Path $StartupLog) {
-            Write-Host "--- stdout ---"
-            Get-Content $StartupLog | ForEach-Object { Write-Host $_ }
-          }
-          if (Test-Path "$OutDir\godot_startup.err") {
-            Write-Host "--- stderr ---"
-            Get-Content "$OutDir\godot_startup.err" | ForEach-Object { Write-Host $_ }
-          }
-
-          # 步骤 3：实际导出
-          Write-Host ""
-          Write-Host "=== Step 3: Export Project ==="
+          # 使用 cmd /c 确保带空格的参数（如 "Windows Desktop"）被正确传递
+          # Start-Process -ArgumentList 会把空格字符串拆成多个参数
+          $ProjectPath = "${{ github.workspace }}\${{ env.PROJECT_PATH }}"
           $ExportLog = "$OutDir\godot_export.log"
-          $ExportProcess = Start-Process -FilePath $GodotPath `
-            -ArgumentList @("--headless", "--path", "${{ github.workspace }}\${{ env.PROJECT_PATH }}", "--export-release", "Windows Desktop", $OutFile) `
-            -RedirectStandardOutput $ExportLog `
-            -RedirectStandardError "$OutDir\godot_export.err" `
-            -NoNewWindow -PassThru
-          $ExportProcess.WaitForExit(300000)  # 5分钟超时
-          Write-Host "Export process exit code: $($ExportProcess.ExitCode)"
-
+          $ExportErr = "$OutDir\godot_export.err"
+          $CmdLine = "`"$GodotPath`" --headless --path `"$ProjectPath`" --export-release `"Windows Desktop`" `"$OutFile`" > `"$ExportLog`" 2> `"$ExportErr`""
+          Write-Host "Executing: $CmdLine"
+          Write-Host ""
+          $ExportProcess = Start-Process -FilePath "cmd.exe" -ArgumentList @("/c", $CmdLine) -NoNewWindow -PassThru -Wait
+          Write-Host "Exit code: $($ExportProcess.ExitCode)"
+          Write-Host ""
           if (Test-Path $ExportLog) {
-            Write-Host "--- stdout ---"
+            Write-Host "=== Godot stdout ==="
             Get-Content $ExportLog | ForEach-Object { Write-Host $_ }
+            Write-Host ""
           }
-          if (Test-Path "$OutDir\godot_export.err") {
-            Write-Host "--- stderr ---"
-            Get-Content "$OutDir\godot_export.err" | ForEach-Object { Write-Host $_ }
+          if (Test-Path $ExportErr) {
+            $ErrContent = Get-Content $ExportErr
+            if ($ErrContent) {
+              Write-Host "=== Godot stderr ==="
+              $ErrContent | ForEach-Object { Write-Host $_ }
+              Write-Host ""
+            }
           }
 
           if (Test-Path $OutFile) {
