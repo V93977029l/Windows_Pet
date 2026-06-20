@@ -3,8 +3,20 @@ name: Godot CI - Build & Test
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - "**/*.md"
+      - "docs/**"
+      - ".trae/**"
+      - ".gitignore"
+      - "LICENSE*"
   pull_request:
     branches: [main]
+    paths-ignore:
+      - "**/*.md"
+      - "docs/**"
+      - ".trae/**"
+      - ".gitignore"
+      - "LICENSE*"
   workflow_dispatch:
 
 permissions:
@@ -30,9 +42,6 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v5
-        with:
-          submodules: recursive
-          fetch-depth: 0
 
       # ── 缓存 Godot 引擎 ──
       - name: Cache Godot Engine
@@ -134,6 +143,29 @@ jobs:
           $ReportDir = "${{ env.PROJECT_PATH }}/test-reports"
           New-Item -ItemType Directory -Force -Path $ReportDir | Out-Null
           godot --headless --path "${{ env.PROJECT_PATH }}" -s res://tools/coverage_runner.gd -a res://tests/ -c --ignoreHeadlessMode -rd $ReportDir -rc 2
+          Write-Host "Coverage exit code: $LASTEXITCODE"
+          Write-Host "Report dir contents:"
+          Get-ChildItem -Recurse -Path $ReportDir -ErrorAction SilentlyContinue | ForEach-Object { Write-Host "  $($_.Name) ($($_.Length) bytes)" }
+
+      - name: Convert coverage.json → lcov.info
+        continue-on-error: true
+        run: |
+          $CoverageJson = "${{ env.PROJECT_PATH }}/test-reports/coverage.json"
+          if (-not (Test-Path $CoverageJson)) {
+            Write-Host "No coverage.json found — skipping lcov conversion"
+            exit 0
+          }
+          python tools/coverage_to_lcov.py $CoverageJson --project-dir "${{ env.PROJECT_PATH }}" --out "${{ env.PROJECT_PATH }}/test-reports/lcov.info"
+
+      - name: Upload to Codecov
+        continue-on-error: true
+        uses: codecov/codecov-action@v5
+        with:
+          files: ${{ env.PROJECT_PATH }}/test-reports/lcov.info
+          flags: unittests
+          name: godot-gdscript
+          fail_ci_if_error: false
+          verbose: true
 
       - name: Generate AI Feedback Report
         if: failure()
@@ -240,9 +272,6 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v5
-        with:
-          submodules: recursive
-          fetch-depth: 0
 
       # ── 缓存 Godot 引擎 ──
       - name: Cache Godot Engine
