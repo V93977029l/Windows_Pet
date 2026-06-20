@@ -2,16 +2,33 @@ name: Godot CI - Build & Test
 
 on:
   push:
-    branches: [main]
+    branches: [main, 'dev/*']
+    paths-ignore:
+      - "**/*.md"
+      - "docs/**"
+      - ".trae/**"
+      - ".gitignore"
+      - "LICENSE*"
   pull_request:
     branches: [main]
+    paths-ignore:
+      - "**/*.md"
+      - "docs/**"
+      - ".trae/**"
+      - ".gitignore"
+      - "LICENSE*"
   workflow_dispatch:
+    inputs:
+      build_export:
+        description: "是否构建导出 Windows .exe (true/false)"
+        default: "false"
+        required: false
 
 permissions:
   contents: write
 
 env:
-  GODOT_VERSION: "4.6.3"
+  GODOT_VERSION: "4.7"
   GODOT_BIN: godot.exe
   GDUNIT4_VERSION: "v6.1.3"
   PROJECT_PATH: transparent-pet
@@ -25,19 +42,16 @@ jobs:
   # ============================================================
   test:
     name: Run Tests
-    runs-on: windows-2025
+    runs-on: windows-latest
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
-          fetch-depth: 0
+        uses: actions/checkout@v6
 
       # ── 缓存 Godot 引擎 ──
       - name: Cache Godot Engine
         id: cache-godot
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ${{ runner.temp }}/godot.exe
           key: godot-${{ env.GODOT_VERSION }}-${{ runner.os }}
@@ -47,18 +61,48 @@ jobs:
         run: |
           $GodotUrl = "https://github.com/godotengine/godot/releases/download/${{ env.GODOT_VERSION }}-stable/Godot_v${{ env.GODOT_VERSION }}-stable_win64.exe.zip"
           $GodotZip = "${{ runner.temp }}\godot.zip"
+          $ExtractDir = "${{ runner.temp }}\godot_extract"
           Write-Host "Downloading Godot ${{ env.GODOT_VERSION }}..."
+          Write-Host "  URL: $GodotUrl"
           Invoke-WebRequest -Uri $GodotUrl -OutFile $GodotZip
-          Expand-Archive -Path $GodotZip -DestinationPath ${{ runner.temp }}
-          Rename-Item -Path "${{ runner.temp }}\Godot_v${{ env.GODOT_VERSION }}-stable_win64.exe" -NewName "${{ runner.temp }}\godot.exe"
+          Write-Host "  Downloaded: $((Get-Item $GodotZip).Length) bytes"
+          if (Test-Path $ExtractDir) { Remove-Item -Recurse -Force $ExtractDir }
+          Expand-Archive -Path $GodotZip -DestinationPath $ExtractDir -Force
+          Write-Host "  Extracted files:"
+          Get-ChildItem $ExtractDir | ForEach-Object { Write-Host "    $($_.Name) ($($_.Length) bytes)" }
+          # 使用 console 版本（确保 PowerShell 能捕获 stdout/stderr）
+          $ConsoleExe = Get-ChildItem $ExtractDir -Filter "*_console.exe" | Select-Object -First 1
+          if ($ConsoleExe) {
+            Write-Host "  Using console version: $($ConsoleExe.Name)"
+            Copy-Item -Path $ConsoleExe.FullName -Destination "${{ runner.temp }}\godot.exe" -Force
+          } else {
+            Write-Host "  No console version found, using standard version"
+            $StandardExe = Get-ChildItem $ExtractDir -Filter "*.exe" | Select-Object -First 1
+            Copy-Item -Path $StandardExe.FullName -Destination "${{ runner.temp }}\godot.exe" -Force
+          }
+          Write-Host "  Godot installed at: ${{ runner.temp }}\godot.exe ($((Get-Item "${{ runner.temp }}\godot.exe").Length) bytes)"
 
       - name: Add Godot to PATH
         run: echo "${{ runner.temp }}" | Out-File -Append -FilePath $env:GITHUB_PATH
 
+      - name: Verify Godot Installation
+        run: |
+          $GodotPath = "${{ runner.temp }}\godot.exe"
+          if (-not (Test-Path $GodotPath)) {
+            Write-Error "godot.exe not found at $GodotPath"
+            exit 1
+          }
+          Write-Host "Godot binary exists: $((Get-Item $GodotPath).Length) bytes"
+          Write-Host "Running: godot --version"
+          # 使用 cmd /c 来确保能捕获 GUI 应用的输出
+          $Output = cmd /c "`"$GodotPath`" --version 2>&1"
+          Write-Host "Output: $Output"
+          Write-Host "Exit code: $LASTEXITCODE"
+
       # ── 缓存 GdUnit4 ──
       - name: Cache GdUnit4
         id: cache-gdunit
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ${{ github.workspace }}/${{ env.PROJECT_PATH }}/addons/gdUnit4
           key: gdunit4-${{ env.GDUNIT4_VERSION }}
@@ -78,14 +122,96 @@ jobs:
           $SourcePath = Get-ChildItem -Path $ExtractDir -Directory | Select-Object -First 1 | ForEach-Object { "$($_.FullName)\addons\gdUnit4" }
           Copy-Item -Recurse -Path $SourcePath -Destination "$AddonsDir\gdUnit4" -Force
 
+      - name: GDScript Code Scan
+        run: |
+          $ProjectAbsDir = Join-Path (Get-Location) "${{ env.PROJECT_PATH }}"
+          Write-Host "=== Running GDScript Code Scanner ==="
+          Write-Host "Project: $ProjectAbsDir"
+          Write-Host ""
+          $BatchFile = Join-Path ([System.IO.Path]::GetTempPath()) "run_code_scan.cmd"
+          @"
+          @echo off
+          godot --headless --path "$($ProjectAbsDir)" -s res://tools/code_scanner.gd
+          echo Scanner_exit_code=%errorlevel%
+          "@ | Set-Content -Path $BatchFile -Encoding ASCII
+          Write-Host "Executing: $BatchFile"
+          & cmd /c "`"$BatchFile`""
+          $ExitCode = $LASTEXITCODE
+          Write-Host ""
+          Write-Host "Scanner exit code: $ExitCode"
+          if ($ExitCode -ne 0) {
+            Write-Host "代码扫描发现问题 —— 请查看上方输出"
+            exit $ExitCode
+          }
+
       - name: Run GdUnit4 Tests
         run: |
-          godot --headless --path "${{ env.PROJECT_PATH }}" -s res://addons/gdUnit4/bin/GdUnitCmdTool.gd -a res://tests/ -c --ignoreHeadlessMode -rd test-reports -rc 2
+          $ReportDir = Join-Path (Get-Location) "${{ env.PROJECT_PATH }}\test-reports"
+          $ProjectAbsDir = Join-Path (Get-Location) "${{ env.PROJECT_PATH }}"
+          New-Item -ItemType Directory -Force -Path $ReportDir | Out-Null
+          Write-Host "Project dir  : $ProjectAbsDir"
+          Write-Host "Report dir   : $ReportDir"
+          Write-Host "Tests found  :"
+          Get-ChildItem -Recurse -Path "${{ env.PROJECT_PATH }}/tests" -Filter "*.gd" -ErrorAction SilentlyContinue | ForEach-Object { Write-Host "  $($_.FullName)" }
+          Write-Host ""
+          Write-Host "=== Running GdUnit4 (via cmd.exe) ==="
+          $BatchFile = Join-Path ([System.IO.Path]::GetTempPath()) "run_gdunit4.cmd"
+          @"
+          @echo off
+          godot --headless --path "$($ProjectAbsDir)" -s res://addons/gdUnit4/bin/GdUnitCmdTool.gd -a res://tests/ -c --ignoreHeadlessMode -rd "$($ReportDir)" -rc 2
+          echo GdUnit4_exit_code=%errorlevel%
+          "@ | Set-Content -Path $BatchFile -Encoding ASCII
+          Write-Host "Executing: $BatchFile"
+          & cmd /c "`"$BatchFile`""
+          $ExitCode = $LASTEXITCODE
+          Write-Host ""
+          Write-Host "GdUnit4 exit code: $ExitCode"
+          Write-Host "Files in report dir:"
+          Get-ChildItem -Recurse -Path $ReportDir -ErrorAction SilentlyContinue | ForEach-Object { Write-Host "  $($_.FullName) ($($_.Length) bytes)" }
+          if ($ExitCode -ne 0) {
+            Write-Host "GdUnit4 reported non-zero exit; step failed"
+            exit $ExitCode
+          }
 
       - name: Run Coverage
         continue-on-error: true
         run: |
-          godot --headless --path "${{ env.PROJECT_PATH }}" -s res://tools/coverage_runner.gd -a res://tests/ -c --ignoreHeadlessMode -rd test-reports -rc 2
+          $ReportDir = Join-Path (Get-Location) "${{ env.PROJECT_PATH }}\test-reports"
+          $ProjectAbsDir = Join-Path (Get-Location) "${{ env.PROJECT_PATH }}"
+          New-Item -ItemType Directory -Force -Path $ReportDir | Out-Null
+          Write-Host "=== Running Coverage runner (via cmd.exe) ==="
+          $BatchFile = Join-Path ([System.IO.Path]::GetTempPath()) "run_coverage.cmd"
+          @"
+          @echo off
+          godot --headless --path "$($ProjectAbsDir)" -s res://tools/coverage_runner.gd -a res://tests/ -c --ignoreHeadlessMode -rd "$($ReportDir)" -rc 2
+          echo Coverage_exit_code=%errorlevel%
+          "@ | Set-Content -Path $BatchFile -Encoding ASCII
+          & cmd /c "`"$BatchFile`""
+          $ExitCode = $LASTEXITCODE
+          Write-Host ""
+          Write-Host "Coverage exit code: $ExitCode"
+          Write-Host "Report dir contents:"
+          Get-ChildItem -Recurse -Path $ReportDir -ErrorAction SilentlyContinue | ForEach-Object { Write-Host "  $($_.Name) ($($_.Length) bytes)" }
+
+      - name: Convert coverage.json → lcov.info
+        continue-on-error: true
+        run: |
+          $CoverageJson = "${{ env.PROJECT_PATH }}/test-reports/coverage.json"
+          if (-not (Test-Path $CoverageJson)) {
+            Write-Host "No coverage.json found — skipping lcov conversion"
+            exit 0
+          }
+          python tools/coverage_to_lcov.py $CoverageJson --project-dir "${{ env.PROJECT_PATH }}" --out "${{ env.PROJECT_PATH }}/test-reports/lcov.info"
+
+      - name: Upload to Codecov
+        continue-on-error: true
+        uses: codecov/codecov-action@v5
+        with:
+          files: ${{ env.PROJECT_PATH }}/test-reports/lcov.info
+          flags: unittests
+          name: godot-gdscript
+          fail_ci_if_error: false
+          verbose: true
 
       - name: Generate AI Feedback Report
         if: failure()
@@ -118,13 +244,13 @@ jobs:
       # ── 向量知识库：CI 失败时自动存储 + 检索相似历史错误 ──
       - name: Setup Python
         if: failure()
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.11"
 
       - name: Cache HuggingFace Models
         if: failure()
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.cache/huggingface
           key: hf-models-paraphrase-multilingual-MiniLM-L12-v2
@@ -159,8 +285,21 @@ jobs:
             Write-Host "Vector DB query results appended to AI feedback"
           }
 
+      - name: Ensure Test Report Dir
+        if: always()
+        run: |
+          $ReportDir = "${{ env.PROJECT_PATH }}/test-reports"
+          New-Item -ItemType Directory -Force -Path $ReportDir | Out-Null
+          $files = Get-ChildItem -Path $ReportDir -Recurse -ErrorAction SilentlyContinue
+          if (-not $files -or $files.Count -eq 0) {
+            "No test reports generated. GdUnit4 may have failed to run or found no tests." | Out-File -FilePath "$ReportDir/README.txt" -Encoding UTF8
+            Write-Host "No report files found; wrote placeholder README.txt"
+          } else {
+            Write-Host "Found $($files.Count) file(s) in report dir"
+          }
+
       - name: Upload Test Reports
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         if: always()
         with:
           name: test-reports
@@ -168,25 +307,22 @@ jobs:
           retention-days: 30
 
   # ============================================================
-  # Job 2: 构建+导出（仅 main 分支 push）
+  # Job 2: 构建+导出（main 分支 push 自动跑；其他分支可 workflow_dispatch 手动跑）
   # ============================================================
   build-export:
     name: Build & Export
     needs: test
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    runs-on: windows-2025
+    if: (github.ref == 'refs/heads/main' && github.event_name == 'push') || (github.event_name == 'workflow_dispatch' && inputs.build_export == 'true')
+    runs-on: windows-latest
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
-          fetch-depth: 0
+        uses: actions/checkout@v6
 
       # ── 缓存 Godot 引擎 ──
       - name: Cache Godot Engine
         id: cache-godot
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ${{ runner.temp }}/godot.exe
           key: godot-${{ env.GODOT_VERSION }}-${{ runner.os }}
@@ -196,12 +332,41 @@ jobs:
         run: |
           $GodotUrl = "https://github.com/godotengine/godot/releases/download/${{ env.GODOT_VERSION }}-stable/Godot_v${{ env.GODOT_VERSION }}-stable_win64.exe.zip"
           $GodotZip = "${{ runner.temp }}\godot.zip"
+          $ExtractDir = "${{ runner.temp }}\godot_extract"
+          Write-Host "Downloading Godot ${{ env.GODOT_VERSION }}..."
+          Write-Host "  URL: $GodotUrl"
           Invoke-WebRequest -Uri $GodotUrl -OutFile $GodotZip
-          Expand-Archive -Path $GodotZip -DestinationPath ${{ runner.temp }}
-          Rename-Item -Path "${{ runner.temp }}\Godot_v${{ env.GODOT_VERSION }}-stable_win64.exe" -NewName "${{ runner.temp }}\godot.exe"
+          Write-Host "  Downloaded: $((Get-Item $GodotZip).Length) bytes"
+          if (Test-Path $ExtractDir) { Remove-Item -Recurse -Force $ExtractDir }
+          Expand-Archive -Path $GodotZip -DestinationPath $ExtractDir -Force
+          Write-Host "  Extracted files:"
+          Get-ChildItem $ExtractDir | ForEach-Object { Write-Host "    $($_.Name) ($($_.Length) bytes)" }
+          $ConsoleExe = Get-ChildItem $ExtractDir -Filter "*_console.exe" | Select-Object -First 1
+          if ($ConsoleExe) {
+            Write-Host "  Using console version: $($ConsoleExe.Name)"
+            Copy-Item -Path $ConsoleExe.FullName -Destination "${{ runner.temp }}\godot.exe" -Force
+          } else {
+            Write-Host "  No console version found, using standard version"
+            $StandardExe = Get-ChildItem $ExtractDir -Filter "*.exe" | Select-Object -First 1
+            Copy-Item -Path $StandardExe.FullName -Destination "${{ runner.temp }}\godot.exe" -Force
+          }
+          Write-Host "  Godot installed at: ${{ runner.temp }}\godot.exe ($((Get-Item "${{ runner.temp }}\godot.exe").Length) bytes)"
 
       - name: Add Godot to PATH
         run: echo "${{ runner.temp }}" | Out-File -Append -FilePath $env:GITHUB_PATH
+
+      - name: Verify Godot Installation
+        run: |
+          $GodotPath = "${{ runner.temp }}\godot.exe"
+          if (-not (Test-Path $GodotPath)) {
+            Write-Error "godot.exe not found at $GodotPath"
+            exit 1
+          }
+          Write-Host "Godot binary exists: $((Get-Item $GodotPath).Length) bytes"
+          Write-Host "Running: godot --version"
+          $Output = cmd /c "`"$GodotPath`" --version 2>&1"
+          Write-Host "Output: $Output"
+          Write-Host "Exit code: $LASTEXITCODE"
 
       # ── 设置导出模板目录（需要 APPDATA 系统变量）──
       - name: Set Export Template Dir
@@ -213,7 +378,7 @@ jobs:
       # ── 缓存导出模板 ──
       - name: Cache Export Templates
         id: cache-templates
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ${{ env.TEMPLATE_DIR }}
           key: godot-templates-${{ env.GODOT_VERSION }}-v2
@@ -264,34 +429,30 @@ jobs:
       # ── 导出项目 ──
       - name: Export Project (Windows)
         run: |
-          $OutDir = "${{ github.workspace }}\build\windows"
-          New-Item -ItemType Directory -Force -Path $OutDir | Out-Null
-          $OutFile = "$OutDir\TransparentPet.exe"
-          Write-Host "Exporting to: $OutFile"
-          Write-Host "Template dir: $env:TEMPLATE_DIR"
-          if (Test-Path "$env:TEMPLATE_DIR\windows_release_x86_64.exe") {
-            Write-Host "Release template: found"
-          } else {
-            Write-Error "Release template missing! Listing template dir:"
-            Get-ChildItem $env:TEMPLATE_DIR -Recurse | ForEach-Object { Write-Host "  $($_.FullName)" }
-            exit 1
-          }
+          $GodotPath = "${{ runner.temp }}\godot.exe"
+          $ProjectDir = "${{ github.workspace }}\${{ env.PROJECT_PATH }}"
+          $OutputFile = "${{ github.workspace }}\build\windows\TransparentPet.exe"
+          $PresetExportDir = "${{ github.workspace }}\${{ env.PROJECT_PATH }}\..\export"
 
-          $Output = & godot --headless --path "${{ env.PROJECT_PATH }}" --export-release "Windows Desktop" "$OutFile" 2>&1
+          Write-Host "Running: tools\ci_export.ps1"
+          Write-Host "  GodotPath:      $GodotPath"
+          Write-Host "  ProjectDir:     $ProjectDir"
+          Write-Host "  OutputFile:     $OutputFile"
+          Write-Host "  PresetExportDir: $PresetExportDir"
+          Write-Host ""
+
+          powershell -ExecutionPolicy Bypass -NoProfile -File tools\ci_export.ps1 `
+            -GodotPath $GodotPath `
+            -ProjectDir $ProjectDir `
+            -OutputFile $OutputFile `
+            -PresetExportDir $PresetExportDir
+
           $ExitCode = $LASTEXITCODE
-          Write-Host "Godot output:"
-          Write-Host $Output
-          Write-Host "Exit code: $ExitCode"
-
-          if (Test-Path $OutFile) {
-            Write-Host "Export successful: $OutFile ($((Get-Item $OutFile).Length) bytes)"
-          } else {
-            Write-Error "Export failed: file not found at $OutFile"
-            exit 1
-          }
+          Write-Host "Script exit code: $ExitCode"
+          if ($ExitCode -ne 0) { exit $ExitCode }
 
       - name: Upload Build Artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         if: always()
         with:
           name: windows-build
@@ -301,7 +462,7 @@ jobs:
       # ── 自动发布到 GitHub Releases ──
       - name: Create GitHub Release
         if: success()
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: v0.1.0-build${{ github.run_number }}
           name: 桌宠 v0.1.0 (Build ${{ github.run_number }})
