@@ -343,22 +343,26 @@ jobs:
             exit 1
           }
 
-          # 使用 PowerShell 的 & 调用 + 参数数组（splatting）来传递参数
-          # Godot 已使用 console 版本，所以 stdout/stderr 能被 PowerShell 正确捕获
+          # 写 .bat 批处理文件然后用 cmd.exe 执行，这是 Windows 上最可靠的方式
+          # - PowerShell 的 & 对 GUI 程序（如 Godot standard）无法捕获 stdout 或等待退出
+          # - Start-Process -ArgumentList 会把带空格的参数拆坏
+          # - 批处理文件中的引号行为在 cmd.exe 中完全可预测
           $ProjectPath = "${{ github.workspace }}\${{ env.PROJECT_PATH }}"
           $ExportLog = "$OutDir\godot_export.log"
           $ExportErr = "$OutDir\godot_export.err"
-          $GodotArgs = @(
-            "--headless",
-            "--path",
-            $ProjectPath,
-            "--export-release",
-            "Windows Desktop",
-            $OutFile
+          $BatchFile = "$OutDir\run_godot.bat"
+          $BatchLines = @(
+            "@echo off",
+            "setlocal",
+            "echo Running Godot from batch...",
+            "`"$GodotPath`" --headless --path `"$ProjectPath`" --export-release `"Windows Desktop`" `"$OutFile`""
           )
-          Write-Host "Executing: $GodotPath $($GodotArgs -join ' ')"
+          $BatchLines | Set-Content -Path $BatchFile -Encoding ASCII
+          Write-Host "Batch file created: $BatchFile"
+          Write-Host "Content:"
+          Get-Content $BatchFile | ForEach-Object { Write-Host "  $_" }
           Write-Host ""
-          & $GodotPath @GodotArgs > $ExportLog 2> $ExportErr
+          & cmd.exe /c "`"$BatchFile`"" > $ExportLog 2> $ExportErr
           $ExitCode = $LASTEXITCODE
           Write-Host "Exit code: $ExitCode"
           Write-Host ""
