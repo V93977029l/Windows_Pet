@@ -47,13 +47,43 @@ jobs:
         run: |
           $GodotUrl = "https://github.com/godotengine/godot/releases/download/${{ env.GODOT_VERSION }}-stable/Godot_v${{ env.GODOT_VERSION }}-stable_win64.exe.zip"
           $GodotZip = "${{ runner.temp }}\godot.zip"
+          $ExtractDir = "${{ runner.temp }}\godot_extract"
           Write-Host "Downloading Godot ${{ env.GODOT_VERSION }}..."
+          Write-Host "  URL: $GodotUrl"
           Invoke-WebRequest -Uri $GodotUrl -OutFile $GodotZip
-          Expand-Archive -Path $GodotZip -DestinationPath ${{ runner.temp }}
-          Rename-Item -Path "${{ runner.temp }}\Godot_v${{ env.GODOT_VERSION }}-stable_win64.exe" -NewName "${{ runner.temp }}\godot.exe"
+          Write-Host "  Downloaded: $((Get-Item $GodotZip).Length) bytes"
+          if (Test-Path $ExtractDir) { Remove-Item -Recurse -Force $ExtractDir }
+          Expand-Archive -Path $GodotZip -DestinationPath $ExtractDir -Force
+          Write-Host "  Extracted files:"
+          Get-ChildItem $ExtractDir | ForEach-Object { Write-Host "    $($_.Name) ($($_.Length) bytes)" }
+          # 使用 console 版本（确保 PowerShell 能捕获 stdout/stderr）
+          $ConsoleExe = Get-ChildItem $ExtractDir -Filter "*_console.exe" | Select-Object -First 1
+          if ($ConsoleExe) {
+            Write-Host "  Using console version: $($ConsoleExe.Name)"
+            Copy-Item -Path $ConsoleExe.FullName -Destination "${{ runner.temp }}\godot.exe" -Force
+          } else {
+            Write-Host "  No console version found, using standard version"
+            $StandardExe = Get-ChildItem $ExtractDir -Filter "*.exe" | Select-Object -First 1
+            Copy-Item -Path $StandardExe.FullName -Destination "${{ runner.temp }}\godot.exe" -Force
+          }
+          Write-Host "  Godot installed at: ${{ runner.temp }}\godot.exe ($((Get-Item "${{ runner.temp }}\godot.exe").Length) bytes)"
 
       - name: Add Godot to PATH
         run: echo "${{ runner.temp }}" | Out-File -Append -FilePath $env:GITHUB_PATH
+
+      - name: Verify Godot Installation
+        run: |
+          $GodotPath = "${{ runner.temp }}\godot.exe"
+          if (-not (Test-Path $GodotPath)) {
+            Write-Error "godot.exe not found at $GodotPath"
+            exit 1
+          }
+          Write-Host "Godot binary exists: $((Get-Item $GodotPath).Length) bytes"
+          Write-Host "Running: godot --version"
+          # 使用 cmd /c 来确保能捕获 GUI 应用的输出
+          $Output = cmd /c "`"$GodotPath`" --version 2>&1"
+          Write-Host "Output: $Output"
+          Write-Host "Exit code: $LASTEXITCODE"
 
       # ── 缓存 GdUnit4 ──
       - name: Cache GdUnit4
@@ -196,12 +226,41 @@ jobs:
         run: |
           $GodotUrl = "https://github.com/godotengine/godot/releases/download/${{ env.GODOT_VERSION }}-stable/Godot_v${{ env.GODOT_VERSION }}-stable_win64.exe.zip"
           $GodotZip = "${{ runner.temp }}\godot.zip"
+          $ExtractDir = "${{ runner.temp }}\godot_extract"
+          Write-Host "Downloading Godot ${{ env.GODOT_VERSION }}..."
+          Write-Host "  URL: $GodotUrl"
           Invoke-WebRequest -Uri $GodotUrl -OutFile $GodotZip
-          Expand-Archive -Path $GodotZip -DestinationPath ${{ runner.temp }}
-          Rename-Item -Path "${{ runner.temp }}\Godot_v${{ env.GODOT_VERSION }}-stable_win64.exe" -NewName "${{ runner.temp }}\godot.exe"
+          Write-Host "  Downloaded: $((Get-Item $GodotZip).Length) bytes"
+          if (Test-Path $ExtractDir) { Remove-Item -Recurse -Force $ExtractDir }
+          Expand-Archive -Path $GodotZip -DestinationPath $ExtractDir -Force
+          Write-Host "  Extracted files:"
+          Get-ChildItem $ExtractDir | ForEach-Object { Write-Host "    $($_.Name) ($($_.Length) bytes)" }
+          $ConsoleExe = Get-ChildItem $ExtractDir -Filter "*_console.exe" | Select-Object -First 1
+          if ($ConsoleExe) {
+            Write-Host "  Using console version: $($ConsoleExe.Name)"
+            Copy-Item -Path $ConsoleExe.FullName -Destination "${{ runner.temp }}\godot.exe" -Force
+          } else {
+            Write-Host "  No console version found, using standard version"
+            $StandardExe = Get-ChildItem $ExtractDir -Filter "*.exe" | Select-Object -First 1
+            Copy-Item -Path $StandardExe.FullName -Destination "${{ runner.temp }}\godot.exe" -Force
+          }
+          Write-Host "  Godot installed at: ${{ runner.temp }}\godot.exe ($((Get-Item "${{ runner.temp }}\godot.exe").Length) bytes)"
 
       - name: Add Godot to PATH
         run: echo "${{ runner.temp }}" | Out-File -Append -FilePath $env:GITHUB_PATH
+
+      - name: Verify Godot Installation
+        run: |
+          $GodotPath = "${{ runner.temp }}\godot.exe"
+          if (-not (Test-Path $GodotPath)) {
+            Write-Error "godot.exe not found at $GodotPath"
+            exit 1
+          }
+          Write-Host "Godot binary exists: $((Get-Item $GodotPath).Length) bytes"
+          Write-Host "Running: godot --version"
+          $Output = cmd /c "`"$GodotPath`" --version 2>&1"
+          Write-Host "Output: $Output"
+          Write-Host "Exit code: $LASTEXITCODE"
 
       # ── 设置导出模板目录（需要 APPDATA 系统变量）──
       - name: Set Export Template Dir
@@ -264,12 +323,12 @@ jobs:
       # ── 导出项目 ──
       - name: Export Project (Windows)
         run: |
+          $GodotPath = "${{ runner.temp }}\godot.exe"
           $OutDir = "${{ github.workspace }}\build\windows"
           New-Item -ItemType Directory -Force -Path $OutDir | Out-Null
           $OutFile = "$OutDir\TransparentPet.exe"
 
           # 关键修复：export_presets.cfg 中 export_path = "../export/..."
-          # Godot 会检查预设中配置的路径目录是否存在，即使命令行参数覆盖了输出路径
           $PresetExportDir = "${{ github.workspace }}\${{ env.PROJECT_PATH }}\..\export"
           New-Item -ItemType Directory -Force -Path $PresetExportDir | Out-Null
           Write-Host "Preset export directory ensured: $PresetExportDir"
@@ -284,13 +343,60 @@ jobs:
             exit 1
           }
 
-          $Output = & godot --headless --path "${{ env.PROJECT_PATH }}" --export-release "Windows Desktop" "$OutFile" 2>&1
-          $ExitCode = $LASTEXITCODE
-          Write-Host "Godot output:"
-          Write-Host $Output
-          Write-Host "Exit code: $ExitCode"
+          # 诊断步骤 1：测试 Godot 能否访问项目
+          Write-Host ""
+          Write-Host "=== Test 1: Godot project access ==="
+          $TestOutput = cmd /c "`"$GodotPath`" --headless --path `"${{ github.workspace }}\${{ env.PROJECT_PATH }}`" --version 2>&1"
+          Write-Host "Godot project version: $TestOutput"
+          Write-Host "Exit code: $LASTEXITCODE"
+
+          # 诊断步骤 2：测试 Godot 能否启动项目中的 GDExtension
+          Write-Host ""
+          Write-Host "=== Test 2: Godot startup with project (short timeout) ==="
+          $StartupLog = "$OutDir\godot_startup.log"
+          $StartupProcess = Start-Process -FilePath $GodotPath `
+            -ArgumentList @("--headless", "--path", "${{ github.workspace }}\${{ env.PROJECT_PATH }}", "--quit") `
+            -RedirectStandardOutput $StartupLog `
+            -RedirectStandardError "$OutDir\godot_startup.err" `
+            -NoNewWindow -PassThru
+          if ($StartupProcess.WaitForExit(30000)) {
+            Write-Host "Startup completed (exit code: $($StartupProcess.ExitCode))"
+          } else {
+            Write-Host "Startup timed out after 30s, killing process"
+            $StartupProcess.Kill()
+          }
+          if (Test-Path $StartupLog) {
+            Write-Host "--- stdout ---"
+            Get-Content $StartupLog | ForEach-Object { Write-Host $_ }
+          }
+          if (Test-Path "$OutDir\godot_startup.err") {
+            Write-Host "--- stderr ---"
+            Get-Content "$OutDir\godot_startup.err" | ForEach-Object { Write-Host $_ }
+          }
+
+          # 步骤 3：实际导出
+          Write-Host ""
+          Write-Host "=== Step 3: Export Project ==="
+          $ExportLog = "$OutDir\godot_export.log"
+          $ExportProcess = Start-Process -FilePath $GodotPath `
+            -ArgumentList @("--headless", "--path", "${{ github.workspace }}\${{ env.PROJECT_PATH }}", "--export-release", "Windows Desktop", $OutFile) `
+            -RedirectStandardOutput $ExportLog `
+            -RedirectStandardError "$OutDir\godot_export.err" `
+            -NoNewWindow -PassThru
+          $ExportProcess.WaitForExit(300000)  # 5分钟超时
+          Write-Host "Export process exit code: $($ExportProcess.ExitCode)"
+
+          if (Test-Path $ExportLog) {
+            Write-Host "--- stdout ---"
+            Get-Content $ExportLog | ForEach-Object { Write-Host $_ }
+          }
+          if (Test-Path "$OutDir\godot_export.err") {
+            Write-Host "--- stderr ---"
+            Get-Content "$OutDir\godot_export.err" | ForEach-Object { Write-Host $_ }
+          }
 
           if (Test-Path $OutFile) {
+            Write-Host ""
             Write-Host "Export successful: $OutFile ($((Get-Item $OutFile).Length) bytes)"
           } else {
             Write-Error "Export failed: file not found at $OutFile"
