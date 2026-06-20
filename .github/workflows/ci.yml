@@ -115,6 +115,50 @@ jobs:
           $feedback | ConvertTo-Json -Depth 4 | Out-File -FilePath "$reportDir/ai-feedback.json" -Encoding UTF8
           Write-Host "AI feedback report generated: $reportDir/ai-feedback.json"
 
+      # ── 向量知识库：CI 失败时自动存储 + 检索相似历史错误 ──
+      - name: Setup Python
+        if: failure()
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Cache HuggingFace Models
+        if: failure()
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/huggingface
+          key: hf-models-paraphrase-multilingual-MiniLM-L12-v2
+
+      - name: Install ChromaDB
+        if: failure()
+        run: pip install chromadb "sentence-transformers>=3.0.0"
+
+      - name: Rebuild Vector DB
+        if: failure()
+        run: python tools/vector_db/rebuild.py --force
+
+      - name: Store CI Errors to Vector DB
+        if: failure()
+        run: python tools/vector_db/store.py --from-ci-report "${{ env.PROJECT_PATH }}/test-reports/ai-feedback.json"
+
+      - name: Query Similar Past Errors
+        if: failure()
+        run: |
+          $reportDir = "${{ env.PROJECT_PATH }}/test-reports"
+          $feedbackPath = "$reportDir/ai-feedback.json"
+          if (Test-Path $feedbackPath) {
+            $feedback = Get-Content $feedbackPath -Encoding UTF8 | ConvertFrom-Json
+            $similarErrors = @()
+            foreach ($f in $feedback.failures) {
+              $query = "$($f.suite) $($f.test) $($f.message)"
+              $result = python tools/vector_db/manage.py query $query --limit 2 --json 2>&1
+              $similarErrors += $result
+            }
+            $feedback | Add-Member -NotePropertyName "similar_past_errors" -NotePropertyValue $similarErrors -Force
+            $feedback | ConvertTo-Json -Depth 6 | Out-File -FilePath $feedbackPath -Encoding UTF8
+            Write-Host "Vector DB query results appended to AI feedback"
+          }
+
       - name: Upload Test Reports
         uses: actions/upload-artifact@v4
         if: always()
@@ -201,7 +245,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: gdextension/**/bin
-          key: gdextension-${{ hashFiles('gdextension/**/src/**', 'gdextension/**/SConstruct') }}
+          key: gdextension-release-${{ hashFiles('gdextension/**/src/**', 'gdextension/**/SConstruct') }}
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -212,9 +256,8 @@ jobs:
         run: pip install scons
 
       - name: Build GDExtensions
-        continue-on-error: true
         run: |
-          python build.py --target=template_debug --platform=windows
+          python build.py --target=template_release --platform=windows
         working-directory: gdextension
 
       - name: Check GDExtension Build
