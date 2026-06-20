@@ -58,6 +58,11 @@ gdextension/godot-cpp/bin/*
 !gdextension/godot-cpp/bin/*.lib
 !gdextension/godot-cpp/bin/*.a
 
+# 本地 Godot 导出与 CI 产物（由 tools/ci_export.ps1 与本地调试产生，不应提交）
+build/
+ci_job_log.txt
+ci_logs_*.zip
+
 export/
 
 # Test reports
