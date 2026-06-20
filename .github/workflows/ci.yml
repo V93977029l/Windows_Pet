@@ -2,7 +2,7 @@ name: Godot CI - Build & Test
 
 on:
   push:
-    branches: [main]
+    branches: [main, 'dev/*']
     paths-ignore:
       - "**/*.md"
       - "docs/**"
@@ -435,7 +435,7 @@ jobs:
       # ── 自动发布到 GitHub Releases ──
       - name: Create GitHub Release
         if: success()
-        uses: softprops/action-gh-release@v4
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: v0.1.0-build${{ github.run_number }}
           name: 桌宠 v0.1.0 (Build ${{ github.run_number }})
