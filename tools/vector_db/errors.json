@@ -1,0 +1,101 @@
+[
+  {
+    "id": "godot-classname-order",
+    "error_type": "compilation",
+    "module": "godot-engine",
+    "symptom": "Godot 4.x 报解析错误，class_name 声明无效",
+    "root_cause": "class_name 必须在 extends 之前声明，否则 Godot 解析器无法正确识别类名",
+    "fix": "确保 class_name MyClass 写在 extends Node 之前",
+    "tags": ["godot", "gdscript", "class_name", "extends", "解析错误"],
+    "source": "manual",
+    "timestamp": "2025-12-01T00:00:00"
+  },
+  {
+    "id": "godot-dotgodot-delete",
+    "error_type": "compilation",
+    "module": "godot-engine",
+    "symptom": "删除 .godot 目录后项目无法编译，UID 解析失败、GdUnit4 类找不到",
+    "root_cause": ".godot 是 Godot 的导入缓存目录，删除后所有 UID 映射丢失，需用编辑器重新打开项目才能重建",
+    "fix": "不要随便删除 .godot/ 目录。如已删除，用 Godot 编辑器重新打开项目让其自动重建导入缓存",
+    "tags": ["godot", ".godot", "UID", "导入缓存", "GdUnit4"],
+    "source": "manual",
+    "timestamp": "2025-12-01T00:00:00"
+  },
+  {
+    "id": "godot-tscn-uid-conflict",
+    "error_type": "compilation",
+    "module": "godot-engine",
+    "symptom": "复制 .tscn 场景文件后出现 class_name 重复声明、场景加载报错",
+    "root_cause": "直接复制 .tscn 文件时 UID 不变，Godot 认为两个文件是同一资源，导致冲突",
+    "fix": "移动或复制场景文件应通过 Godot 编辑器操作（会自动分配新 UID），或手动修改 .tscn 文件中的 uid 字段",
+    "tags": ["godot", "tscn", "UID", "场景", "复制"],
+    "source": "manual",
+    "timestamp": "2025-12-01T00:00:00"
+  },
+  {
+    "id": "gdscript-variable-shadow",
+    "error_type": "logic",
+    "module": "gdscript",
+    "symptom": "在 extends Node2D 的类中声明 var scale: float 导致与 Node2D.scale 属性冲突",
+    "root_cause": "GDScript 允许变量名遮蔽基类属性，但会导致意外的行为错误",
+    "fix": "重命名变量避免与基类属性冲突，如 var new_scale: float 或 var pet_scale: float",
+    "tags": ["gdscript", "变量遮蔽", "基类", "Node2D", "scale"],
+    "source": "manual",
+    "timestamp": "2025-12-01T00:00:00"
+  },
+  {
+    "id": "ci-env-apdata-cache",
+    "error_type": "ci",
+    "module": "github-actions",
+    "symptom": "GitHub Actions 中导出模板缓存路径错误，Godot 找不到模板文件",
+    "root_cause": "GitHub Actions 表达式中 ${{ env.APPDATA }} 取的是 workflow env: 块中定义的变量，不是 Windows 系统环境变量 %APPDATA%",
+    "fix": "先在 PowerShell 步骤中用 echo \"VAR=$env:APPDATA\\path\" >> $env:GITHUB_ENV 写入环境变量，再在后续步骤用 ${{ env.VAR }} 引用",
+    "tags": ["github-actions", "CI", "APPDATA", "缓存", "导出模板", "环境变量"],
+    "source": "ci",
+    "timestamp": "2025-12-15T00:00:00"
+  },
+  {
+    "id": "powershell-no-and",
+    "error_type": "ci",
+    "module": "github-actions",
+    "symptom": "PowerShell 中 chained commands 报错：标记 && 不是此版本中的有效语句分隔符",
+    "root_cause": "PowerShell 不支持 bash 风格的 && 连接命令，需使用 ; 或分步执行",
+    "fix": "用 ; 分隔命令（cmd1; cmd2），或分两个独立的 RunCommand 调用",
+    "tags": ["powershell", "github-actions", "CI", "&&", "语法"],
+    "source": "ci",
+    "timestamp": "2025-12-15T00:00:00"
+  },
+  {
+    "id": "precommit-crlf",
+    "error_type": "ci",
+    "module": "pre-commit",
+    "symptom": "pre-commit hook 报 mixed-line-ending 失败，CRLF/LF 不一致",
+    "root_cause": "Windows 系统默认使用 CRLF 换行，但仓库要求 LF，pre-commit 自动修复后需要重新 git add",
+    "fix": "pre-commit 自动修复后，运行 git add 重新暂存修改的文件，然后再次 commit",
+    "tags": ["pre-commit", "CRLF", "LF", "换行符", "git"],
+    "source": "ci",
+    "timestamp": "2025-12-15T00:00:00"
+  },
+  {
+    "id": "signal-connection-leak",
+    "error_type": "logic",
+    "module": "godot-engine",
+    "symptom": "宠物切换场景后信号回调仍被触发，导致已销毁节点的回调执行报错",
+    "root_cause": "信号连接后未在节点退出场景树时断开，导致悬空引用",
+    "fix": "在 _exit_tree() 中调用 disconnect() 断开所有手动连接的信号",
+    "tags": ["godot", "信号", "内存泄漏", "场景切换", "_exit_tree", "disconnect"],
+    "source": "manual",
+    "timestamp": "2025-12-20T00:00:00"
+  },
+  {
+    "id": "ci-gdextension-target-mismatch",
+    "error_type": "ci",
+    "module": "github-actions",
+    "symptom": "CI 构建导出失败：Export failed: file not found at TransparentPet.exe，Godot output 为空",
+    "root_cause": "GDExtension 编译目标为 template_debug（生成 *_debug.dll），但 --export-release 需要 template_release 版本的 DLL，Godot 找不到 release DLL 静默失败",
+    "fix": "将 GDExtension 编译目标从 --target=template_debug 改为 --target=template_release，与导出步骤保持一致。同时移除 continue-on-error: true 避免掩盖编译失败",
+    "tags": ["github-actions", "CI", "GDExtension", "template_debug", "template_release", "导出", "DLL"],
+    "source": "ci",
+    "timestamp": "2026-06-12T00:00:00"
+  }
+]
