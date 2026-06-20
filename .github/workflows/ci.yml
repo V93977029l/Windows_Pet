@@ -343,16 +343,24 @@ jobs:
             exit 1
           }
 
-          # 使用 cmd /c 确保带空格的参数（如 "Windows Desktop"）被正确传递
-          # Start-Process -ArgumentList 会把空格字符串拆成多个参数
+          # 使用 PowerShell 的 & 调用 + 参数数组（splatting）来传递参数
+          # Godot 已使用 console 版本，所以 stdout/stderr 能被 PowerShell 正确捕获
           $ProjectPath = "${{ github.workspace }}\${{ env.PROJECT_PATH }}"
           $ExportLog = "$OutDir\godot_export.log"
           $ExportErr = "$OutDir\godot_export.err"
-          $CmdLine = "`"$GodotPath`" --headless --path `"$ProjectPath`" --export-release `"Windows Desktop`" `"$OutFile`" > `"$ExportLog`" 2> `"$ExportErr`""
-          Write-Host "Executing: $CmdLine"
+          $GodotArgs = @(
+            "--headless",
+            "--path",
+            $ProjectPath,
+            "--export-release",
+            "Windows Desktop",
+            $OutFile
+          )
+          Write-Host "Executing: $GodotPath $($GodotArgs -join ' ')"
           Write-Host ""
-          $ExportProcess = Start-Process -FilePath "cmd.exe" -ArgumentList @("/c", $CmdLine) -NoNewWindow -PassThru -Wait
-          Write-Host "Exit code: $($ExportProcess.ExitCode)"
+          & $GodotPath @GodotArgs > $ExportLog 2> $ExportErr
+          $ExitCode = $LASTEXITCODE
+          Write-Host "Exit code: $ExitCode"
           Write-Host ""
           if (Test-Path $ExportLog) {
             Write-Host "=== Godot stdout ==="
