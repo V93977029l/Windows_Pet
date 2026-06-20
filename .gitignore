@@ -7,7 +7,7 @@ transparent-pet/config/*_user.cfg
 transparent-pet/config/pet_config_user.cfg
 
 
-# GDExtension build artifacts
+# GDExtension build artifacts（排除 addons 下的预编译 DLL）
 *.o
 *.obj
 *.lib
@@ -15,6 +15,7 @@ transparent-pet/config/pet_config_user.cfg
 *.exp
 *.pdb
 *.dll
+!transparent-pet/addons/**/*.dll
 *.so
 *.dylib
 *.bc
