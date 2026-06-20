@@ -267,6 +267,13 @@ jobs:
           $OutDir = "${{ github.workspace }}\build\windows"
           New-Item -ItemType Directory -Force -Path $OutDir | Out-Null
           $OutFile = "$OutDir\TransparentPet.exe"
+
+          # 关键修复：export_presets.cfg 中 export_path = "../export/..."
+          # Godot 会检查预设中配置的路径目录是否存在，即使命令行参数覆盖了输出路径
+          $PresetExportDir = "${{ github.workspace }}\${{ env.PROJECT_PATH }}\..\export"
+          New-Item -ItemType Directory -Force -Path $PresetExportDir | Out-Null
+          Write-Host "Preset export directory ensured: $PresetExportDir"
+
           Write-Host "Exporting to: $OutFile"
           Write-Host "Template dir: $env:TEMPLATE_DIR"
           if (Test-Path "$env:TEMPLATE_DIR\windows_release_x86_64.exe") {
