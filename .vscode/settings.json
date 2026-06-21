@@ -6,5 +6,6 @@
 		"**/.godot": true,
 		"**/*.o": true,
 		".ruff_cache": true
-	}
+	},
+	"cmake.ignoreCMakeListsMissing": true
 }
