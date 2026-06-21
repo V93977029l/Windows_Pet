@@ -65,6 +65,13 @@ ci_logs_*.zip
 
 export/
 
+# 本地构建产物（godot --headless 导出的 exe/pck/bat）
+build/
+
+# CI 调试日志（临时文件，不提交）
+ci_job_log.txt
+ci_logs_*.zip
+
 # Test reports
 test-reports/
 reports/

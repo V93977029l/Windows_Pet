@@ -18,9 +18,15 @@ on:
       - ".gitignore"
       - "LICENSE*"
   workflow_dispatch:
+    inputs:
+      build_export:
+        description: "是否构建导出 Windows .exe (true/false)"
+        default: "false"
+        required: false
 
 permissions:
   contents: write
+  id-token: write
 
 env:
   GODOT_VERSION: "4.7"
@@ -117,6 +123,28 @@ jobs:
           $SourcePath = Get-ChildItem -Path $ExtractDir -Directory | Select-Object -First 1 | ForEach-Object { "$($_.FullName)\addons\gdUnit4" }
           Copy-Item -Recurse -Path $SourcePath -Destination "$AddonsDir\gdUnit4" -Force
 
+      - name: GDScript Code Scan
+        run: |
+          $ProjectAbsDir = Join-Path (Get-Location) "${{ env.PROJECT_PATH }}"
+          Write-Host "=== Running GDScript Code Scanner ==="
+          Write-Host "Project: $ProjectAbsDir"
+          Write-Host ""
+          $BatchFile = Join-Path ([System.IO.Path]::GetTempPath()) "run_code_scan.cmd"
+          @"
+          @echo off
+          godot --headless --path "$($ProjectAbsDir)" -s res://tools/code_scanner.gd
+          echo Scanner_exit_code=%errorlevel%
+          "@ | Set-Content -Path $BatchFile -Encoding ASCII
+          Write-Host "Executing: $BatchFile"
+          & cmd /c "`"$BatchFile`""
+          $ExitCode = $LASTEXITCODE
+          Write-Host ""
+          Write-Host "Scanner exit code: $ExitCode"
+          if ($ExitCode -ne 0) {
+            Write-Host "代码扫描发现问题 —— 请查看上方输出"
+            exit $ExitCode
+          }
+
       - name: Run GdUnit4 Tests
         run: |
           $ReportDir = Join-Path (Get-Location) "${{ env.PROJECT_PATH }}\test-reports"
@@ -183,6 +211,7 @@ jobs:
           files: ${{ env.PROJECT_PATH }}/test-reports/lcov.info
           flags: unittests
           name: godot-gdscript
+          token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: false
           verbose: true
 
@@ -280,12 +309,12 @@ jobs:
           retention-days: 30
 
   # ============================================================
-  # Job 2: 构建+导出（仅 main 分支 push）
+  # Job 2: 构建+导出（main 分支 push 自动跑；其他分支可 workflow_dispatch 手动跑）
   # ============================================================
   build-export:
     name: Build & Export
     needs: test
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: (github.ref == 'refs/heads/main' && github.event_name == 'push') || (github.event_name == 'workflow_dispatch' && inputs.build_export == 'true')
     runs-on: windows-latest
 
     steps:
