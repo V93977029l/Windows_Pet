@@ -7,13 +7,20 @@ extends Node2D
 var display_controller = null
 var interaction_controller = null
 var effects_controller: PetEffectsAPI = null
-var ui_controller = null
+var ui_controller: Node = null
+var character_registry = null
 var tray_manager: Node = null
 
 var draggable_list: Array = []
 
 const SVG_PATH: String = ProjectConstants.SVG_PATH
 const PetConsts = preload("res://modules/pet/scripts/pet_constants.gd")
+
+## 音效预留路径（占位——真正的音频资源就位后替换即可）
+## 所有路径使用 res://，若文件不存在 AudioManager 会静默忽略。
+const SFX_THROW: String = "res://assets/audio/sfx_throw.wav"
+const SFX_PICKUP: String = "res://assets/audio/sfx_pickup.wav"
+const SFX_LAND: String = "res://assets/audio/sfx_land.wav"
 
 
 func _ready():
@@ -86,8 +93,18 @@ func _ready():
 	tray_manager.settings_requested.connect(_on_tray_settings_requested)
 	tray_manager.exit_requested.connect(_on_tray_exit_requested)
 
+	# ── 4.3 角色注册表（多宠物支持）──
+	character_registry = preload("res://modules/character/scripts/character_registry.gd").new()
+	character_registry.character_changed.connect(_on_character_changed)
+
+	# ── 4.4 HUD（宠物 UI 占位）──
+	ui_controller = preload("res://modules/ui/scripts/hud_controller.gd").new()
+	add_child(ui_controller)
+	ui_controller.init(self)
+
 	# ── 4.5 订阅 UI 事件（EventBus 解耦）──
 	_subscribe_ui_events()
+	_subscribe_character_events()
 
 	# ── 5. 液态玻璃预设激活 ──
 	if ConfigManager.cfg_get("pet", "slime_1_material", "slime_1") == "slime_2":
@@ -170,12 +187,27 @@ func _input(event: InputEvent):
 				if _mouse_in_sprite(entry.sprite):
 					_bring_to_front(entry.id)
 					interaction_controller.drag.handle_area_input_event(event, entry.sprite)
+					# 音效：拿起宠物
+					_emit_sound(SFX_PICKUP)
 					return
 		else:
 			interaction_controller.drag.handle_area_input_event(event, null)
+			# 音效：如果正在抛射，播放投掷音效
+			if interaction_controller.drag and interaction_controller.drag.is_throwing:
+				_emit_sound(SFX_THROW)
 
 	if event.is_action_pressed("OpenSettings"):
 		open_settings_window()
+
+
+## 发布 play_sound 事件到 EventBus（由 AudioManager 监听播放）
+## 资源不存在时 AudioManager 会静默忽略，所以这里不做存在检查。
+func _emit_sound(path: String, volume_db: float = 0.0, pitch_scale: float = 1.0) -> void:
+	EventBus.publish("play_sound", {
+		"path": path,
+		"volume_db": volume_db,
+		"pitch_scale": pitch_scale
+	})
 
 
 # ── 公共 API ──
@@ -362,3 +394,52 @@ func _on_event_throw_params(payload: Dictionary):
 		payload.get("multiplier", PetConsts.THROW_MULTIPLIER_DEFAULT),
 		payload.get("enabled", PetConsts.THROW_ENABLED_DEFAULT)
 	)
+
+
+# ── 角色（多宠物）事件订阅 ──
+
+func _subscribe_character_events():
+	EventBus.subscribe("character_switch_requested", _on_event_character_switch)
+	print("✅ [EventBus] 角色切换事件订阅完成")
+
+
+## 角色切换信号回调（由 character_registry 直接发出）
+func _on_character_changed(character_id: String):
+	var data: Dictionary = character_registry.get_character(character_id)
+	if data.is_empty():
+		return
+
+	# 1) 切换精灵纹理
+	var sprite_path: String = data.get("sprite", "")
+	if not sprite_path.is_empty() and ResourceLoader.exists(sprite_path):
+		var tex = load(sprite_path)
+		if tex and slime_sprite:
+			slime_sprite.texture = tex
+			print("[Pet] 已切换精灵纹理：", sprite_path)
+
+	# 2) 切换默认材质
+	var mat: String = data.get("material", "")
+	if not mat.is_empty():
+		var preset = display_controller.material.get_preset_by_id(mat)
+		if preset:
+			apply_preset(preset)
+			on_material_changed(mat)
+
+	# 3) 切换缩放
+	var s: float = data.get("scale", 0.0)
+	if s > 0.0:
+		update_pet_scale(s)
+		apply_high_res_scale(s)
+
+	# 4) 通知 HUD 刷新
+	if ui_controller:
+		ui_controller.set_hint(data.get("name", character_id))
+		ui_controller.refresh()
+
+
+## 通过 EventBus 请求切换角色（便于其他模块触发）
+func _on_event_character_switch(payload: Dictionary):
+	var cid: String = payload.get("id", "")
+	if cid.is_empty():
+		return
+	character_registry.switch_character(cid)

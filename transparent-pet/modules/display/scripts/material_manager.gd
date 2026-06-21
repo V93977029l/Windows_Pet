@@ -169,8 +169,6 @@ func init(sprite: Sprite2D):
 ## 【核心逻辑】
 ##   创建并注册项目默认包含的材质预设。
 ##   如需添加新材质，在此方法中添加新的 MaterialPreset 并 register_preset()。
-## 【已注册预设】
-##   slime_1 — "1号史莱姆(普通)": 基础蓝色史莱姆材质，支持动态流动效果
 func _register_default_presets():
 	# 1号史莱姆（普通）- 默认基础材质
 	# 使用 slime.gdshader 着色器实现动态流动的蓝色史莱姆效果
@@ -183,6 +181,21 @@ func _register_default_presets():
 	var slime_2 = MaterialPreset.new("slime_2", "2号史莱姆(液态玻璃)")
 	slime_2.description = "透明水滴质感，支持折射/模糊/光晕效果"
 	registry.register_preset(slime_2)
+
+	# 3号史莱姆（金属）- 占位（需要 shader 支持）
+	var slime_3 = MaterialPreset.new("slime_3", "3号史莱姆(金属)")
+	slime_3.description = "金属质感史莱姆，表面有反光效果（待 shader 支持）"
+	registry.register_preset(slime_3)
+
+	# 4号史莱姆（冰晶）- 占位（需要 shader 支持）
+	var slime_4 = MaterialPreset.new("slime_4", "4号史莱姆(冰晶)")
+	slime_4.description = "冰晶/冰块质感，透明带碎裂反光（待 shader 支持）"
+	registry.register_preset(slime_4)
+
+	# 5号史莱姆（火焰）- 占位（需要 shader 支持）
+	var slime_5 = MaterialPreset.new("slime_5", "5号史莱姆(火焰)")
+	slime_5.description = "火焰/熔岩质感，内部有流动光效（待 shader 支持）"
+	registry.register_preset(slime_5)
 
 
 ## 应用材质预设（入口方法，自动分发）
