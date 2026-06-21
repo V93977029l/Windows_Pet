@@ -26,6 +26,7 @@ on:
 
 permissions:
   contents: write
+  id-token: write
 
 env:
   GODOT_VERSION: "4.7"
@@ -210,6 +211,7 @@ jobs:
           files: ${{ env.PROJECT_PATH }}/test-reports/lcov.info
           flags: unittests
           name: godot-gdscript
+          token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: false
           verbose: true
 
