@@ -51,13 +51,28 @@ game/
 
 ## 文档导航
 
+### 游戏设计文档 (GDD)
+
 | 文档 | 说明 |
 | --- | --- |
-| [项目结构总览.md](documents/项目结构总览.md) | 完整的项目架构和模块说明 |
-| [GDExtension构建全流程.md](documents/tool-guides/GDExtension构建全流程.md) | GDExtension 编译和部署指南 |
-| [GitSubmodule操作指南.md](documents/tool-guides/GitSubmodule操作指南.md) | Git Submodule 管理指南 |
-| [快速测试指南.md](documents/快速测试指南.md) | 快速上手和测试流程 |
-| [桌宠开发日志.md](documents/桌宠开发日志.md) | 项目开发历史记录 |
+| [GDD总览.md](docs/gdd/00-GDD总览.md) | ⭐ 设计支柱、原则、文档导航（GDD 入口） |
+| [核心体验循环.md](docs/gdd/01-核心体验循环.md) | Moment/Session/Long-term 三层循环 |
+| [玩家动机与画像.md](docs/gdd/02-玩家动机与画像.md) | 目标玩家、动机、混合型主次排序 |
+| [机制规格/](docs/gdd/03-机制规格/) | 自主行为/情绪/互动反馈/收集解锁/自定义 5 大系统 |
+| [成就与收集册.md](docs/gdd/04-成就与收集册.md) | 无货币经济下的长期目标系统 |
+| [调优变量表.md](docs/gdd/05-调优变量表.md) | 全部数值假设与调优区间 |
+| [新手引导流程.md](docs/gdd/06-新手引导流程.md) | 首次启动体验设计 |
+| [现有功能体验规格化.md](docs/gdd/07-现有功能体验规格化.md) | 已实现功能的玩家体验规格 |
+
+### 工程文档
+
+| 文档 | 说明 |
+| --- | --- |
+| [项目结构总览.md](docs/项目结构总览.md) | 完整的项目架构和模块说明 |
+| [GDExtension构建全流程.md](docs/tool-guides/GDExtension构建全流程.md) | GDExtension 编译和部署指南 |
+| [GitSubmodule操作指南.md](docs/tool-guides/GitSubmodule操作指南.md) | Git Submodule 管理指南 |
+| [快速测试指南.md](docs/快速测试指南.md) | 快速上手和测试流程 |
+| [桌宠开发日志.md](docs/桌宠开发日志.md) | 项目开发历史记录 |
 
 ## 环境要求
 

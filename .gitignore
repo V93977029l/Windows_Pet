@@ -78,3 +78,6 @@ reports/
 
 # ChromaDB 向量数据库（从 errors.json 重建，不提交二进制文件）
 tools/vector_db/chroma_db/
+
+# Workbuddy AI 助手本地数据
+.workbuddy/
